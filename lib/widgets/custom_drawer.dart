@@ -9,6 +9,7 @@ import 'package:customer_maxx_crm/screens/lead_manager/view_leads_screen.dart';
 import 'package:customer_maxx_crm/screens/lead_manager/lead_manager_dashboard_screen.dart';
 import 'package:customer_maxx_crm/screens/ba_specialist/registered_leads_screen.dart';
 import 'package:customer_maxx_crm/screens/ba_specialist/ba_specialist_dashboard_screen.dart';
+import 'package:customer_maxx_crm/main.dart';
 
 class CustomDrawer extends StatelessWidget {
   final String currentUserRole;
@@ -28,9 +29,6 @@ class CustomDrawer extends StatelessWidget {
       child: Column(
         children: [
           DrawerHeader(
-            decoration: const BoxDecoration(
-              color: Color(0xFF2196F3), // Blue color
-            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.end,
@@ -38,27 +36,19 @@ class CustomDrawer extends StatelessWidget {
                 const CircleAvatar(
                   radius: 30,
                   backgroundColor: Colors.white,
-                  child: Icon(
-                    Icons.person,
-                    size: 30,
-                    color: Color(0xFF2196F3),
-                  ),
+                  child: Icon(Icons.person, size: 30),
                 ),
                 const SizedBox(height: 10),
                 Text(
                   currentUserName,
                   style: const TextStyle(
-                    color: Colors.white,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 Text(
                   currentUserRole,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 14,
-                  ),
+                  style: const TextStyle(fontSize: 14),
                 ),
               ],
             ),
@@ -67,37 +57,34 @@ class CustomDrawer extends StatelessWidget {
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
-                _buildDrawerItem(
-                  context,
-                  Icons.dashboard,
-                  'Dashboard',
-                  () {
-                    Navigator.pop(context);
-                    // Navigate to appropriate dashboard based on role
-                    if (currentUserRole == 'Admin') {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const AdminDashboardScreen(),
-                        ),
-                      );
-                    } else if (currentUserRole == 'Lead Manager') {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const LeadManagerDashboardScreen(),
-                        ),
-                      );
-                    } else if (currentUserRole == 'BA Specialist') {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const BASpecialistDashboardScreen(),
-                        ),
-                      );
-                    }
-                  },
-                ),
+                _buildDrawerItem(context, Icons.dashboard, 'Dashboard', () {
+                  Navigator.pop(context);
+                  // Navigate to appropriate dashboard based on role
+                  if (currentUserRole == 'Admin') {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AdminDashboardScreen(),
+                      ),
+                    );
+                  } else if (currentUserRole == 'Lead Manager') {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            const LeadManagerDashboardScreen(),
+                      ),
+                    );
+                  } else if (currentUserRole == 'BA Specialist') {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            const BASpecialistDashboardScreen(),
+                      ),
+                    );
+                  }
+                }),
                 if (currentUserRole == 'Admin') ...[
                   _buildDrawerItem(
                     context,
@@ -113,49 +100,34 @@ class CustomDrawer extends StatelessWidget {
                       );
                     },
                   ),
-                  _buildDrawerItem(
-                    context,
-                    Icons.leaderboard,
-                    'All Leads',
-                    () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const AllLeadsScreen(),
-                        ),
-                      );
-                    },
-                  ),
+                  _buildDrawerItem(context, Icons.leaderboard, 'All Leads', () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AllLeadsScreen(),
+                      ),
+                    );
+                  }),
                 ] else if (currentUserRole == 'Lead Manager') ...[
-                  _buildDrawerItem(
-                    context,
-                    Icons.add,
-                    'Add Lead',
-                    () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const AddLeadScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  _buildDrawerItem(
-                    context,
-                    Icons.visibility,
-                    'View Leads',
-                    () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ViewLeadsScreen(),
-                        ),
-                      );
-                    },
-                  ),
+                  _buildDrawerItem(context, Icons.add, 'Add Lead', () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AddLeadScreen(),
+                      ),
+                    );
+                  }),
+                  _buildDrawerItem(context, Icons.visibility, 'View Leads', () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ViewLeadsScreen(),
+                      ),
+                    );
+                  }),
                 ] else if (currentUserRole == 'BA Specialist') ...[
                   _buildDrawerItem(
                     context,
@@ -171,32 +143,60 @@ class CustomDrawer extends StatelessWidget {
                       );
                     },
                   ),
-                  _buildDrawerItem(
-                    context,
-                    Icons.visibility,
-                    'View Leads',
-                    () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ViewLeadsScreen(),
-                        ),
-                      );
-                    },
-                  ),
+                  _buildDrawerItem(context, Icons.visibility, 'View Leads', () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ViewLeadsScreen(),
+                      ),
+                    );
+                  }),
                 ],
                 const Divider(),
-                _buildDrawerItem(
-                  context,
-                  Icons.logout,
-                  'Logout',
-                  () {
-                    authProvider.logout();
+                _buildDrawerItem(context, Icons.logout, 'Logout', () async {
+                  // Show confirmation dialog
+                  bool? shouldLogout = await showDialog<bool>(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: const Text('Logout'),
+                        content: const Text('Are you sure you want to logout?'),
+                        actions: <Widget>[
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(true),
+                            child: const Text('Logout'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+
+                  // If user confirmed logout
+                  if (shouldLogout == true) {
+                    // Close drawer first
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                    }
+                    
+                    // Perform logout
+                    await authProvider.logout();
+                    
+                    // Clear all navigation and go to root (AuthWrapper will handle showing LoginScreen)
+                    if (context.mounted) {
+                      Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (context) => const AuthWrapper()),
+                        (route) => false,
+                      );
+                    }
+                  } else {
                     Navigator.pop(context);
-                    // Navigate to login screen
-                  },
-                ),
+                  }
+                }),
               ],
             ),
           ),
@@ -212,7 +212,7 @@ class CustomDrawer extends StatelessWidget {
     VoidCallback onTap,
   ) {
     return ListTile(
-      leading: Icon(icon, color: const Color(0xFF2196F3)),
+      leading: Icon(icon),
       title: Text(title),
       onTap: onTap,
     );

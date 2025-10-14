@@ -1,32 +1,52 @@
 import 'package:customer_maxx_crm/models/user.dart';
+import 'package:customer_maxx_crm/utils/shared_pref_utils.dart';
 
 class AuthService {
   // Mock users for demonstration
   static final List<User> _users = [
     User(
       id: 1,
-      name: 'Admin',
+      name: 'Pranali',
       email: 'admin@admin.com',
       role: 'Admin',
       password: 'admin123',
     ),
     User(
       id: 2,
-      name: 'Lead Manager',
+      name: 'gayatri',
       email: 'lead@lead.com',
       role: 'Lead Manager',
       password: 'lead123',
     ),
     User(
       id: 3,
-      name: 'BA Specialist',
+      name: 'shrikant',
       email: 'ba@ba.com',
       role: 'BA Specialist',
-      password: 'ba123',
+      password: 'baspe123',
+    ),
+    User(
+      id: 4,
+      name: 'achal',
+      email: 'achal@lead.com',
+      role: 'Lead Manager',
+      password: 'achal123',
+    ),
+    User(
+      id: 5,
+      name: 'Nikita',
+      email: 'nikita@ba.com',
+      role: 'BA Specialist',
+      password: 'nikita123',
     ),
   ];
 
   static User? currentUser;
+
+  // Initialize the service by checking for saved user data
+  static Future<void> init() async {
+    currentUser = await SharedPrefUtils.getUser();
+  }
 
   // Login method
   Future<User?> login(String email, String password, String role) async {
@@ -41,6 +61,8 @@ class AuthService {
     
     if (user.id != -1) {
       currentUser = user;
+      // Save user data to SharedPreferences
+      await SharedPrefUtils.saveUser(user);
       return user;
     }
     
@@ -76,12 +98,19 @@ class AuthService {
   }
 
   // Logout method
-  void logout() {
+  Future<void> logout() async {
     currentUser = null;
+    // Clear user data from SharedPreferences
+    await SharedPrefUtils.clearUserData();
   }
 
   // Get current user
   User? getCurrentUser() {
     return currentUser;
+  }
+  
+  // Check if user is logged in
+  Future<bool> isLoggedIn() async {
+    return await SharedPrefUtils.isLoggedIn();
   }
 }

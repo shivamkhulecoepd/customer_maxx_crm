@@ -45,21 +45,27 @@ class _LoginScreenState extends State<LoginScreen> {
       });
 
       if (success) {
-        // Navigate to dashboard based on role
-        // This will be handled by the main app widget
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Login successful!'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        // Show success message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Login successful!'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 1),
+            ),
+          );
+        }
+        // Navigation will be handled automatically by the Consumer in main.dart
+        // The main app will rebuild and navigate to the appropriate dashboard
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Invalid credentials. Please try again.'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Invalid credentials. Please try again.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }
@@ -81,7 +87,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF2196F3),
                   ),
                 ),
                 const SizedBox(height: 30),
@@ -89,7 +94,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _emailController,
                   decoration: const InputDecoration(
                     labelText: 'Email',
-                    border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.email),
                   ),
                   validator: (value) {
@@ -107,7 +111,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _passwordController,
                   decoration: const InputDecoration(
                     labelText: 'Password',
-                    border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.lock),
                   ),
                   obscureText: true,
@@ -126,7 +129,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   value: _selectedRole,
                   decoration: const InputDecoration(
                     labelText: 'Role',
-                    border: OutlineInputBorder(),
                   ),
                   items: _roles.map((role) {
                     return DropdownMenuItem(
@@ -154,20 +156,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   height: 50,
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _login,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2196F3),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
                     child: _isLoading
-                        ? const CircularProgressIndicator(color: Colors.white)
+                        ? const CircularProgressIndicator()
                         : const Text(
                             'Login',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
                             ),
                           ),
                   ),
@@ -185,7 +180,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: const Text(
                     'Don\'t have an account? Register',
                     style: TextStyle(
-                      color: Color(0xFF2196F3),
                       fontWeight: FontWeight.bold,
                     ),
                   ),

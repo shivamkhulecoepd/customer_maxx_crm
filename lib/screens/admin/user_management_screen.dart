@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:customer_maxx_crm/providers/auth_provider.dart';
 import 'package:customer_maxx_crm/providers/users_provider.dart';
-import 'package:customer_maxx_crm/models/user.dart';
+
 import 'package:customer_maxx_crm/widgets/custom_app_bar.dart';
 import 'package:customer_maxx_crm/widgets/custom_drawer.dart';
 
@@ -14,7 +14,7 @@ class UserManagementScreen extends StatefulWidget {
 }
 
 class _UserManagementScreenState extends State<UserManagementScreen> {
-  late String _userName;
+  String _userName = '';
   final TextEditingController _searchController = TextEditingController();
   final List<String> _roles = ['Admin', 'Lead Manager', 'BA Specialist'];
 
@@ -23,16 +23,20 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     super.initState();
     // Get user name from auth provider
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      setState(() {
-        _userName = authProvider.user?.name ?? 'Admin';
-      });
+      if (mounted) {
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        setState(() {
+          _userName = authProvider.user?.name ?? 'Admin';
+        });
+      }
     });
     
     // Load users
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final usersProvider = Provider.of<UsersProvider>(context, listen: false);
-      usersProvider.fetchAllUsers();
+      if (mounted) {
+        final usersProvider = Provider.of<UsersProvider>(context, listen: false);
+        usersProvider.fetchAllUsers();
+      }
     });
   }
 

@@ -4,6 +4,7 @@ import 'package:customer_maxx_crm/providers/auth_provider.dart';
 import 'package:customer_maxx_crm/providers/leads_provider.dart';
 import 'package:customer_maxx_crm/widgets/custom_app_bar.dart';
 import 'package:customer_maxx_crm/widgets/custom_drawer.dart';
+import 'package:intl/intl.dart';
 
 class ViewLeadsScreen extends StatefulWidget {
   const ViewLeadsScreen({Key? key}) : super(key: key);
@@ -13,26 +14,35 @@ class ViewLeadsScreen extends StatefulWidget {
 }
 
 class _ViewLeadsScreenState extends State<ViewLeadsScreen> {
-  late String _userName;
-  String _selectedStatus = 'All';
+  String _userName = '';
+  String _selectedStatus = '-- Filter by Status --';
 
-  final List<String> _statuses = ['All', 'New', 'Follow Up', 'Closed'];
+  final List<String> _statuses = [
+    '-- Filter by Status --',
+    'Registered',
+    'Demo Attended',
+    'Not Connected',
+    'Demo Interested',
+    'Pending'
+  ];
 
   @override
   void initState() {
     super.initState();
-    // Get user name from auth provider
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      setState(() {
-        _userName = authProvider.user?.name ?? 'Lead Manager';
-      });
+      if (mounted) {
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        setState(() {
+          _userName = authProvider.user?.name ?? 'Lead Manager';
+        });
+      }
     });
     
-    // Load leads
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final leadsProvider = Provider.of<LeadsProvider>(context, listen: false);
-      leadsProvider.fetchAllLeads();
+      if (mounted) {
+        final leadsProvider = Provider.of<LeadsProvider>(context, listen: false);
+        leadsProvider.fetchAllLeads();
+      }
     });
   }
 
@@ -46,93 +56,216 @@ class _ViewLeadsScreenState extends State<ViewLeadsScreen> {
       ),
       body: Consumer<LeadsProvider>(
         builder: (context, leadsProvider, child) {
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Row(
                   children: [
+                    const Icon(Icons.list, size: 24),
+                    const SizedBox(width: 8),
                     const Text(
-                      'Filter by Status:',
+                      'View Leads',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    DropdownButton<String>(
-                      value: _selectedStatus,
-                      items: _statuses.map((status) {
-                        return DropdownMenuItem(
-                          value: status,
-                          child: Text(status),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() {
-                            _selectedStatus = value;
-                          });
-                          // Filter leads by status
-                          leadsProvider.fetchLeadsByStatus(value);
-                        }
-                      },
+                  ],
+                ),
+                const SizedBox(height: 20),
+                
+                // Filter Row
+                Row(
+                  children: [
+                    SizedBox(
+                      width: 200,
+                      child: DropdownButtonFormField<String>(
+                        value: _selectedStatus,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        ),
+                        items: _statuses.map((status) {
+                          return DropdownMenuItem(
+                            value: status,
+                            child: Text(status),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              _selectedStatus = value;
+                            });
+                            if (value == '-- Filter by Status --') {
+                              leadsProvider.fetchAllLeads();
+                            } else {
+                              leadsProvider.fetchLeadsByStatus(value);
+                            }
+                          }
+                        },
+                      ),
                     ),
                   ],
                 ),
-              ),
-              if (leadsProvider.isLoading)
-                const Expanded(
-                  child: Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                )
-              else
-                Expanded(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: DataTable(
-                      columns: const [
-                        DataColumn(label: Text('ID')),
-                        DataColumn(label: Text('Name')),
-                        DataColumn(label: Text('Phone')),
-                        DataColumn(label: Text('Email')),
-                        DataColumn(label: Text('Status')),
-                        DataColumn(label: Text('History')),
-                        DataColumn(label: Text('Delete')),
-                      ],
-                      rows: leadsProvider.leads.map((lead) {
-                        return DataRow(
-                          cells: [
-                            DataCell(Text(lead.id.toString())),
-                            DataCell(Text(lead.name)),
-                            DataCell(Text(lead.phone)),
-                            DataCell(Text(lead.email)),
-                            DataCell(Text(lead.status)),
-                            DataCell(
-                              IconButton(
-                                icon: const Icon(Icons.visibility, color: Colors.blue),
-                                onPressed: () {
-                                  // View lead history functionality
-                                },
-                              ),
+                const SizedBox(height: 20),
+                
+                if (leadsProvider.isLoading)
+                  const Expanded(
+                    child: Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  )
+                else
+                  Expanded(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: DataTable(
+                        headingRowColor: WidgetStateProperty.all(const Color(0xFF2c5aa0)),
+                        headingTextStyle: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                        headingRowHeight: 50,
+                        dataRowHeight: 50,
+                        columns: const [
+                          DataColumn(
+                            label: Text(
+                              'ID',
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
                             ),
-                            DataCell(
-                              IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
-                                onPressed: () {
-                                  // Delete lead functionality
-                                  _confirmDeleteLead(context, lead.id, leadsProvider);
-                                },
-                              ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'Created At',
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
                             ),
-                          ],
-                        );
-                      }).toList(),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'Lead Name',
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'Phone',
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'Email',
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'Education',
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'Experience',
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'Location',
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'Status',
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'Feedback',
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'Owner',
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'Assigned To',
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'History',
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'Delete',
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                          ),
+                        ],
+                        rows: leadsProvider.leads.map((lead) {
+                          return DataRow(
+                            cells: [
+                              DataCell(Text(lead.id.toString())),
+                              DataCell(Text(DateFormat('yyyy-MM-dd HH:mm:ss').format(lead.date))),
+                              DataCell(Text(lead.name)),
+                              DataCell(Text(lead.phone)),
+                              DataCell(Text(lead.email)),
+                              DataCell(Text(lead.education)),
+                              DataCell(Text(lead.experience)),
+                              DataCell(Text(lead.location)),
+                              DataCell(Text(lead.status)),
+                              DataCell(Text(lead.feedback.isEmpty ? 'No feedback' : lead.feedback)),
+                              DataCell(Text(lead.leadManager)),
+                              DataCell(Text(lead.assignedBy.isNotEmpty ? lead.assignedBy : 'Nikita')),
+                              DataCell(
+                                ElevatedButton(
+                                  onPressed: () {
+                                    // View lead history functionality
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('View history for ${lead.name}')),
+                                    );
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.blue,
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  ),
+                                  child: const Text('View', style: TextStyle(color: Colors.white, fontSize: 12)),
+                                ),
+                              ),
+                              DataCell(
+                                ElevatedButton(
+                                  onPressed: () {
+                                    _confirmDeleteLead(context, lead.id, leadsProvider);
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.red,
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  ),
+                                  child: const Text('Delete', style: TextStyle(color: Colors.white, fontSize: 12)),
+                                ),
+                              ),
+                            ],
+                          );
+                        }).toList(),
+                      ),
                     ),
                   ),
-                ),
-            ],
+              ],
+            ),
           );
         },
       ),
@@ -158,19 +291,23 @@ class _ViewLeadsScreenState extends State<ViewLeadsScreen> {
                 Navigator.pop(context);
                 final success = await leadsProvider.deleteLead(leadId);
                 if (success) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Lead deleted successfully!'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Lead deleted successfully!'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
                 } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Failed to delete lead. Please try again.'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Failed to delete lead. Please try again.'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
                 }
               },
               child: const Text('Delete'),

@@ -22,7 +22,7 @@ class UserService {
       name: 'BA Specialist',
       email: 'ba@ba.com',
       role: 'BA Specialist',
-      password: 'ba123',
+      password: 'baspe123',
     ),
   ];
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:customer_maxx_crm/providers/auth_provider.dart';
 import 'package:customer_maxx_crm/widgets/custom_app_bar.dart';
@@ -8,30 +9,26 @@ class LeadManagerDashboardScreen extends StatefulWidget {
   const LeadManagerDashboardScreen({Key? key}) : super(key: key);
 
   @override
-  State<LeadManagerDashboardScreen> createState() => _LeadManagerDashboardScreenState();
+  State<LeadManagerDashboardScreen> createState() =>
+      _LeadManagerDashboardScreenState();
 }
 
-class _LeadManagerDashboardScreenState extends State<LeadManagerDashboardScreen> {
-  late String _userName;
+class _LeadManagerDashboardScreenState
+    extends State<LeadManagerDashboardScreen> {
+  String _userName = '';
 
   @override
   void initState() {
     super.initState();
-    // Get user name from auth provider
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      setState(() {
-        _userName = authProvider.user?.name ?? 'Lead Manager';
-      });
-    });
+    // Get user name from auth provider immediately
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    _userName = authProvider.user?.name ?? 'Lead Manager';
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
-        title: 'Welcome to Lead Manager Dashboard',
-      ),
+      appBar: CustomAppBar(title: 'Welcome to Lead Manager Dashboard'),
       drawer: CustomDrawer(
         currentUserRole: 'Lead Manager',
         currentUserName: _userName,
@@ -51,20 +48,22 @@ class _LeadManagerDashboardScreenState extends State<LeadManagerDashboardScreen>
                 ),
               ),
               const SizedBox(height: 30),
-              // Stats cards
-              Row(
+              // Stats cards in Grid
+              GridView.count(
+                crossAxisCount:
+                    3, // Adjust based on screen size or use SliverGridDelegate for responsiveness
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
                 children: [
-                  _buildStatCard('Total Leads', '10', Colors.blue),
-                  const SizedBox(width: 16),
-                  _buildStatCard('New Leads', '5', Colors.green),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  _buildStatCard('Follow Up', '3', Colors.orange),
-                  const SizedBox(width: 16),
-                  _buildStatCard('Closed', '2', Colors.red),
+                  _buildStatCard('Not Connected', '0', Colors.teal),
+                  _buildStatCard('Follow-up Planned', '0', Colors.teal),
+                  _buildStatCard('Follow-up Completed', '0', Colors.teal),
+                  _buildStatCard('Demo Attended', '0', Colors.teal),
+                  _buildStatCard('Warm Lead', '0', Colors.teal),
+                  _buildStatCard('Hot Lead', '0', Colors.teal),
+                  _buildStatCard('Converted', '0', Colors.teal),
                 ],
               ),
             ],
@@ -76,12 +75,22 @@ class _LeadManagerDashboardScreenState extends State<LeadManagerDashboardScreen>
 
   // Method to build stat cards
   Widget _buildStatCard(String title, String value, Color color) {
+    // Get current time for timestamp
+    String timestamp = DateFormat(
+      'hh:mm a, MMMM dd, yyyy',
+    ).format(DateTime.now());
+
     return Expanded(
       child: Container(
-        height: 100,
+        height: 140, // Increased height for better layout
+        padding: const EdgeInsets.all(12), // Added padding for spacing
         decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(10),
+          gradient: LinearGradient(
+            colors: [color.withOpacity(0.8), color], // Gradient effect
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(12), // Slightly larger radius
           boxShadow: [
             BoxShadow(
               color: color.withOpacity(0.3),
@@ -93,20 +102,33 @@ class _LeadManagerDashboardScreenState extends State<LeadManagerDashboardScreen>
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
               value,
               style: const TextStyle(
-                fontSize: 24,
+                fontSize: 28, // Larger font for value
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
             ),
+            const SizedBox(height: 8), // Added spacing between value and title
             Text(
               title,
+              textAlign:
+                  TextAlign.center, // Centered text for better readability
               style: const TextStyle(
                 fontSize: 16,
+                fontWeight: FontWeight.w500, // Medium weight for title
                 color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 4), // Added spacing for timestamp
+            Text(
+              'Updated: $timestamp', // Dynamic timestamp
+              style: const TextStyle(
+                fontSize: 12,
+                color: Colors.white70, // Lighter color for timestamp
               ),
             ),
           ],

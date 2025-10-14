@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:customer_maxx_crm/providers/theme_provider.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -14,6 +16,35 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    
+    // Create a list of actions, starting with any existing actions
+    List<Widget> appActions = [];
+    if (actions != null) {
+      appActions.addAll(actions!);
+    }
+    
+    // Add the theme toggle button
+    appActions.add(
+      IconButton(
+        icon: Icon(
+          themeProvider.currentThemeMode == 'light' 
+            ? Icons.dark_mode 
+            : themeProvider.currentThemeMode == 'dark' 
+              ? Icons.brightness_auto 
+              : Icons.light_mode,
+        ),
+        onPressed: () {
+          themeProvider.toggleTheme();
+        },
+        tooltip: themeProvider.currentThemeMode == 'light' 
+          ? 'Switch to dark mode' 
+          : themeProvider.currentThemeMode == 'dark' 
+            ? 'Switch to system theme' 
+            : 'Switch to light mode',
+      ),
+    );
+
     return AppBar(
       leading: onLeadingPressed != null
           ? IconButton(
@@ -26,11 +57,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         style: const TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.bold,
-          color: Colors.white,
         ),
       ),
-      backgroundColor: const Color(0xFF2196F3), // Blue color
-      actions: actions,
+      actions: appActions,
       elevation: 0,
     );
   }

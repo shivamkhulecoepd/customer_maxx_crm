@@ -13,18 +13,14 @@ class AdminDashboardScreen extends StatefulWidget {
 }
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
-  late String _userName;
+  String _userName = '';
 
   @override
   void initState() {
     super.initState();
-    // Get user name from auth provider
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      setState(() {
-        _userName = authProvider.user?.name ?? 'Admin';
-      });
-    });
+    // Get user name from auth provider immediately
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    _userName = authProvider.user?.name ?? 'Admin';
   }
 
   @override
@@ -46,7 +42,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF2196F3),
                 ),
               ),
               const SizedBox(height: 20),
@@ -56,13 +51,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
                 shrinkWrap:
-                    true, // so it doesn’t take infinite height inside Column/ScrollView
+                    true, // so it doesn't take infinite height inside Column/ScrollView
                 physics:
                     const NeverScrollableScrollPhysics(), // disable internal scroll if inside parent scroll
                 children: [
-                  _buildStatCard('Total Users', '3', Colors.blue),
+                  _buildStatCard('Total Users', '3', Theme.of(context).primaryColor),
                   _buildStatCard('Total Leads', '24', Colors.green),
-                  _buildStatCard('Lead Managers', '3', Colors.blue),
+                  _buildStatCard('Lead Managers', '3', Theme.of(context).primaryColor),
                   _buildStatCard('BA Specialists', '24', Colors.green),
                 ],
               ),
@@ -77,11 +72,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Container(
                 height: 250,
                 decoration: BoxDecoration(
-                  color: Colors.white,
                   borderRadius: BorderRadius.circular(10),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.grey.withOpacity(0.2),
+                      color: Theme.of(context).shadowColor.withOpacity(0.1),
                       spreadRadius: 2,
                       blurRadius: 5,
                       offset: const Offset(0, 3),
@@ -100,11 +94,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Container(
                 height: 250,
                 decoration: BoxDecoration(
-                  color: Colors.white,
                   borderRadius: BorderRadius.circular(10),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.grey.withOpacity(0.2),
+                      color: Theme.of(context).shadowColor.withOpacity(0.1),
                       spreadRadius: 2,
                       blurRadius: 5,
                       offset: const Offset(0, 3),
@@ -123,11 +116,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Container(
                 height: 250,
                 decoration: BoxDecoration(
-                  color: Colors.white,
                   borderRadius: BorderRadius.circular(10),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.grey.withOpacity(0.2),
+                      color: Theme.of(context).shadowColor.withOpacity(0.1),
                       spreadRadius: 2,
                       blurRadius: 5,
                       offset: const Offset(0, 3),
@@ -163,7 +155,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         xValueMapper: (ChartData data, _) => data.x,
         yValueMapper: (ChartData data, _) => data.y,
         name: 'Leads',
-        color: const Color.fromRGBO(102, 184, 240, 1),
+        color: Theme.of(context).primaryColor,
       ),
     ];
   }
@@ -186,7 +178,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         xValueMapper: (ChartData data, _) => data.x,
         yValueMapper: (ChartData data, _) => data.y,
         name: 'Leads',
-        color: const Color.fromRGBO(102, 184, 240, 1),
+        color: Theme.of(context).primaryColor,
       ),
     ];
   }
@@ -194,7 +186,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   // Method to get pie chart data
   List<PieSeries<ChartData, String>> _getPieSeries() {
     final List<ChartData> chartData = [
-      ChartData('New', 12, color: Colors.blue),
+      ChartData('New', 12, color: Theme.of(context).primaryColor),
       ChartData('Follow Up', 8, color: Colors.orange),
       ChartData('Closed', 4, color: Colors.yellow),
     ];
@@ -213,20 +205,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   // Method to build stat cards
   Widget _buildStatCard(String title, String value, Color color) {
-    return Expanded(
+    return Card(
       child: Container(
         height: 100,
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(10),
-          boxShadow: [
-            BoxShadow(
-              color: color.withOpacity(0.3),
-              spreadRadius: 2,
-              blurRadius: 5,
-              offset: const Offset(0, 3),
-            ),
-          ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

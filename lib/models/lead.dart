@@ -12,10 +12,11 @@ class Lead {
   final String location;
   final String orderBy;
   final String assignedBy;
-  final double? discount;
+  final String? discount;
   final double? firstInstallment;
   final double? secondInstallment;
   final double? finalFee;
+  final String? baSpecialist;
 
   Lead({
     required this.id,
@@ -35,6 +36,7 @@ class Lead {
     this.firstInstallment,
     this.secondInstallment,
     this.finalFee,
+    this.baSpecialist,
   });
 
   factory Lead.fromJson(Map<String, dynamic> json) {
@@ -52,7 +54,8 @@ class Lead {
       location: json['location'] as String? ?? '',
       orderBy: json['orderBy'] as String? ?? '',
       assignedBy: json['assignedBy'] as String? ?? '',
-      discount: (json['discount'] as num?)?.toDouble(),
+      discount: json['discount'] as String?,
+      baSpecialist: json['baSpecialist'] as String? ?? '',
       firstInstallment: (json['firstInstallment'] as num?)?.toDouble(),
       secondInstallment: (json['secondInstallment'] as num?)?.toDouble(),
       finalFee: (json['finalFee'] as num?)?.toDouble(),
@@ -75,6 +78,7 @@ class Lead {
       'orderBy': orderBy,
       'assignedBy': assignedBy,
       'discount': discount,
+      'baSpecialist': baSpecialist,
       'firstInstallment': firstInstallment,
       'secondInstallment': secondInstallment,
       'finalFee': finalFee,

@@ -13,23 +13,25 @@ class RegisteredLeadsScreen extends StatefulWidget {
 }
 
 class _RegisteredLeadsScreenState extends State<RegisteredLeadsScreen> {
-  late String _userName;
+  String _userName = '';
 
   @override
   void initState() {
     super.initState();
-    // Get user name from auth provider
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      setState(() {
-        _userName = authProvider.user?.name ?? 'BA Specialist';
-      });
+      if (mounted) {
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        setState(() {
+          _userName = authProvider.user?.name ?? 'shrikant';
+        });
+      }
     });
     
-    // Load leads
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final leadsProvider = Provider.of<LeadsProvider>(context, listen: false);
-      leadsProvider.fetchAllLeads();
+      if (mounted) {
+        final leadsProvider = Provider.of<LeadsProvider>(context, listen: false);
+        leadsProvider.fetchLeadsByStatus('Registered');
+      }
     });
   }
 
@@ -48,15 +50,17 @@ class _RegisteredLeadsScreenState extends State<RegisteredLeadsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Header
                 const Text(
                   'Registered Leads',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF2196F3),
+                    color: Color(0xFF2c5aa0),
                   ),
                 ),
                 const SizedBox(height: 20),
+                
                 if (leadsProvider.isLoading)
                   const Expanded(
                     child: Center(
@@ -68,36 +72,153 @@ class _RegisteredLeadsScreenState extends State<RegisteredLeadsScreen> {
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: DataTable(
+                        headingRowColor: WidgetStateProperty.all(const Color(0xFF2c5aa0)),
+                        headingTextStyle: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                        headingRowHeight: 50,
+                        dataRowHeight: 50,
                         columns: const [
-                          DataColumn(label: Text('Sr No')),
-                          DataColumn(label: Text('Name')),
-                          DataColumn(label: Text('Contact')),
-                          DataColumn(label: Text('Email')),
-                          DataColumn(label: Text('Education-Experience')),
-                          DataColumn(label: Text('City')),
-                          DataColumn(label: Text('Lead Owner/BA Specialist')),
-                          DataColumn(label: Text('Discount')),
-                          DataColumn(label: Text('First Installment')),
-                          DataColumn(label: Text('Second Installment')),
-                          DataColumn(label: Text('Final Fee')),
+                          DataColumn(
+                            label: Text(
+                              'Sr. No',
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'Name',
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'Contact',
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'Email',
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'Education / Experience',
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'City',
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'Lead Owner',
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'BA Specialist',
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'Discount',
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'First Installment',
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'Second Installment',
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                          ),
+                          DataColumn(
+                            label: Text(
+                              'Final Fee',
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                          ),
                         ],
-                        rows: leadsProvider.leads.asMap().entries.map((entry) {
+                        rows: leadsProvider.leads.where((lead) => 
+                          lead.status.toLowerCase() == 'registered'
+                        ).toList().asMap().entries.map((entry) {
                           final index = entry.key;
                           final lead = entry.value;
                           
                           return DataRow(
+                            color: WidgetStateProperty.resolveWith<Color?>(
+                                (Set<WidgetState> states) {
+                              return index.isEven
+                                  ? Colors.grey.withOpacity(0.1)
+                                  : null;
+                            }),
                             cells: [
                               DataCell(Text((index + 1).toString())),
                               DataCell(Text(lead.name)),
                               DataCell(Text(lead.phone)),
                               DataCell(Text(lead.email)),
-                              DataCell(Text('${lead.education}-${lead.experience}')),
+                              DataCell(Text('${lead.education} / ${lead.experience}')),
                               DataCell(Text(lead.location)),
                               DataCell(Text(lead.leadManager)),
-                              DataCell(Text(lead.discount?.toString() ?? '')),
-                              DataCell(Text(lead.firstInstallment?.toString() ?? '')),
-                              DataCell(Text(lead.secondInstallment?.toString() ?? '')),
-                              DataCell(Text(lead.finalFee?.toString() ?? '')),
+                              DataCell(Text(lead.assignedBy.isNotEmpty ? lead.assignedBy : 'shrikant')),
+                              DataCell(
+                                DropdownButton<String>(
+                                  value: 'No Discount',
+                                  items: ['No Discount', '10%', '20%', '30%'].map((discount) {
+                                    return DropdownMenuItem(
+                                      value: discount,
+                                      child: Text(discount, style: const TextStyle(fontSize: 12)),
+                                    );
+                                  }).toList(),
+                                  onChanged: (value) {
+                                    // Update discount
+                                  },
+                                  underline: Container(),
+                                ),
+                              ),
+                              DataCell(
+                                SizedBox(
+                                  width: 80,
+                                  child: TextField(
+                                    decoration: const InputDecoration(
+                                      hintText: '0.00',
+                                      border: OutlineInputBorder(),
+                                      contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    ),
+                                    keyboardType: TextInputType.number,
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                ),
+                              ),
+                              DataCell(
+                                SizedBox(
+                                  width: 80,
+                                  child: TextField(
+                                    decoration: const InputDecoration(
+                                      hintText: '0.00',
+                                      border: OutlineInputBorder(),
+                                      contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    ),
+                                    keyboardType: TextInputType.number,
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                ),
+                              ),
+                              DataCell(Text('41,300', style: const TextStyle(fontWeight: FontWeight.bold))),
                             ],
                           );
                         }).toList(),
