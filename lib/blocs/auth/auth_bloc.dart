@@ -102,15 +102,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      final user = await _authService.login(
+      final result = await _authService.login(
         event.email,
         event.password,
         event.role,
       );
-      if (user != null) {
-        emit(Authenticated(user));
+      
+      if (result['success']) {
+        emit(Authenticated(result['user']));
       } else {
-        emit(Unauthenticated());
+        emit(AuthError(result['error']));
       }
     } catch (e) {
       emit(AuthError('Login failed: ${e.toString()}'));
@@ -123,16 +124,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      final success = await _authService.register(
+      final result = await _authService.register(
         event.name,
         event.email,
         event.password,
         event.role,
       );
-      if (success) {
+      
+      if (result['success']) {
         emit(AuthInitial()); // Return to initial state after successful registration
       } else {
-        emit(AuthError('Registration failed'));
+        emit(AuthError(result['error']));
       }
     } catch (e) {
       emit(AuthError('Registration failed: ${e.toString()}'));

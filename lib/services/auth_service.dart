@@ -49,28 +49,54 @@ class AuthService {
   }
 
   // Login method
-  Future<User?> login(String email, String password, String role) async {
+  Future<Map<String, dynamic>> login(String email, String password, String role) async {
     // Simulate network delay
     await Future.delayed(Duration(milliseconds: 500));
     
-    // Find user with matching credentials
-    final user = _users.firstWhere(
-      (u) => u.email == email && u.password == password && u.role == role,
+    // Find user with matching email
+    final emailUser = _users.firstWhere(
+      (u) => u.email == email,
       orElse: () => User(id: -1, name: '', email: '', role: '', password: ''),
     );
     
-    if (user.id != -1) {
-      currentUser = user;
-      // Save user data to SharedPreferences
-      await SharedPrefUtils.saveUser(user);
-      return user;
+    if (emailUser.id == -1) {
+      return {
+        'success': false,
+        'error': 'User not found. Please check your email.',
+        'user': null,
+      };
     }
     
-    return null;
+    // Check password
+    if (emailUser.password != password) {
+      return {
+        'success': false,
+        'error': 'Incorrect password. Please try again.',
+        'user': null,
+      };
+    }
+    
+    // Check role
+    if (emailUser.role != role) {
+      return {
+        'success': false,
+        'error': 'Role mismatch. Please select the correct role.',
+        'user': null,
+      };
+    }
+    
+    currentUser = emailUser;
+    // Save user data to SharedPreferences
+    await SharedPrefUtils.saveUser(emailUser);
+    return {
+      'success': true,
+      'error': null,
+      'user': emailUser,
+    };
   }
 
   // Registration method
-  Future<bool> register(String name, String email, String password, String role) async {
+  Future<Map<String, dynamic>> register(String name, String email, String password, String role) async {
     // Simulate network delay
     await Future.delayed(Duration(milliseconds: 500));
     
@@ -81,7 +107,11 @@ class AuthService {
     );
     
     if (existingUser.id != -1) {
-      return false; // Email already exists
+      return {
+        'success': false,
+        'error': 'Email already exists. Please use a different email.',
+        'user': null,
+      };
     }
     
     // Add new user
@@ -94,7 +124,11 @@ class AuthService {
     );
     
     _users.add(newUser);
-    return true;
+    return {
+      'success': true,
+      'error': null,
+      'user': newUser,
+    };
   }
 
   // Logout method

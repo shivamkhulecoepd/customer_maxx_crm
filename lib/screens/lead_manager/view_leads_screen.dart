@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:customer_maxx_crm/blocs/auth/auth_bloc.dart';
 import 'package:customer_maxx_crm/blocs/leads/leads_bloc.dart';
 import 'package:customer_maxx_crm/blocs/leads/leads_event.dart';
 import 'package:customer_maxx_crm/blocs/leads/leads_state.dart';
 import 'package:customer_maxx_crm/widgets/custom_app_bar.dart';
-import 'package:customer_maxx_crm/widgets/custom_drawer.dart';
+import 'package:customer_maxx_crm/widgets/modern_drawer.dart';
 import 'package:intl/intl.dart';
 
 class ViewLeadsScreen extends StatefulWidget {
@@ -16,7 +15,6 @@ class ViewLeadsScreen extends StatefulWidget {
 }
 
 class _ViewLeadsScreenState extends State<ViewLeadsScreen> {
-  String _userName = '';
   String _selectedStatus = '-- Filter by Status --';
 
   final List<String> _statuses = [
@@ -33,17 +31,6 @@ class _ViewLeadsScreenState extends State<ViewLeadsScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        final authState = BlocProvider.of<AuthBloc>(context).state;
-        if (authState is Authenticated && authState.user != null) {
-          setState(() {
-            _userName = authState.user!.name;
-          });
-        }
-      }
-    });
-    
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
         BlocProvider.of<LeadsBloc>(context).add(LoadAllLeads());
       }
     });
@@ -53,10 +40,7 @@ class _ViewLeadsScreenState extends State<ViewLeadsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const CustomAppBar(title: 'View Leads'),
-      drawer: CustomDrawer(
-        currentUserRole: 'Lead Manager',
-        currentUserName: _userName,
-      ),
+      drawer: const ModernDrawer(), // No parameters needed now
       body: BlocBuilder<LeadsBloc, LeadsState>(
         builder: (context, leadsState) {
           return Padding(

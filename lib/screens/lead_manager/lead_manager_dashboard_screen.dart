@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:customer_maxx_crm/blocs/auth/auth_bloc.dart';
 import 'package:customer_maxx_crm/widgets/custom_app_bar.dart';
-import 'package:customer_maxx_crm/widgets/custom_drawer.dart';
+import 'package:customer_maxx_crm/widgets/modern_drawer.dart';
 
 class LeadManagerDashboardScreen extends StatefulWidget {
   const LeadManagerDashboardScreen({super.key});
@@ -15,41 +15,32 @@ class LeadManagerDashboardScreen extends StatefulWidget {
 
 class _LeadManagerDashboardScreenState
     extends State<LeadManagerDashboardScreen> {
-  String _userName = '';
-
-  @override
-  void initState() {
-    super.initState();
-    // Get user name from auth bloc immediately
-    final authState = BlocProvider.of<AuthBloc>(context).state;
-    if (authState is Authenticated && authState.user != null) {
-      _userName = authState.user!.name;
-    } else {
-      _userName = 'Lead Manager';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(title: 'Welcome to Lead Manager Dashboard'),
-      drawer: CustomDrawer(
-        currentUserRole: 'Lead Manager',
-        currentUserName: _userName,
-      ),
+      drawer: const ModernDrawer(), // No parameters needed now
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Welcome, $_userName',
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2196F3),
-                ),
+              BlocBuilder<AuthBloc, AuthState>(
+                builder: (context, authState) {
+                  String userName = 'User';
+                  if (authState is Authenticated && authState.user != null) {
+                    userName = authState.user!.name;
+                  }
+                  return Text(
+                    'Welcome, $userName',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2196F3),
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 30),
               // Stats cards in Grid

@@ -21,7 +21,6 @@ class ModernAdminDashboardScreen extends StatefulWidget {
 class _ModernAdminDashboardScreenState extends State<ModernAdminDashboardScreen> {
   String _userName = '';
   String _userEmail = '';
-  String _userRole = 'Admin';
 
   @override
   void initState() {
@@ -34,7 +33,6 @@ class _ModernAdminDashboardScreenState extends State<ModernAdminDashboardScreen>
           setState(() {
             _userName = authState.user!.name;
             _userEmail = authState.user!.email;
-            _userRole = authState.user!.role;
           });
         }
       }
@@ -53,11 +51,7 @@ class _ModernAdminDashboardScreenState extends State<ModernAdminDashboardScreen>
             userName: _userName,
             userEmail: _userEmail,
           ),
-          drawer: ModernDrawer(
-            currentUserRole: _userRole,
-            currentUserName: _userName,
-            currentUserEmail: _userEmail,
-          ),
+          drawer: const ModernDrawer(), // No parameters needed now
           body: RefreshIndicator(
             onRefresh: () async {
               // Refresh data
@@ -167,7 +161,7 @@ class _ModernAdminDashboardScreenState extends State<ModernAdminDashboardScreen>
                         ),
                         const SizedBox(height: 16),
                         SizedBox(
-                          height: 120,
+                          height: 150,
                           child: ListView(
                             scrollDirection: Axis.horizontal,
                             children: [

@@ -47,11 +47,7 @@ class _ModernSettingsScreenState extends State<ModernSettingsScreen> {
         userName: _userName,
         userEmail: _userEmail,
       ),
-      drawer: ModernDrawer(
-        currentUserRole: 'Admin', // This would be dynamic in a real app
-        currentUserName: _userName,
-        currentUserEmail: _userEmail,
-      ),
+      drawer: const ModernDrawer(), // No parameters needed now
       body: BlocBuilder<ThemeBloc, ThemeState>(
         builder: (context, themeState) {
           final isDarkMode = themeState.isDarkMode;

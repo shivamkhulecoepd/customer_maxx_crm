@@ -6,7 +6,7 @@ import 'package:customer_maxx_crm/blocs/leads/leads_event.dart';
 import 'package:customer_maxx_crm/blocs/leads/leads_state.dart';
 import 'package:customer_maxx_crm/models/lead.dart';
 import 'package:customer_maxx_crm/widgets/custom_app_bar.dart';
-import 'package:customer_maxx_crm/widgets/custom_drawer.dart';
+import 'package:customer_maxx_crm/widgets/modern_drawer.dart';
 import 'package:intl/intl.dart';
 
 class BASpecialistDashboardScreen extends StatefulWidget {
@@ -17,7 +17,6 @@ class BASpecialistDashboardScreen extends StatefulWidget {
 }
 
 class _BASpecialistDashboardScreenState extends State<BASpecialistDashboardScreen> {
-  String _userName = '';
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _dateController = TextEditingController();
@@ -36,14 +35,6 @@ class _BASpecialistDashboardScreenState extends State<BASpecialistDashboardScree
   @override
   void initState() {
     super.initState();
-    // Get user name from auth bloc immediately
-    final authState = BlocProvider.of<AuthBloc>(context).state;
-    if (authState is Authenticated && authState.user != null) {
-      _userName = authState.user!.name;
-    } else {
-      _userName = 'shrikant';
-    }
-    
     // Load leads data
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -87,10 +78,7 @@ class _BASpecialistDashboardScreenState extends State<BASpecialistDashboardScree
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const CustomAppBar(title: 'BA Specialist Dashboard'),
-      drawer: CustomDrawer(
-        currentUserRole: 'BA Specialist',
-        currentUserName: _userName,
-      ),
+      drawer: const ModernDrawer(), // No parameters needed now
       body: BlocBuilder<LeadsBloc, LeadsState>(
         builder: (context, leadsState) {
           return SingleChildScrollView(
@@ -100,12 +88,20 @@ class _BASpecialistDashboardScreenState extends State<BASpecialistDashboardScree
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Welcome Header
-                  Text(
-                    'Welcome to BA Specialist Dashboard $_userName 👋',
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  BlocBuilder<AuthBloc, AuthState>(
+                    builder: (context, authState) {
+                      String userName = 'User';
+                      if (authState is Authenticated && authState.user != null) {
+                        userName = authState.user!.name;
+                      }
+                      return Text(
+                        'Welcome to BA Specialist Dashboard $userName 👋',
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 20),
                   
@@ -136,95 +132,106 @@ class _BASpecialistDashboardScreenState extends State<BASpecialistDashboardScree
                         const SizedBox(height: 16),
                         
                         // Filter Row 1
-                        Row(
+                        Column(
                           children: [
-                            Expanded(
-                              child: TextField(
-                                controller: _nameController,
-                                decoration: const InputDecoration(
-                                  hintText: 'Lead Name',
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  border: OutlineInputBorder(),
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: _nameController,
+                                    decoration: const InputDecoration(
+                                      hintText: 'Lead Name',
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                      border: OutlineInputBorder(),
+                                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: TextField(
-                                controller: _phoneController,
-                                decoration: const InputDecoration(
-                                  hintText: 'Phone',
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  border: OutlineInputBorder(),
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: TextField(
+                                    controller: _phoneController,
+                                    decoration: const InputDecoration(
+                                      hintText: 'Phone',
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                      border: OutlineInputBorder(),
+                                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    ),
+                                    keyboardType: TextInputType.phone,
+                                  ),
                                 ),
-                                keyboardType: TextInputType.phone,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: TextField(
-                                controller: _dateController,
-                                decoration: const InputDecoration(
-                                  hintText: 'dd-mm-yyyy',
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  border: OutlineInputBorder(),
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: TextField(
+                                    controller: _dateController,
+                                    decoration: const InputDecoration(
+                                      hintText: 'dd-mm-yyyy',
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                      border: OutlineInputBorder(),
+                                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    ),
+                                    readOnly: true,
+                                    onTap: _selectDate,
+                                  ),
                                 ),
-                                readOnly: true,
-                                onTap: _selectDate,
-                              ),
+                              ],
                             ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: DropdownButtonFormField<String>(
-                                initialValue: _selectedStatus,
-                                decoration: const InputDecoration(
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  border: OutlineInputBorder(),
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: DropdownButtonFormField<String>(
+                                    value: _selectedStatus,
+                                    decoration: const InputDecoration(
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                      border: OutlineInputBorder(),
+                                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    ),
+                                    items: _statuses.map((status) {
+                                      return DropdownMenuItem(
+                                        value: status,
+                                        child: Text(status),
+                                      );
+                                    }).toList(),
+                                    onChanged: (value) {
+                                      if (value != null) {
+                                        setState(() {
+                                          _selectedStatus = value;
+                                        });
+                                      }
+                                    },
+                                  ),
                                 ),
-                                items: _statuses.map((status) {
-                                  return DropdownMenuItem(
-                                    value: status,
-                                    child: Text(status),
-                                  );
-                                }).toList(),
-                                onChanged: (value) {
-                                  if (value != null) {
-                                    setState(() {
-                                      _selectedStatus = value;
-                                    });
-                                  }
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: TextField(
-                                controller: _feedbackController,
-                                decoration: const InputDecoration(
-                                  hintText: 'Feedback',
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  border: OutlineInputBorder(),
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: TextField(
+                                    controller: _feedbackController,
+                                    decoration: const InputDecoration(
+                                      hintText: 'Feedback',
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                      border: OutlineInputBorder(),
+                                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            ElevatedButton(
-                              onPressed: _applyFilters,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF007bff),
-                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                              ),
-                              child: const Text('Filter', style: TextStyle(color: Colors.white)),
+                                const SizedBox(width: 16),
+                                SizedBox(
+                                  width: 100,
+                                  child: ElevatedButton(
+                                    onPressed: _applyFilters,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF007bff),
+                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                    ),
+                                    child: const Text('Filter', style: TextStyle(color: Colors.white)),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -343,9 +350,7 @@ class _BASpecialistDashboardScreenState extends State<BASpecialistDashboardScree
                                   ),
                                 ),
                               ],
-                              rows: leadsState.leads.where((lead) => 
-                                lead.assignedBy == _userName || lead.assignedBy == 'shrikant'
-                              ).map((lead) {
+                              rows: leadsState.leads.map((lead) {
                                 return DataRow(
                                   color: WidgetStateProperty.all(Colors.white),
                                   cells: [

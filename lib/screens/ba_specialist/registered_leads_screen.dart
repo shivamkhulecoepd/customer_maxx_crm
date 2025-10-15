@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:customer_maxx_crm/blocs/auth/auth_bloc.dart';
 import 'package:customer_maxx_crm/blocs/leads/leads_bloc.dart';
 import 'package:customer_maxx_crm/blocs/leads/leads_event.dart';
 import 'package:customer_maxx_crm/blocs/leads/leads_state.dart';
 import 'package:customer_maxx_crm/widgets/custom_app_bar.dart';
-import 'package:customer_maxx_crm/widgets/custom_drawer.dart';
+import 'package:customer_maxx_crm/widgets/modern_drawer.dart';
 
 class RegisteredLeadsScreen extends StatefulWidget {
   const RegisteredLeadsScreen({super.key});
@@ -15,22 +14,9 @@ class RegisteredLeadsScreen extends StatefulWidget {
 }
 
 class _RegisteredLeadsScreenState extends State<RegisteredLeadsScreen> {
-  String _userName = '';
-
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        final authState = BlocProvider.of<AuthBloc>(context).state;
-        if (authState is Authenticated && authState.user != null) {
-          setState(() {
-            _userName = authState.user!.name;
-          });
-        }
-      }
-    });
-    
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         BlocProvider.of<LeadsBloc>(context).add(LoadLeadsByStatus('Registered'));
@@ -42,10 +28,7 @@ class _RegisteredLeadsScreenState extends State<RegisteredLeadsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const CustomAppBar(title: 'Registered Leads'),
-      drawer: CustomDrawer(
-        currentUserRole: 'BA Specialist',
-        currentUserName: _userName,
-      ),
+      drawer: const ModernDrawer(), // No parameters needed now
       body: BlocBuilder<LeadsBloc, LeadsState>(
         builder: (context, leadsState) {
           return Padding(

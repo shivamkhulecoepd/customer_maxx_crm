@@ -74,11 +74,7 @@ class _ModernUserManagementScreenState
         userName: _userName,
         userEmail: _userEmail,
       ),
-      drawer: ModernDrawer(
-        currentUserRole: 'Admin',
-        currentUserName: _userName,
-        currentUserEmail: _userEmail,
-      ),
+      drawer: const ModernDrawer(), // No parameters needed now
       body: BlocBuilder<UsersBloc, UsersState>(
         builder: (context, usersState) {
           return RefreshIndicator(
@@ -349,7 +345,7 @@ class _AddUserBottomSheetState extends State<AddUserBottomSheet> {
         key: _formKey,
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
               width: 40,

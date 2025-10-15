@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:customer_maxx_crm/blocs/auth/auth_bloc.dart';
 import 'package:customer_maxx_crm/blocs/users/users_bloc.dart';
 import 'package:customer_maxx_crm/blocs/users/users_event.dart';
 import 'package:customer_maxx_crm/blocs/users/users_state.dart';
 import 'package:customer_maxx_crm/models/user.dart';
 
 import 'package:customer_maxx_crm/widgets/custom_app_bar.dart';
-import 'package:customer_maxx_crm/widgets/custom_drawer.dart';
+import 'package:customer_maxx_crm/widgets/modern_drawer.dart';
 
 class UserManagementScreen extends StatefulWidget {
   const UserManagementScreen({super.key});
@@ -17,24 +16,11 @@ class UserManagementScreen extends StatefulWidget {
 }
 
 class _UserManagementScreenState extends State<UserManagementScreen> {
-  String _userName = '';
   final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    // Get user name from auth bloc
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        final authState = BlocProvider.of<AuthBloc>(context).state;
-        if (authState is Authenticated && authState.user != null) {
-          setState(() {
-            _userName = authState.user!.name;
-          });
-        }
-      }
-    });
-    
     // Load users
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -62,10 +48,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const CustomAppBar(title: 'User Management'),
-      drawer: CustomDrawer(
-        currentUserRole: 'Admin',
-        currentUserName: _userName,
-      ),
+      drawer: const ModernDrawer(), // No parameters needed now
       body: BlocBuilder<UsersBloc, UsersState>(
         builder: (context, usersState) {
           return Column(

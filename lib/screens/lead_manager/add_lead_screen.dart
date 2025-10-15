@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:customer_maxx_crm/blocs/auth/auth_bloc.dart';
 import 'package:customer_maxx_crm/blocs/leads/leads_bloc.dart';
 import 'package:customer_maxx_crm/blocs/leads/leads_event.dart';
 import 'package:customer_maxx_crm/models/lead.dart';
 import 'package:customer_maxx_crm/widgets/custom_app_bar.dart';
-import 'package:customer_maxx_crm/widgets/custom_drawer.dart';
+import 'package:customer_maxx_crm/widgets/modern_drawer.dart';
 
 class AddLeadScreen extends StatefulWidget {
   const AddLeadScreen({super.key});
@@ -15,7 +14,6 @@ class AddLeadScreen extends StatefulWidget {
 }
 
 class _AddLeadScreenState extends State<AddLeadScreen> {
-  String _userName = '';
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _contactController = TextEditingController();
@@ -38,21 +36,6 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
     'Nikita',
     'shrikant'
   ];
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        final authState = BlocProvider.of<AuthBloc>(context).state;
-        if (authState is Authenticated && authState.user != null) {
-          setState(() {
-            _userName = authState.user!.name;
-          });
-        }
-      }
-    });
-  }
 
   @override
   void dispose() {
@@ -118,10 +101,7 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const CustomAppBar(title: 'Add New Lead'),
-      drawer: CustomDrawer(
-        currentUserRole: 'Lead Manager',
-        currentUserName: _userName,
-      ),
+      drawer: const ModernDrawer(), // No parameters needed now
       body: Container(
         color: const Color(0xFF2c5aa0),
         child: Center(

@@ -26,6 +26,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
   bool _rememberMe = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  String? _errorMessage;
   
   late AuthMode _authMode;
 
@@ -50,37 +51,32 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
+        _errorMessage = null;
       });
 
-      // Use Bloc instead of Provider
       final authBloc = BlocProvider.of<AuthBloc>(context);
       authBloc.add(LoginRequested(
         _emailController.text.trim(),
         _passwordController.text,
         _selectedRole,
       ));
-
-      // We'll handle the response in the BlocListener
     }
   }
 
   void _register() async {
     if (_formKey.currentState!.validate()) {
       if (_passwordController.text != _confirmPasswordController.text) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Passwords do not match'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        setState(() {
+          _errorMessage = 'Passwords do not match';
+        });
         return;
       }
 
       setState(() {
         _isLoading = true;
+        _errorMessage = null;
       });
 
-      // Use Bloc instead of Provider
       final authBloc = BlocProvider.of<AuthBloc>(context);
       authBloc.add(RegisterRequested(
         _nameController.text.trim(),
@@ -88,14 +84,13 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
         _passwordController.text,
         _selectedRole,
       ));
-
-      // We'll handle the response in the BlocListener
     }
   }
 
   void _switchAuthMode() {
     setState(() {
       _authMode = _authMode == AuthMode.login ? AuthMode.register : AuthMode.login;
+      _errorMessage = null; // Clear error message when switching modes
     });
   }
 
@@ -110,29 +105,16 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
         });
         
         if (state is AuthError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: Colors.red,
-            ),
-          );
+          setState(() {
+            _errorMessage = state.message;
+          });
         } else if (state is Authenticated) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Login successful!'),
-              backgroundColor: Colors.green,
-            ),
-          );
+          // Login successful - no need for snackbar as navigation will happen
         } else if (state is AuthInitial) {
           // Registration successful
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Registration successful! Please login.'),
-              backgroundColor: Colors.green,
-            ),
-          );
           setState(() {
             _authMode = AuthMode.login;
+            _errorMessage = 'Registration successful! Please login.';
           });
         }
       },
@@ -257,6 +239,38 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                                     ),
                                   ),
                                   const SizedBox(height: 32),
+                                  
+                                  // Error message display
+                                  if (_errorMessage != null) ...[
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.red.withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.error_outline,
+                                            color: Colors.red,
+                                            size: 20,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              _errorMessage!,
+                                              style: const TextStyle(
+                                                color: Colors.red,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                  ],
                                   
                                   // Name Input (only for registration)
                                   if (!isLogin) ...[
@@ -638,7 +652,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: DropdownButtonFormField<String>(
-                                      initialValue: _selectedRole,
+                                      value: _selectedRole,
                                       style: TextStyle(
                                         color: isDarkMode 
                                             ? const Color(0xFFFFFFFF) 

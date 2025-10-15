@@ -6,6 +6,7 @@ import 'package:customer_maxx_crm/blocs/users/users_bloc.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_bloc.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_event.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_state.dart';
+import 'package:customer_maxx_crm/screens/splash_screen.dart';
 import 'package:customer_maxx_crm/screens/auth/auth_screen.dart';
 import 'package:customer_maxx_crm/screens/admin/admin_dashboard_screen.dart';
 import 'package:customer_maxx_crm/screens/lead_manager/lead_manager_dashboard_screen.dart';
@@ -21,7 +22,7 @@ void main() async {
     MultiBlocProvider(
       providers: [
         BlocProvider<AuthBloc>(
-          create: (context) => AuthBloc()..add(AppStarted()),
+          create: (context) => AuthBloc(),
         ),
         BlocProvider<LeadsBloc>(
           create: (context) => LeadsBloc(),
@@ -50,7 +51,7 @@ class MainApp extends StatelessWidget {
           theme: AppThemes.lightTheme,
           darkTheme: AppThemes.darkTheme,
           themeMode: themeState.themeMode,
-          home: const AuthWrapper(),
+          home: const SplashScreen(),
         );
       },
     );
