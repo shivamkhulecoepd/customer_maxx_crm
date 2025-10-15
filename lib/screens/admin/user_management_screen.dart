@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:customer_maxx_crm/providers/auth_provider.dart';
-import 'package:customer_maxx_crm/providers/users_provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:customer_maxx_crm/blocs/auth/auth_bloc.dart';
+import 'package:customer_maxx_crm/blocs/users/users_bloc.dart';
+import 'package:customer_maxx_crm/blocs/users/users_event.dart';
+import 'package:customer_maxx_crm/blocs/users/users_state.dart';
+import 'package:customer_maxx_crm/models/user.dart';
 
 import 'package:customer_maxx_crm/widgets/custom_app_bar.dart';
 import 'package:customer_maxx_crm/widgets/custom_drawer.dart';
 
 class UserManagementScreen extends StatefulWidget {
-  const UserManagementScreen({Key? key}) : super(key: key);
+  const UserManagementScreen({super.key});
 
   @override
   State<UserManagementScreen> createState() => _UserManagementScreenState();
@@ -16,26 +19,26 @@ class UserManagementScreen extends StatefulWidget {
 class _UserManagementScreenState extends State<UserManagementScreen> {
   String _userName = '';
   final TextEditingController _searchController = TextEditingController();
-  final List<String> _roles = ['Admin', 'Lead Manager', 'BA Specialist'];
 
   @override
   void initState() {
     super.initState();
-    // Get user name from auth provider
+    // Get user name from auth bloc
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        setState(() {
-          _userName = authProvider.user?.name ?? 'Admin';
-        });
+        final authState = BlocProvider.of<AuthBloc>(context).state;
+        if (authState is Authenticated && authState.user != null) {
+          setState(() {
+            _userName = authState.user!.name;
+          });
+        }
       }
     });
     
     // Load users
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        final usersProvider = Provider.of<UsersProvider>(context, listen: false);
-        usersProvider.fetchAllUsers();
+        BlocProvider.of<UsersBloc>(context).add(LoadAllUsers());
       }
     });
   }
@@ -63,8 +66,8 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         currentUserRole: 'Admin',
         currentUserName: _userName,
       ),
-      body: Consumer<UsersProvider>(
-        builder: (context, usersProvider, child) {
+      body: BlocBuilder<UsersBloc, UsersState>(
+        builder: (context, usersState) {
           return Column(
             children: [
               Padding(
@@ -96,7 +99,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                   ],
                 ),
               ),
-              if (usersProvider.isLoading)
+              if (usersState.isLoading)
                 const Expanded(
                   child: Center(
                     child: CircularProgressIndicator(),
@@ -114,7 +117,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                         DataColumn(label: Text('Role')),
                         DataColumn(label: Text('Action')),
                       ],
-                      rows: usersProvider.users.map((user) {
+                      rows: usersState.users.map((user) {
                         return DataRow(
                           cells: [
                             DataCell(Text(user.id.toString())),
@@ -134,6 +137,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                                     icon: const Icon(Icons.delete, color: Colors.red),
                                     onPressed: () {
                                       // Delete user functionality
+                                      BlocProvider.of<UsersBloc>(context).add(DeleteUser(user.id));
                                     },
                                   ),
                                 ],
@@ -154,7 +158,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 }
 
 class AddUserDialog extends StatefulWidget {
-  const AddUserDialog({Key? key}) : super(key: key);
+  const AddUserDialog({super.key});
 
   @override
   State<AddUserDialog> createState() => _AddUserDialogState();
@@ -180,6 +184,15 @@ class _AddUserDialogState extends State<AddUserDialog> {
   void _addUser() {
     if (_formKey.currentState!.validate()) {
       // Add user logic
+      final newUser = User(
+        id: 0, // Will be set by backend
+        name: _nameController.text,
+        email: _emailController.text,
+        role: _selectedRole,
+        password: _passwordController.text,
+      );
+      
+      BlocProvider.of<UsersBloc>(context).add(AddUser(newUser));
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -249,7 +262,7 @@ class _AddUserDialogState extends State<AddUserDialog> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _selectedRole,
+              initialValue: _selectedRole,
               decoration: const InputDecoration(
                 labelText: 'Role',
                 border: OutlineInputBorder(),

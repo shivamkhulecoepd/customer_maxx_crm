@@ -16,7 +16,7 @@ class Lead {
   final double? firstInstallment;
   final double? secondInstallment;
   final double? finalFee;
-  final String? baSpecialist;
+  final String baSpecialist;
 
   Lead({
     required this.id,
@@ -36,7 +36,7 @@ class Lead {
     this.firstInstallment,
     this.secondInstallment,
     this.finalFee,
-    this.baSpecialist,
+    this.baSpecialist = '',
   });
 
   factory Lead.fromJson(Map<String, dynamic> json) {

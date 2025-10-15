@@ -182,7 +182,7 @@ class LeadsProvider with ChangeNotifier {
       rows.add([
         'ID', 'Date', 'Name', 'Phone', 'Email', 'Lead Manager',
         'Status', 'Feedback', 'Education', 'Experience', 'Location', 'Order By',
-        'Assigned By', 'Discount', 'First Installment', 'Second Installment', 'Final Fee'
+        'Assigned By', 'BA Specialist', 'Discount', 'First Installment', 'Second Installment', 'Final Fee'
       ]);
       
       // Add data rows
@@ -201,6 +201,7 @@ class LeadsProvider with ChangeNotifier {
           lead.location,
           lead.orderBy,
           lead.assignedBy,
+          lead.baSpecialist,
           lead.discount ?? '',
           lead.firstInstallment ?? '',
           lead.secondInstallment ?? '',
@@ -269,6 +270,7 @@ class LeadsProvider with ChangeNotifier {
                 location: row[10].toString(),
                 orderBy: row[11].toString(),
                 assignedBy: row[12].toString(),
+                baSpecialist: row.length > 17 ? row[17].toString() : row[12].toString(),
                 discount: row[13].toString(),
                 firstInstallment: row[14] is num ? row[14].toDouble() : double.tryParse(row[14].toString()),
                 secondInstallment: row[15] is num ? row[15].toDouble() : double.tryParse(row[15].toString()),

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
-import 'package:customer_maxx_crm/providers/auth_provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:customer_maxx_crm/blocs/auth/auth_bloc.dart';
 import 'package:customer_maxx_crm/widgets/custom_app_bar.dart';
 import 'package:customer_maxx_crm/widgets/custom_drawer.dart';
 
 class LeadManagerDashboardScreen extends StatefulWidget {
-  const LeadManagerDashboardScreen({Key? key}) : super(key: key);
+  const LeadManagerDashboardScreen({super.key});
 
   @override
   State<LeadManagerDashboardScreen> createState() =>
@@ -20,9 +20,13 @@ class _LeadManagerDashboardScreenState
   @override
   void initState() {
     super.initState();
-    // Get user name from auth provider immediately
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    _userName = authProvider.user?.name ?? 'Lead Manager';
+    // Get user name from auth bloc immediately
+    final authState = BlocProvider.of<AuthBloc>(context).state;
+    if (authState is Authenticated && authState.user != null) {
+      _userName = authState.user!.name;
+    } else {
+      _userName = 'Lead Manager';
+    }
   }
 
   @override
@@ -55,7 +59,7 @@ class _LeadManagerDashboardScreenState
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
                 shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
+                physics: const NeverScrollableScrollPhysics(),
                 children: [
                   _buildStatCard('Not Connected', '0', Colors.teal),
                   _buildStatCard('Follow-up Planned', '0', Colors.teal),
@@ -86,14 +90,14 @@ class _LeadManagerDashboardScreenState
         padding: const EdgeInsets.all(12), // Added padding for spacing
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [color.withOpacity(0.8), color], // Gradient effect
+            colors: [color.withValues(alpha: 0.8), color], // Gradient effect
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(12), // Slightly larger radius
           boxShadow: [
             BoxShadow(
-              color: color.withOpacity(0.3),
+              color: color.withValues(alpha: 0.3),
               spreadRadius: 2,
               blurRadius: 5,
               offset: const Offset(0, 3),

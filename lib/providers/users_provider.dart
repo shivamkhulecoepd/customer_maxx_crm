@@ -18,7 +18,7 @@ class UsersProvider with ChangeNotifier {
       _users = await _userService.getAllUsers();
     } catch (e) {
       // Handle error
-      print('Error fetching users: $e');
+      debugPrint('Error fetching users: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -34,7 +34,7 @@ class UsersProvider with ChangeNotifier {
       }
       return success;
     } catch (e) {
-      print('Error adding user: $e');
+      debugPrint('Error adding user: $e');
       return false;
     }
   }
@@ -51,7 +51,7 @@ class UsersProvider with ChangeNotifier {
       }
       return success;
     } catch (e) {
-      print('Error updating user: $e');
+      debugPrint('Error updating user: $e');
       return false;
     }
   }
@@ -65,7 +65,7 @@ class UsersProvider with ChangeNotifier {
       }
       return success;
     } catch (e) {
-      print('Error deleting user: $e');
+      debugPrint('Error deleting user: $e');
       return false;
     }
   }

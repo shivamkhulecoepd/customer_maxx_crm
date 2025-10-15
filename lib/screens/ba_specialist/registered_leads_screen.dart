@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:customer_maxx_crm/providers/auth_provider.dart';
-import 'package:customer_maxx_crm/providers/leads_provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:customer_maxx_crm/blocs/auth/auth_bloc.dart';
+import 'package:customer_maxx_crm/blocs/leads/leads_bloc.dart';
+import 'package:customer_maxx_crm/blocs/leads/leads_event.dart';
+import 'package:customer_maxx_crm/blocs/leads/leads_state.dart';
 import 'package:customer_maxx_crm/widgets/custom_app_bar.dart';
 import 'package:customer_maxx_crm/widgets/custom_drawer.dart';
 
 class RegisteredLeadsScreen extends StatefulWidget {
-  const RegisteredLeadsScreen({Key? key}) : super(key: key);
+  const RegisteredLeadsScreen({super.key});
 
   @override
   State<RegisteredLeadsScreen> createState() => _RegisteredLeadsScreenState();
@@ -20,17 +22,18 @@ class _RegisteredLeadsScreenState extends State<RegisteredLeadsScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        setState(() {
-          _userName = authProvider.user?.name ?? 'shrikant';
-        });
+        final authState = BlocProvider.of<AuthBloc>(context).state;
+        if (authState is Authenticated && authState.user != null) {
+          setState(() {
+            _userName = authState.user!.name;
+          });
+        }
       }
     });
     
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        final leadsProvider = Provider.of<LeadsProvider>(context, listen: false);
-        leadsProvider.fetchLeadsByStatus('Registered');
+        BlocProvider.of<LeadsBloc>(context).add(LoadLeadsByStatus('Registered'));
       }
     });
   }
@@ -43,8 +46,8 @@ class _RegisteredLeadsScreenState extends State<RegisteredLeadsScreen> {
         currentUserRole: 'BA Specialist',
         currentUserName: _userName,
       ),
-      body: Consumer<LeadsProvider>(
-        builder: (context, leadsProvider, child) {
+      body: BlocBuilder<LeadsBloc, LeadsState>(
+        builder: (context, leadsState) {
           return Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -61,7 +64,7 @@ class _RegisteredLeadsScreenState extends State<RegisteredLeadsScreen> {
                 ),
                 const SizedBox(height: 20),
                 
-                if (leadsProvider.isLoading)
+                if (leadsState.isLoading)
                   const Expanded(
                     child: Center(
                       child: CircularProgressIndicator(),
@@ -78,7 +81,8 @@ class _RegisteredLeadsScreenState extends State<RegisteredLeadsScreen> {
                           color: Colors.white,
                         ),
                         headingRowHeight: 50,
-                        dataRowHeight: 50,
+                        dataRowMinHeight: 50,
+                        dataRowMaxHeight: 50,
                         columns: const [
                           DataColumn(
                             label: Text(
@@ -153,7 +157,7 @@ class _RegisteredLeadsScreenState extends State<RegisteredLeadsScreen> {
                             ),
                           ),
                         ],
-                        rows: leadsProvider.leads.where((lead) => 
+                        rows: leadsState.leads.where((lead) => 
                           lead.status.toLowerCase() == 'registered'
                         ).toList().asMap().entries.map((entry) {
                           final index = entry.key;
@@ -163,7 +167,7 @@ class _RegisteredLeadsScreenState extends State<RegisteredLeadsScreen> {
                             color: WidgetStateProperty.resolveWith<Color?>(
                                 (Set<WidgetState> states) {
                               return index.isEven
-                                  ? Colors.grey.withOpacity(0.1)
+                                  ? Colors.grey.withValues(alpha: 0.1)
                                   : null;
                             }),
                             cells: [

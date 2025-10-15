@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:customer_maxx_crm/providers/auth_provider.dart';
-import 'package:customer_maxx_crm/providers/leads_provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:customer_maxx_crm/blocs/auth/auth_bloc.dart';
+import 'package:customer_maxx_crm/blocs/leads/leads_bloc.dart';
+import 'package:customer_maxx_crm/blocs/leads/leads_event.dart';
 import 'package:customer_maxx_crm/models/lead.dart';
 import 'package:customer_maxx_crm/widgets/custom_app_bar.dart';
 import 'package:customer_maxx_crm/widgets/custom_drawer.dart';
 
 class AddLeadScreen extends StatefulWidget {
-  const AddLeadScreen({Key? key}) : super(key: key);
+  const AddLeadScreen({super.key});
 
   @override
   State<AddLeadScreen> createState() => _AddLeadScreenState();
@@ -43,10 +44,12 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        setState(() {
-          _userName = authProvider.user?.name ?? 'Lead Manager';
-        });
+        final authState = BlocProvider.of<AuthBloc>(context).state;
+        if (authState is Authenticated && authState.user != null) {
+          setState(() {
+            _userName = authState.user!.name;
+          });
+        }
       }
     });
   }
@@ -64,8 +67,6 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
 
   void _submitLead() async {
     if (_formKey.currentState!.validate()) {
-      final leadsProvider = Provider.of<LeadsProvider>(context, listen: false);
-      
       final newLead = Lead(
         id: 0, // Will be assigned by service
         date: DateTime.now(),
@@ -80,42 +81,36 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
         location: _locationController.text.trim(),
         orderBy: '',
         assignedBy: _selectedBASpecialist == '-- Select Specialist --' ? '' : _selectedBASpecialist,
+        discount: null,
+        firstInstallment: null,
+        secondInstallment: null,
+        finalFee: null,
+        baSpecialist: _selectedBASpecialist == '-- Select Specialist --' ? '' : _selectedBASpecialist,
       );
 
-      final success = await leadsProvider.addLead(newLead);
+      BlocProvider.of<LeadsBloc>(context).add(AddLead(newLead));
       
-      if (success) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Lead added successfully!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-        
-        // Clear form
-        _formKey.currentState!.reset();
-        _nameController.clear();
-        _contactController.clear();
-        _emailController.clear();
-        _educationController.clear();
-        _experienceController.clear();
-        _locationController.clear();
-        setState(() {
-          _selectedLeadManager = '-- Select Lead Manager --';
-          _selectedBASpecialist = '-- Select Specialist --';
-        });
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to add lead. Please try again.'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Lead added successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
       }
+      
+      // Clear form
+      _formKey.currentState!.reset();
+      _nameController.clear();
+      _contactController.clear();
+      _emailController.clear();
+      _educationController.clear();
+      _experienceController.clear();
+      _locationController.clear();
+      setState(() {
+        _selectedLeadManager = '-- Select Lead Manager --';
+        _selectedBASpecialist = '-- Select Specialist --';
+      });
     }
   }
 
@@ -351,7 +346,7 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
                               ),
                               const SizedBox(height: 8),
                               DropdownButtonFormField<String>(
-                                value: _selectedLeadManager,
+                                initialValue: _selectedLeadManager,
                                 decoration: const InputDecoration(
                                   filled: true,
                                   fillColor: Colors.white,
@@ -386,7 +381,7 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
                               ),
                               const SizedBox(height: 8),
                               DropdownButtonFormField<String>(
-                                value: _selectedBASpecialist,
+                                initialValue: _selectedBASpecialist,
                                 decoration: const InputDecoration(
                                   filled: true,
                                   fillColor: Colors.white,

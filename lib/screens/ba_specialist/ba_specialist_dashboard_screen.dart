@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:customer_maxx_crm/providers/auth_provider.dart';
-import 'package:customer_maxx_crm/providers/leads_provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:customer_maxx_crm/blocs/auth/auth_bloc.dart';
+import 'package:customer_maxx_crm/blocs/leads/leads_bloc.dart';
+import 'package:customer_maxx_crm/blocs/leads/leads_event.dart';
+import 'package:customer_maxx_crm/blocs/leads/leads_state.dart';
+import 'package:customer_maxx_crm/models/lead.dart';
 import 'package:customer_maxx_crm/widgets/custom_app_bar.dart';
 import 'package:customer_maxx_crm/widgets/custom_drawer.dart';
 import 'package:intl/intl.dart';
 
 class BASpecialistDashboardScreen extends StatefulWidget {
-  const BASpecialistDashboardScreen({Key? key}) : super(key: key);
+  const BASpecialistDashboardScreen({super.key});
 
   @override
   State<BASpecialistDashboardScreen> createState() => _BASpecialistDashboardScreenState();
@@ -33,15 +36,18 @@ class _BASpecialistDashboardScreenState extends State<BASpecialistDashboardScree
   @override
   void initState() {
     super.initState();
-    // Get user name from auth provider immediately
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    _userName = authProvider.user?.name ?? 'shrikant';
+    // Get user name from auth bloc immediately
+    final authState = BlocProvider.of<AuthBloc>(context).state;
+    if (authState is Authenticated && authState.user != null) {
+      _userName = authState.user!.name;
+    } else {
+      _userName = 'shrikant';
+    }
     
     // Load leads data
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        final leadsProvider = Provider.of<LeadsProvider>(context, listen: false);
-        leadsProvider.fetchAllLeads();
+        BlocProvider.of<LeadsBloc>(context).add(LoadAllLeads());
       }
     });
   }
@@ -70,12 +76,10 @@ class _BASpecialistDashboardScreenState extends State<BASpecialistDashboardScree
   }
 
   void _applyFilters() {
-    final leadsProvider = Provider.of<LeadsProvider>(context, listen: false);
-    
     if (_selectedStatus == 'All Status') {
-      leadsProvider.fetchAllLeads();
+      BlocProvider.of<LeadsBloc>(context).add(LoadAllLeads());
     } else {
-      leadsProvider.fetchLeadsByStatus(_selectedStatus);
+      BlocProvider.of<LeadsBloc>(context).add(LoadLeadsByStatus(_selectedStatus));
     }
   }
 
@@ -87,8 +91,8 @@ class _BASpecialistDashboardScreenState extends State<BASpecialistDashboardScree
         currentUserRole: 'BA Specialist',
         currentUserName: _userName,
       ),
-      body: Consumer<LeadsProvider>(
-        builder: (context, leadsProvider, child) {
+      body: BlocBuilder<LeadsBloc, LeadsState>(
+        builder: (context, leadsState) {
           return SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -178,7 +182,7 @@ class _BASpecialistDashboardScreenState extends State<BASpecialistDashboardScree
                             const SizedBox(width: 16),
                             Expanded(
                               child: DropdownButtonFormField<String>(
-                                value: _selectedStatus,
+                                initialValue: _selectedStatus,
                                 decoration: const InputDecoration(
                                   filled: true,
                                   fillColor: Colors.white,
@@ -255,7 +259,7 @@ class _BASpecialistDashboardScreenState extends State<BASpecialistDashboardScree
                         ),
                         const SizedBox(height: 16),
                         
-                        if (leadsProvider.isLoading)
+                        if (leadsState.isLoading)
                           const Center(
                             child: CircularProgressIndicator(color: Colors.white),
                           )
@@ -269,7 +273,8 @@ class _BASpecialistDashboardScreenState extends State<BASpecialistDashboardScree
                                 color: Colors.white,
                               ),
                               headingRowHeight: 50,
-                              dataRowHeight: 50,
+                              dataRowMinHeight: 50,
+                              dataRowMaxHeight: 50,
                               columns: const [
                                 DataColumn(
                                   label: Text(
@@ -338,7 +343,7 @@ class _BASpecialistDashboardScreenState extends State<BASpecialistDashboardScree
                                   ),
                                 ),
                               ],
-                              rows: leadsProvider.leads.where((lead) => 
+                              rows: leadsState.leads.where((lead) => 
                                 lead.assignedBy == _userName || lead.assignedBy == 'shrikant'
                               ).map((lead) {
                                 return DataRow(
@@ -362,6 +367,29 @@ class _BASpecialistDashboardScreenState extends State<BASpecialistDashboardScree
                                         }).toList(),
                                         onChanged: (value) {
                                           // Update lead status
+                                          if (value != null) {
+                                            final updatedLead = Lead(
+                                              id: lead.id,
+                                              date: lead.date,
+                                              name: lead.name,
+                                              phone: lead.phone,
+                                              email: lead.email,
+                                              leadManager: lead.leadManager,
+                                              status: value,
+                                              feedback: lead.feedback,
+                                              education: lead.education,
+                                              experience: lead.experience,
+                                              location: lead.location,
+                                              orderBy: lead.orderBy,
+                                              assignedBy: lead.assignedBy,
+                                              discount: lead.discount,
+                                              firstInstallment: lead.firstInstallment,
+                                              secondInstallment: lead.secondInstallment,
+                                              finalFee: lead.finalFee,
+                                              baSpecialist: lead.baSpecialist,
+                                            );
+                                            BlocProvider.of<LeadsBloc>(context).add(UpdateLead(updatedLead));
+                                          }
                                         },
                                         underline: Container(),
                                       ),

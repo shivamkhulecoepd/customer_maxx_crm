@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:customer_maxx_crm/utils/theme_utils.dart';
 
-class ThemeProvider with ChangeNotifier {
+class ThemeProvider with ChangeNotifier, WidgetsBindingObserver {
   static const String _themeKey = 'theme_mode';
   static const String _systemTheme = 'system';
   static const String _lightTheme = 'light';
@@ -11,6 +12,8 @@ class ThemeProvider with ChangeNotifier {
 
   ThemeProvider() {
     _loadThemeMode();
+    // Listen to system theme changes
+    WidgetsBinding.instance.addObserver(this);
   }
 
   String get currentThemeMode => _currentThemeMode;
@@ -21,8 +24,27 @@ class ThemeProvider with ChangeNotifier {
     } else if (_currentThemeMode == _darkTheme) {
       return ThemeMode.dark;
     } else {
-      return ThemeMode.system;
+      // For system theme, we need to check the platform brightness
+      final platformBrightness = WidgetsBinding.instance.platformDispatcher.platformBrightness;
+      return platformBrightness == Brightness.dark 
+          ? ThemeMode.dark 
+          : ThemeMode.light;
     }
+  }
+
+  bool get isDarkMode {
+    if (_currentThemeMode == _lightTheme) {
+      return false;
+    } else if (_currentThemeMode == _darkTheme) {
+      return true;
+    } else {
+      // For system theme, check the platform brightness
+      return WidgetsBinding.instance.platformDispatcher.platformBrightness == Brightness.dark;
+    }
+  }
+
+  Color getStatusColor(String status) {
+    return AppThemes.getStatusColor(status);
   }
 
   Future<void> _loadThemeMode() async {
@@ -50,5 +72,21 @@ class ThemeProvider with ChangeNotifier {
     } else {
       await setThemeMode(_lightTheme);
     }
+  }
+
+  // WidgetsBindingObserver method to handle system theme changes
+  @override
+  void didChangePlatformBrightness() {
+    // Notify listeners when system theme changes
+    // This will only affect the UI if we're in system theme mode
+    if (_currentThemeMode == _systemTheme) {
+      notifyListeners();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 }

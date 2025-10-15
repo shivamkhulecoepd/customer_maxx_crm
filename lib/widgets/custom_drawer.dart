@@ -1,14 +1,15 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:customer_maxx_crm/providers/auth_provider.dart';
-import 'package:customer_maxx_crm/screens/admin/user_management_screen.dart';
 import 'package:customer_maxx_crm/screens/admin/all_leads_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:customer_maxx_crm/blocs/auth/auth_bloc.dart';
+import 'package:customer_maxx_crm/screens/admin/modern_user_management_screen.dart';
 import 'package:customer_maxx_crm/screens/admin/admin_dashboard_screen.dart';
 import 'package:customer_maxx_crm/screens/lead_manager/add_lead_screen.dart';
 import 'package:customer_maxx_crm/screens/lead_manager/view_leads_screen.dart';
 import 'package:customer_maxx_crm/screens/lead_manager/lead_manager_dashboard_screen.dart';
 import 'package:customer_maxx_crm/screens/ba_specialist/registered_leads_screen.dart';
 import 'package:customer_maxx_crm/screens/ba_specialist/ba_specialist_dashboard_screen.dart';
+import 'package:customer_maxx_crm/screens/settings_screen.dart';
 import 'package:customer_maxx_crm/main.dart';
 
 class CustomDrawer extends StatelessWidget {
@@ -16,27 +17,26 @@ class CustomDrawer extends StatelessWidget {
   final String currentUserName;
 
   const CustomDrawer({
-    Key? key,
+    super.key,
     required this.currentUserRole,
     required this.currentUserName,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
     return Drawer(
       child: Column(
         children: [
+          // Drawer header with profile
           DrawerHeader(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 const CircleAvatar(
-                  radius: 30,
-                  backgroundColor: Colors.white,
-                  child: Icon(Icons.person, size: 30),
+                  radius: 24,
+                  backgroundColor: Color(0xFF00BCD4),
+                  child: Icon(Icons.person, color: Colors.white, size: 24),
                 ),
                 const SizedBox(height: 10),
                 Text(
@@ -48,11 +48,35 @@ class CustomDrawer extends StatelessWidget {
                 ),
                 Text(
                   currentUserRole,
-                  style: const TextStyle(fontSize: 14),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF757575),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ModernSettingsScreen(),
+                      ),
+                    );
+                  },
+                  child: const Text(
+                    'View Profile',
+                    style: TextStyle(
+                      color: Color(0xFF00BCD4),
+                      fontSize: 14,
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
+          
+          // Menu items
           Expanded(
             child: ListView(
               padding: EdgeInsets.zero,
@@ -64,7 +88,7 @@ class CustomDrawer extends StatelessWidget {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const AdminDashboardScreen(),
+                        builder: (context) => const ModernAdminDashboardScreen(),
                       ),
                     );
                   } else if (currentUserRole == 'Lead Manager') {
@@ -85,6 +109,7 @@ class CustomDrawer extends StatelessWidget {
                     );
                   }
                 }),
+                
                 if (currentUserRole == 'Admin') ...[
                   _buildDrawerItem(
                     context,
@@ -95,7 +120,7 @@ class CustomDrawer extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const UserManagementScreen(),
+                          builder: (context) => const ModernUserManagementScreen(),
                         ),
                       );
                     },
@@ -153,7 +178,21 @@ class CustomDrawer extends StatelessWidget {
                     );
                   }),
                 ],
+                
                 const Divider(),
+                
+                // Settings
+                _buildDrawerItem(context, Icons.settings, 'Settings', () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ModernSettingsScreen(),
+                    ),
+                  );
+                }),
+                
+                // Logout
                 _buildDrawerItem(context, Icons.logout, 'Logout', () async {
                   // Show confirmation dialog
                   bool? shouldLogout = await showDialog<bool>(
@@ -175,26 +214,30 @@ class CustomDrawer extends StatelessWidget {
                       );
                     },
                   );
-
+                  
                   // If user confirmed logout
                   if (shouldLogout == true) {
+                    // Store context in a local variable before async operation
+                    final currentContext = context;
                     // Close drawer first
-                    if (context.mounted) {
-                      Navigator.pop(context);
+                    if (currentContext.mounted) {
+                      Navigator.pop(currentContext);
                     }
                     
                     // Perform logout
-                    await authProvider.logout();
+                    currentContext.read<AuthBloc>().add(LogoutRequested());
                     
-                    // Clear all navigation and go to root (AuthWrapper will handle showing LoginScreen)
-                    if (context.mounted) {
-                      Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                    // Clear all navigation and go to root
+                    if (currentContext.mounted) {
+                      Navigator.of(currentContext, rootNavigator: true).pushAndRemoveUntil(
                         MaterialPageRoute(builder: (context) => const AuthWrapper()),
                         (route) => false,
                       );
                     }
                   } else {
-                    Navigator.pop(context);
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                    }
                   }
                 }),
               ],
@@ -204,7 +247,7 @@ class CustomDrawer extends StatelessWidget {
       ),
     );
   }
-
+  
   Widget _buildDrawerItem(
     BuildContext context,
     IconData icon,
@@ -212,7 +255,7 @@ class CustomDrawer extends StatelessWidget {
     VoidCallback onTap,
   ) {
     return ListTile(
-      leading: Icon(icon),
+      leading: Icon(icon, color: const Color(0xFF00BCD4)),
       title: Text(title),
       onTap: onTap,
     );

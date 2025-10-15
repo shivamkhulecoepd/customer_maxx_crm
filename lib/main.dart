@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:customer_maxx_crm/providers/auth_provider.dart';
-import 'package:customer_maxx_crm/providers/leads_provider.dart';
-import 'package:customer_maxx_crm/providers/users_provider.dart';
-import 'package:customer_maxx_crm/providers/theme_provider.dart';
-import 'package:customer_maxx_crm/screens/auth/login_screen.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:customer_maxx_crm/blocs/auth/auth_bloc.dart';
+import 'package:customer_maxx_crm/blocs/leads/leads_bloc.dart';
+import 'package:customer_maxx_crm/blocs/users/users_bloc.dart';
+import 'package:customer_maxx_crm/blocs/theme/theme_bloc.dart';
+import 'package:customer_maxx_crm/blocs/theme/theme_event.dart';
+import 'package:customer_maxx_crm/blocs/theme/theme_state.dart';
+import 'package:customer_maxx_crm/screens/auth/auth_screen.dart';
 import 'package:customer_maxx_crm/screens/admin/admin_dashboard_screen.dart';
 import 'package:customer_maxx_crm/screens/lead_manager/lead_manager_dashboard_screen.dart';
 import 'package:customer_maxx_crm/screens/ba_specialist/ba_specialist_dashboard_screen.dart';
@@ -16,12 +18,20 @@ void main() async {
   await AuthService.init();
   
   runApp(
-    MultiProvider(
+    MultiBlocProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => LeadsProvider()),
-        ChangeNotifierProvider(create: (_) => UsersProvider()),
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        BlocProvider<AuthBloc>(
+          create: (context) => AuthBloc()..add(AppStarted()),
+        ),
+        BlocProvider<LeadsBloc>(
+          create: (context) => LeadsBloc(),
+        ),
+        BlocProvider<UsersBloc>(
+          create: (context) => UsersBloc(),
+        ),
+        BlocProvider<ThemeBloc>(
+          create: (context) => ThemeBloc()..add(LoadTheme()),
+        ),
       ],
       child: const MainApp(),
     ),
@@ -33,13 +43,13 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
+    return BlocBuilder<ThemeBloc, ThemeState>(
+      builder: (context, themeState) {
         return MaterialApp(
           title: 'CustomerMaxx CRM',
           theme: AppThemes.lightTheme,
           darkTheme: AppThemes.darkTheme,
-          themeMode: themeProvider.themeMode,
+          themeMode: themeState.themeMode,
           home: const AuthWrapper(),
         );
       },
@@ -52,10 +62,10 @@ class AuthWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AuthProvider>(
-      builder: (context, authProvider, child) {
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, authState) {
         // Show loading while initializing
-        if (!authProvider.isInitialized || authProvider.status == AuthStatus.unknown) {
+        if (authState is AuthLoading) {
           return const Scaffold(
             body: Center(
               child: Column(
@@ -71,21 +81,22 @@ class AuthWrapper extends StatelessWidget {
         }
         
         // Navigate based on authentication status
-        if (authProvider.status == AuthStatus.authenticated && authProvider.user != null) {
-          final userRole = authProvider.user!.role;
-          switch (userRole) {
-            case 'Admin':
-              return const AdminDashboardScreen();
-            case 'Lead Manager':
-              return const LeadManagerDashboardScreen();
-            case 'BA Specialist':
-              return const BASpecialistDashboardScreen();
-            default:
-              return const LoginScreen();
+        if (authState is Authenticated) {
+          final userRole = authState.user?.role;
+          if (userRole != null) {
+            switch (userRole) {
+              case 'Admin':
+                return const ModernAdminDashboardScreen();
+              case 'Lead Manager':
+                return const LeadManagerDashboardScreen();
+              case 'BA Specialist':
+                return const BASpecialistDashboardScreen();
+              default:
+                return const AuthScreen(authMode: AuthMode.login);
+            }
           }
-        } else {
-          return const LoginScreen();
         }
+        return const AuthScreen(authMode: AuthMode.login);
       },
     );
   }

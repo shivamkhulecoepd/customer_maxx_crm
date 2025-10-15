@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:customer_maxx_crm/providers/auth_provider.dart';
-import 'package:customer_maxx_crm/providers/leads_provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:customer_maxx_crm/blocs/auth/auth_bloc.dart';
+import 'package:customer_maxx_crm/blocs/leads/leads_bloc.dart';
+import 'package:customer_maxx_crm/blocs/leads/leads_event.dart';
+import 'package:customer_maxx_crm/blocs/leads/leads_state.dart';
 import 'package:customer_maxx_crm/widgets/custom_app_bar.dart';
 import 'package:customer_maxx_crm/widgets/custom_drawer.dart';
 import 'package:intl/intl.dart';
 
 class ViewLeadsScreen extends StatefulWidget {
-  const ViewLeadsScreen({Key? key}) : super(key: key);
+  const ViewLeadsScreen({super.key});
 
   @override
   State<ViewLeadsScreen> createState() => _ViewLeadsScreenState();
@@ -31,17 +33,18 @@ class _ViewLeadsScreenState extends State<ViewLeadsScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        setState(() {
-          _userName = authProvider.user?.name ?? 'Lead Manager';
-        });
+        final authState = BlocProvider.of<AuthBloc>(context).state;
+        if (authState is Authenticated && authState.user != null) {
+          setState(() {
+            _userName = authState.user!.name;
+          });
+        }
       }
     });
     
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        final leadsProvider = Provider.of<LeadsProvider>(context, listen: false);
-        leadsProvider.fetchAllLeads();
+        BlocProvider.of<LeadsBloc>(context).add(LoadAllLeads());
       }
     });
   }
@@ -54,8 +57,8 @@ class _ViewLeadsScreenState extends State<ViewLeadsScreen> {
         currentUserRole: 'Lead Manager',
         currentUserName: _userName,
       ),
-      body: Consumer<LeadsProvider>(
-        builder: (context, leadsProvider, child) {
+      body: BlocBuilder<LeadsBloc, LeadsState>(
+        builder: (context, leadsState) {
           return Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -83,7 +86,7 @@ class _ViewLeadsScreenState extends State<ViewLeadsScreen> {
                     SizedBox(
                       width: 200,
                       child: DropdownButtonFormField<String>(
-                        value: _selectedStatus,
+                        initialValue: _selectedStatus,
                         decoration: const InputDecoration(
                           border: OutlineInputBorder(),
                           contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -100,9 +103,9 @@ class _ViewLeadsScreenState extends State<ViewLeadsScreen> {
                               _selectedStatus = value;
                             });
                             if (value == '-- Filter by Status --') {
-                              leadsProvider.fetchAllLeads();
+                              BlocProvider.of<LeadsBloc>(context).add(LoadAllLeads());
                             } else {
-                              leadsProvider.fetchLeadsByStatus(value);
+                              BlocProvider.of<LeadsBloc>(context).add(LoadLeadsByStatus(value));
                             }
                           }
                         },
@@ -112,7 +115,7 @@ class _ViewLeadsScreenState extends State<ViewLeadsScreen> {
                 ),
                 const SizedBox(height: 20),
                 
-                if (leadsProvider.isLoading)
+                if (leadsState.isLoading)
                   const Expanded(
                     child: Center(
                       child: CircularProgressIndicator(),
@@ -129,7 +132,8 @@ class _ViewLeadsScreenState extends State<ViewLeadsScreen> {
                           color: Colors.white,
                         ),
                         headingRowHeight: 50,
-                        dataRowHeight: 50,
+                        dataRowMinHeight: 50,
+                        dataRowMaxHeight: 50,
                         columns: const [
                           DataColumn(
                             label: Text(
@@ -216,7 +220,7 @@ class _ViewLeadsScreenState extends State<ViewLeadsScreen> {
                             ),
                           ),
                         ],
-                        rows: leadsProvider.leads.map((lead) {
+                        rows: leadsState.leads.map((lead) {
                           return DataRow(
                             cells: [
                               DataCell(Text(lead.id.toString())),
@@ -249,7 +253,7 @@ class _ViewLeadsScreenState extends State<ViewLeadsScreen> {
                               DataCell(
                                 ElevatedButton(
                                   onPressed: () {
-                                    _confirmDeleteLead(context, lead.id, leadsProvider);
+                                    _confirmDeleteLead(context, lead.id);
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.red,
@@ -272,7 +276,7 @@ class _ViewLeadsScreenState extends State<ViewLeadsScreen> {
     );
   }
 
-  void _confirmDeleteLead(BuildContext context, int leadId, LeadsProvider leadsProvider) {
+  void _confirmDeleteLead(BuildContext context, int leadId) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -289,25 +293,14 @@ class _ViewLeadsScreenState extends State<ViewLeadsScreen> {
             TextButton(
               onPressed: () async {
                 Navigator.pop(context);
-                final success = await leadsProvider.deleteLead(leadId);
-                if (success) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Lead deleted successfully!'),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                  }
-                } else {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Failed to delete lead. Please try again.'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
+                BlocProvider.of<LeadsBloc>(context).add(DeleteLead(leadId));
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Lead deleted successfully!'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
                 }
               },
               child: const Text('Delete'),
