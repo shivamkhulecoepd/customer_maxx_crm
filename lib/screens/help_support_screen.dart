@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:customer_maxx_crm/blocs/auth/auth_bloc.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_bloc.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_state.dart';
-import 'package:customer_maxx_crm/widgets/modern_layout.dart';
+import 'package:customer_maxx_crm/widgets/main_layout.dart';
 import 'package:customer_maxx_crm/utils/theme_utils.dart';
 
 class HelpSupportScreen extends StatefulWidget {

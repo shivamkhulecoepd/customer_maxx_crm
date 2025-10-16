@@ -4,8 +4,8 @@ import 'package:customer_maxx_crm/blocs/auth/auth_bloc.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_bloc.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_event.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_state.dart';
-import 'package:customer_maxx_crm/widgets/modern_layout.dart';
-import 'package:customer_maxx_crm/screens/auth/modern_auth_screen.dart';
+import 'package:customer_maxx_crm/widgets/main_layout.dart';
+import 'package:customer_maxx_crm/screens/auth/auth_screen.dart';
 import 'package:customer_maxx_crm/utils/theme_utils.dart';
 
 class ModernSettingsScreen extends StatefulWidget {

@@ -3,8 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:customer_maxx_crm/blocs/leads/leads_bloc.dart';
 import 'package:customer_maxx_crm/blocs/leads/leads_event.dart';
 import 'package:customer_maxx_crm/blocs/leads/leads_state.dart';
-import 'package:customer_maxx_crm/widgets/modern_app_bar.dart';
-import 'package:customer_maxx_crm/widgets/modern_drawer.dart';
+import 'package:customer_maxx_crm/widgets/app_bar.dart';
+import 'package:customer_maxx_crm/widgets/app_drawer.dart';
 
 class RegisteredLeadsScreen extends StatefulWidget {
   const RegisteredLeadsScreen({super.key});

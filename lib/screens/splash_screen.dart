@@ -4,7 +4,7 @@ import 'package:customer_maxx_crm/blocs/auth/auth_bloc.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_bloc.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_state.dart';
 import 'package:customer_maxx_crm/utils/theme_utils.dart';
-import 'package:customer_maxx_crm/screens/auth/modern_auth_screen.dart';
+import 'package:customer_maxx_crm/screens/auth/auth_screen.dart';
 import 'package:customer_maxx_crm/main.dart';
 
 class ModernSplashScreen extends StatefulWidget {
@@ -362,7 +362,7 @@ class _ModernSplashScreenState extends State<ModernSplashScreen>
           ),
           const SizedBox(height: 20),
           Text(
-            '© 2024 CustomerMaxx. All rights reserved.',
+            '© 2025 CustomerMaxx. All rights reserved.',
             style: TextStyle(
               fontSize: 12,
               color: isDarkMode 

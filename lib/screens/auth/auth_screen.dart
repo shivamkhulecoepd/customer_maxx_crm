@@ -6,9 +6,9 @@ import 'package:customer_maxx_crm/blocs/theme/theme_event.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_state.dart';
 import 'package:customer_maxx_crm/utils/theme_utils.dart';
 
-import 'package:customer_maxx_crm/screens/admin/modern_admin_dashboard.dart';
-import 'package:customer_maxx_crm/screens/lead_manager/modern_lead_manager_dashboard.dart';
-import 'package:customer_maxx_crm/screens/ba_specialist/modern_ba_specialist_dashboard.dart';
+import 'package:customer_maxx_crm/screens/admin/admin_dashboard.dart';
+import 'package:customer_maxx_crm/screens/lead_manager/lead_manager_dashboard.dart';
+import 'package:customer_maxx_crm/screens/ba_specialist/ba_specialist_dashboard.dart';
 
 enum AuthMode { login, register }
 
