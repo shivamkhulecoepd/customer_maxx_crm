@@ -229,10 +229,7 @@ class LeadsBloc extends Bloc<LeadsEvent, LeadsState> {
         'Order By',
         'Assigned By',
         'BA Specialist',
-        'Discount',
-        'First Installment',
-        'Second Installment',
-        'Final Fee'
+        'Discount'
       ]);
 
       // Add data rows
@@ -252,10 +249,7 @@ class LeadsBloc extends Bloc<LeadsEvent, LeadsState> {
           lead.orderBy,
           lead.assignedBy,
           lead.baSpecialist,
-          lead.discount ?? '',
-          lead.firstInstallment ?? '',
-          lead.secondInstallment ?? '',
-          lead.finalFee ?? '',
+          lead.discount,
         ]);
       }
 
@@ -305,9 +299,9 @@ class LeadsBloc extends Bloc<LeadsEvent, LeadsState> {
         for (int i = 1; i < rows.length; i++) {
           try {
             var row = rows[i];
-            if (row.length >= 17) {
+            if (row.length >= 15) {
               final lead = Lead(
-                id: row[0] is int ? row[0] : int.tryParse(row[0].toString()) ?? 0,
+                id: row[0].toString(),
                 date: DateTime.tryParse(row[1].toString()) ?? DateTime.now(),
                 name: row[2].toString(),
                 phone: row[3].toString(),
@@ -320,17 +314,8 @@ class LeadsBloc extends Bloc<LeadsEvent, LeadsState> {
                 location: row[10].toString(),
                 orderBy: row[11].toString(),
                 assignedBy: row[12].toString(),
-                baSpecialist: row.length > 17 ? row[17].toString() : row[12].toString(),
-                discount: row[13].toString(),
-                firstInstallment: row[14] is num
-                    ? row[14].toDouble()
-                    : double.tryParse(row[14].toString()),
-                secondInstallment: row[15] is num
-                    ? row[15].toDouble()
-                    : double.tryParse(row[15].toString()),
-                finalFee: row[16] is num
-                    ? row[16].toDouble()
-                    : double.tryParse(row[16].toString()),
+                baSpecialist: row[13].toString(),
+                discount: row[14].toString(),
               );
 
               // Add lead to the list
@@ -371,7 +356,7 @@ class LeadsBloc extends Bloc<LeadsEvent, LeadsState> {
       bool allSuccess = true;
       final List<Lead> remainingLeads = List<Lead>.from(state.leads);
 
-      for (int id in event.selectedLeadIds) {
+      for (String id in event.selectedLeadIds) {
         bool success = await _leadService.deleteLead(id);
         if (success) {
           remainingLeads.removeWhere((lead) => lead.id == id);

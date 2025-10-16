@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:customer_maxx_crm/blocs/leads/leads_bloc.dart';
 import 'package:customer_maxx_crm/blocs/leads/leads_event.dart';
 import 'package:customer_maxx_crm/models/lead.dart';
-import 'package:customer_maxx_crm/widgets/custom_app_bar.dart';
+import 'package:customer_maxx_crm/widgets/modern_app_bar.dart';
 import 'package:customer_maxx_crm/widgets/modern_drawer.dart';
 
 class AddLeadScreen extends StatefulWidget {
@@ -51,7 +51,7 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
   void _submitLead() async {
     if (_formKey.currentState!.validate()) {
       final newLead = Lead(
-        id: 0, // Will be assigned by service
+        id: '0', // Will be assigned by service
         date: DateTime.now(),
         name: _nameController.text.trim(),
         phone: _contactController.text.trim(),
@@ -64,10 +64,7 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
         location: _locationController.text.trim(),
         orderBy: '',
         assignedBy: _selectedBASpecialist == '-- Select Specialist --' ? '' : _selectedBASpecialist,
-        discount: null,
-        firstInstallment: null,
-        secondInstallment: null,
-        finalFee: null,
+        discount: '',
         baSpecialist: _selectedBASpecialist == '-- Select Specialist --' ? '' : _selectedBASpecialist,
       );
 
@@ -100,7 +97,7 @@ class _AddLeadScreenState extends State<AddLeadScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(title: 'Add New Lead'),
+      appBar: const ModernAppBar(title: 'Add New Lead', userName: '', userEmail: ''),
       drawer: const ModernDrawer(), // No parameters needed now
       body: Container(
         color: const Color(0xFF2c5aa0),

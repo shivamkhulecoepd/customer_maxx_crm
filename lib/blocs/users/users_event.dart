@@ -29,7 +29,7 @@ class UpdateUser extends UsersEvent {
 }
 
 class DeleteUser extends UsersEvent {
-  final int id;
+  final String id;
 
   const DeleteUser(this.id);
 

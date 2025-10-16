@@ -306,7 +306,7 @@ class _AddUserBottomSheetState extends State<AddUserBottomSheet> {
       });
 
       final newUser = User(
-        id: 0, // Will be set by the backend
+        id: '0', // Will be set by the backend
         name: _nameController.text.trim(),
         email: _emailController.text.trim(),
         role: _selectedRole,

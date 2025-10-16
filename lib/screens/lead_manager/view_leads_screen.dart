@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:customer_maxx_crm/blocs/leads/leads_bloc.dart';
 import 'package:customer_maxx_crm/blocs/leads/leads_event.dart';
 import 'package:customer_maxx_crm/blocs/leads/leads_state.dart';
-import 'package:customer_maxx_crm/widgets/custom_app_bar.dart';
+import 'package:customer_maxx_crm/widgets/modern_app_bar.dart';
 import 'package:customer_maxx_crm/widgets/modern_drawer.dart';
 import 'package:intl/intl.dart';
 
@@ -39,7 +39,7 @@ class _ViewLeadsScreenState extends State<ViewLeadsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(title: 'View Leads'),
+      appBar: const ModernAppBar(title: 'View Leads', userName: '', userEmail: ''),
       drawer: const ModernDrawer(), // No parameters needed now
       body: BlocBuilder<LeadsBloc, LeadsState>(
         builder: (context, leadsState) {
@@ -207,7 +207,7 @@ class _ViewLeadsScreenState extends State<ViewLeadsScreen> {
                         rows: leadsState.leads.map((lead) {
                           return DataRow(
                             cells: [
-                              DataCell(Text(lead.id.toString())),
+                              DataCell(Text(lead.id)),
                               DataCell(Text(DateFormat('yyyy-MM-dd HH:mm:ss').format(lead.date))),
                               DataCell(Text(lead.name)),
                               DataCell(Text(lead.phone)),
@@ -260,7 +260,7 @@ class _ViewLeadsScreenState extends State<ViewLeadsScreen> {
     );
   }
 
-  void _confirmDeleteLead(BuildContext context, int leadId) {
+  void _confirmDeleteLead(BuildContext context, String leadId) {
     showDialog(
       context: context,
       builder: (BuildContext context) {

@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:customer_maxx_crm/blocs/leads/leads_bloc.dart';
 import 'package:customer_maxx_crm/blocs/leads/leads_event.dart';
 import 'package:customer_maxx_crm/blocs/leads/leads_state.dart';
-import 'package:customer_maxx_crm/widgets/custom_app_bar.dart';
+import 'package:customer_maxx_crm/widgets/modern_app_bar.dart';
 import 'package:customer_maxx_crm/widgets/modern_drawer.dart';
 
 class AllLeadsScreen extends StatefulWidget {
@@ -25,7 +25,7 @@ class _AllLeadsScreenState extends State<AllLeadsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(title: 'All Leads'),
+      appBar: const ModernAppBar(title: 'All Leads', userName: '', userEmail: ''),
       drawer: const ModernDrawer(), // No parameters needed now
       body: BlocBuilder<LeadsBloc, LeadsState>(
         builder: (context, leadsState) {

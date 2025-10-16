@@ -1,5 +1,5 @@
 class Lead {
-  final int id;
+  final String id;
   final DateTime date;
   final String name;
   final String phone;
@@ -12,13 +12,10 @@ class Lead {
   final String location;
   final String orderBy;
   final String assignedBy;
-  final String? discount;
-  final double? firstInstallment;
-  final double? secondInstallment;
-  final double? finalFee;
+  final String discount;
   final String baSpecialist;
 
-  Lead({
+  const Lead({
     required this.id,
     required this.date,
     required this.name,
@@ -27,38 +24,32 @@ class Lead {
     required this.leadManager,
     required this.status,
     required this.feedback,
-    this.education = '',
-    this.experience = '',
-    this.location = '',
-    this.orderBy = '',
-    this.assignedBy = '',
-    this.discount,
-    this.firstInstallment,
-    this.secondInstallment,
-    this.finalFee,
-    this.baSpecialist = '',
+    required this.education,
+    required this.experience,
+    required this.location,
+    required this.orderBy,
+    required this.assignedBy,
+    required this.discount,
+    required this.baSpecialist,
   });
 
   factory Lead.fromJson(Map<String, dynamic> json) {
     return Lead(
-      id: json['id'] as int,
-      date: DateTime.parse(json['date'] as String),
-      name: json['name'] as String,
-      phone: json['phone'] as String,
-      email: json['email'] as String,
-      leadManager: json['leadManager'] as String,
-      status: json['status'] as String,
-      feedback: json['feedback'] as String,
+      id: json['id'].toString(),
+      date: json['date'] != null ? DateTime.parse(json['date'] as String) : DateTime.now(),
+      name: json['name'] as String? ?? '',
+      phone: json['phone'] as String? ?? '',
+      email: json['email'] as String? ?? '',
+      leadManager: json['leadManager'] as String? ?? '',
+      status: json['status'] as String? ?? 'Pending',
+      feedback: json['feedback'] as String? ?? '',
       education: json['education'] as String? ?? '',
       experience: json['experience'] as String? ?? '',
       location: json['location'] as String? ?? '',
       orderBy: json['orderBy'] as String? ?? '',
       assignedBy: json['assignedBy'] as String? ?? '',
-      discount: json['discount'] as String?,
+      discount: json['discount'] as String? ?? '',
       baSpecialist: json['baSpecialist'] as String? ?? '',
-      firstInstallment: (json['firstInstallment'] as num?)?.toDouble(),
-      secondInstallment: (json['secondInstallment'] as num?)?.toDouble(),
-      finalFee: (json['finalFee'] as num?)?.toDouble(),
     );
   }
 
@@ -79,9 +70,6 @@ class Lead {
       'assignedBy': assignedBy,
       'discount': discount,
       'baSpecialist': baSpecialist,
-      'firstInstallment': firstInstallment,
-      'secondInstallment': secondInstallment,
-      'finalFee': finalFee,
     };
   }
 }

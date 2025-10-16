@@ -6,11 +6,11 @@ import 'package:customer_maxx_crm/blocs/users/users_bloc.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_bloc.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_event.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_state.dart';
-import 'package:customer_maxx_crm/screens/splash_screen.dart';
-import 'package:customer_maxx_crm/screens/auth/auth_screen.dart';
-import 'package:customer_maxx_crm/screens/admin/admin_dashboard_screen.dart';
-import 'package:customer_maxx_crm/screens/lead_manager/lead_manager_dashboard_screen.dart';
-import 'package:customer_maxx_crm/screens/ba_specialist/ba_specialist_dashboard_screen.dart';
+import 'package:customer_maxx_crm/screens/modern_splash_screen.dart';
+import 'package:customer_maxx_crm/screens/auth/modern_auth_screen.dart';
+import 'package:customer_maxx_crm/screens/admin/modern_admin_dashboard.dart';
+import 'package:customer_maxx_crm/screens/lead_manager/modern_lead_manager_dashboard.dart';
+import 'package:customer_maxx_crm/screens/ba_specialist/modern_ba_specialist_dashboard.dart';
 import 'package:customer_maxx_crm/services/auth_service.dart';
 import 'package:customer_maxx_crm/utils/theme_utils.dart';
 
@@ -51,7 +51,7 @@ class MainApp extends StatelessWidget {
           theme: AppThemes.lightTheme,
           darkTheme: AppThemes.darkTheme,
           themeMode: themeState.themeMode,
-          home: const SplashScreen(),
+          home: const ModernSplashScreen(),
         );
       },
     );
@@ -87,17 +87,17 @@ class AuthWrapper extends StatelessWidget {
           if (userRole != null) {
             switch (userRole) {
               case 'Admin':
-                return const ModernAdminDashboardScreen();
+                return const ModernAdminDashboard();
               case 'Lead Manager':
-                return const LeadManagerDashboardScreen();
+                return const ModernLeadManagerDashboard();
               case 'BA Specialist':
-                return const BASpecialistDashboardScreen();
+                return const ModernBASpecialistDashboard();
               default:
-                return const AuthScreen(authMode: AuthMode.login);
+                return const ModernAuthScreen(authMode: AuthMode.login);
             }
           }
         }
-        return const AuthScreen(authMode: AuthMode.login);
+        return const ModernAuthScreen(authMode: AuthMode.login);
       },
     );
   }

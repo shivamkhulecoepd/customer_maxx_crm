@@ -6,7 +6,7 @@ import 'package:customer_maxx_crm/blocs/theme/theme_event.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_state.dart';
 import 'package:customer_maxx_crm/widgets/modern_app_bar.dart';
 import 'package:customer_maxx_crm/widgets/modern_drawer.dart';
-import 'package:customer_maxx_crm/screens/auth/auth_screen.dart';
+import 'package:customer_maxx_crm/screens/auth/modern_auth_screen.dart';
 
 class ModernSettingsScreen extends StatefulWidget {
   const ModernSettingsScreen({super.key});
@@ -479,7 +479,7 @@ class _ModernSettingsScreenState extends State<ModernSettingsScreen> {
             // Clear all navigation and go to root
             if (currentContext.mounted) {
               Navigator.of(currentContext, rootNavigator: true).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => const AuthScreen()),
+                MaterialPageRoute(builder: (context) => const ModernAuthScreen(authMode: AuthMode.login)),
                 (route) => false,
               );
             }

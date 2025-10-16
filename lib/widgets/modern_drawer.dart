@@ -5,12 +5,12 @@ import 'package:customer_maxx_crm/blocs/auth/auth_bloc.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_bloc.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_state.dart';
 import 'package:customer_maxx_crm/screens/admin/modern_user_management_screen.dart';
-import 'package:customer_maxx_crm/screens/admin/admin_dashboard_screen.dart';
+import 'package:customer_maxx_crm/screens/admin/modern_admin_dashboard.dart';
 import 'package:customer_maxx_crm/screens/lead_manager/add_lead_screen.dart';
 import 'package:customer_maxx_crm/screens/lead_manager/view_leads_screen.dart';
-import 'package:customer_maxx_crm/screens/lead_manager/lead_manager_dashboard_screen.dart';
+import 'package:customer_maxx_crm/screens/lead_manager/modern_lead_manager_dashboard.dart';
 import 'package:customer_maxx_crm/screens/ba_specialist/registered_leads_screen.dart';
-import 'package:customer_maxx_crm/screens/ba_specialist/ba_specialist_dashboard_screen.dart';
+import 'package:customer_maxx_crm/screens/ba_specialist/modern_ba_specialist_dashboard.dart';
 import 'package:customer_maxx_crm/screens/settings_screen.dart';
 import 'package:customer_maxx_crm/main.dart';
 
@@ -23,18 +23,65 @@ class ModernDrawer extends StatelessWidget {
       builder: (context, authState) {
         String userName = 'User';
         String userRole = 'User';
-        
+
         if (authState is Authenticated && authState.user != null) {
           userName = authState.user!.name;
           userRole = authState.user!.role;
         }
-        
+
         return Drawer(
           child: ListView(
             padding: EdgeInsets.zero,
             children: [
               // Drawer Header
+              // DrawerHeader(
+              //   decoration: const BoxDecoration(
+              //     gradient: LinearGradient(
+              //       colors: [Color(0xFF00BCD4), Color(0xFF0097A7)],
+              //       begin: Alignment.topLeft,
+              //       end: Alignment.bottomRight,
+              //     ),
+              //   ),
+              //   child: Column(
+              //     crossAxisAlignment: CrossAxisAlignment.start,
+              //     mainAxisAlignment: MainAxisAlignment.center,
+              //     children: [
+              //       CircleAvatar(
+              //         radius: 30,
+              //         backgroundColor: Colors.white.withValues(alpha: 0.2),
+              //         child: Text(
+              //           userName.isNotEmpty
+              //               ? userName[0].toUpperCase()
+              //               : 'A',
+              //           style: const TextStyle(
+              //             color: Colors.white,
+              //             fontSize: 24,
+              //             fontWeight: FontWeight.bold,
+              //           ),
+              //         ),
+              //       ),
+              //       const SizedBox(height: 12),
+              //       Text(
+              //         userName,
+              //         style: const TextStyle(
+              //           fontSize: 20,
+              //           fontWeight: FontWeight.bold,
+              //           color: Colors.white,
+              //         ),
+              //       ),
+              //       Text(
+              //         userRole,
+              //         style: TextStyle(
+              //           fontSize: 14,
+              //           color: Colors.white.withValues(alpha: 0.9),
+              //         ),
+              //       ),
+              //     ],
+              //   ),
+              // ),
               DrawerHeader(
+                margin: EdgeInsets.zero,
+                padding: EdgeInsets.zero,
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [Color(0xFF00BCD4), Color(0xFF0097A7)],
@@ -42,44 +89,78 @@ class ModernDrawer extends StatelessWidget {
                     end: Alignment.bottomRight,
                   ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircleAvatar(
-                      radius: 30,
-                      backgroundColor: Colors.white.withValues(alpha: 0.2),
-                      child: Text(
-                        userName.isNotEmpty
-                            ? userName[0].toUpperCase()
-                            : 'A',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final screenWidth = MediaQuery.of(context).size.width;
+                    final screenHeight = MediaQuery.of(context).size.height;
+
+                    // Use dynamic scaling factors
+                    final avatarRadius =
+                        screenWidth * 0.08; // scales with width
+                    final nameFontSize = screenWidth * 0.05;
+                    final roleFontSize = screenWidth * 0.035;
+
+                    return Container(
+                      width: double.infinity,
+                      height: constraints.maxHeight, // ensures proper scaling
+                      padding: EdgeInsets.symmetric(
+                        horizontal: screenWidth * 0.04,
+                        vertical: screenHeight * 0.015,
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      userName,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          CircleAvatar(
+                            radius: avatarRadius,
+                            backgroundColor: Colors.white.withOpacity(0.2),
+                            child: Text(
+                              userName.isNotEmpty
+                                  ? userName[0].toUpperCase()
+                                  : 'A',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: avatarRadius,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: screenWidth * 0.04),
+                          Expanded(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    userName,
+                                    style: TextStyle(
+                                      fontSize: nameFontSize,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    userRole,
+                                    style: TextStyle(
+                                      fontSize: roleFontSize,
+                                      color: Colors.white.withOpacity(0.9),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    Text(
-                      userRole,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white.withValues(alpha: 0.9),
-                      ),
-                    ),
-                  ],
+                    );
+                  },
                 ),
               ),
-          
+
               // Drawer menu items
               _buildModernDrawerItem(
                 context,
@@ -91,28 +172,30 @@ class ModernDrawer extends StatelessWidget {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const ModernAdminDashboardScreen(),
+                        builder: (context) => const ModernAdminDashboard(),
                       ),
                     );
                   } else if (userRole == 'Lead Manager') {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const LeadManagerDashboardScreen(),
+                        builder: (context) =>
+                            const ModernLeadManagerDashboard(),
                       ),
                     );
                   } else if (userRole == 'BA Specialist') {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const BASpecialistDashboardScreen(),
+                        builder: (context) =>
+                            const ModernBASpecialistDashboard(),
                       ),
                     );
                   }
                 },
                 isActive: true,
               ),
-          
+
               if (userRole == 'Admin') ...[
                 _buildModernDrawerItem(
                   context,
@@ -123,7 +206,8 @@ class ModernDrawer extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const ModernUserManagementScreen(),
+                        builder: (context) =>
+                            const ModernUserManagementScreen(),
                       ),
                     );
                   },
@@ -201,9 +285,9 @@ class ModernDrawer extends StatelessWidget {
                   },
                 ),
               ],
-          
+
               const Divider(),
-          
+
               // Settings
               _buildModernDrawerItem(
                 context,
@@ -219,7 +303,7 @@ class ModernDrawer extends StatelessWidget {
                   );
                 },
               ),
-          
+
               // Help & Support
               _buildModernDrawerItem(
                 context,
@@ -230,57 +314,54 @@ class ModernDrawer extends StatelessWidget {
                   // Navigate to help page or show dialog
                 },
               ),
-          
+
               // Logout
-              _buildModernDrawerItem(
-                context,
-                Icons.logout,
-                'Logout',
-                () async {
-                  bool? shouldLogout = await showDialog<bool>(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return AlertDialog(
-                        title: const Text('Logout'),
-                        content: const Text('Are you sure you want to logout?'),
-                        actions: <Widget>[
-                          TextButton(
-                            onPressed: () => Navigator.of(context).pop(false),
-                            child: const Text('Cancel'),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.of(context).pop(true),
-                            child: const Text('Logout'),
-                          ),
-                        ],
-                      );
-                    },
-                  );
-          
-                  if (shouldLogout == true) {
-                    final currentContext = context;
-                    if (currentContext.mounted) {
-                      Navigator.pop(currentContext);
-                    }
-          
-                    currentContext.read<AuthBloc>().add(LogoutRequested());
-          
-                    if (currentContext.mounted) {
-                      Navigator.of(currentContext, rootNavigator: true)
-                          .pushAndRemoveUntil(
-                        MaterialPageRoute(
-                          builder: (context) => const AuthWrapper(),
+              _buildModernDrawerItem(context, Icons.logout, 'Logout', () async {
+                bool? shouldLogout = await showDialog<bool>(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: const Text('Logout'),
+                      content: const Text('Are you sure you want to logout?'),
+                      actions: <Widget>[
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: const Text('Cancel'),
                         ),
-                        (route) => false,
-                      );
-                    }
-                  } else {
-                    if (context.mounted) {
-                      Navigator.pop(context);
-                    }
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          child: const Text('Logout'),
+                        ),
+                      ],
+                    );
+                  },
+                );
+
+                if (shouldLogout == true) {
+                  final currentContext = context;
+                  if (currentContext.mounted) {
+                    Navigator.pop(currentContext);
                   }
-                },
-              ),
+
+                  currentContext.read<AuthBloc>().add(LogoutRequested());
+
+                  if (currentContext.mounted) {
+                    Navigator.of(
+                      currentContext,
+                      rootNavigator: true,
+                    ).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                        builder: (context) => const AuthWrapper(),
+                      ),
+                      (route) => false,
+                    );
+                  }
+                } else {
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                  }
+                }
+              }),
             ],
           ),
         );
@@ -313,8 +394,8 @@ class ModernDrawer extends StatelessWidget {
               color: isActive
                   ? const Color(0xFF00BCD4)
                   : isDarkMode
-                      ? Colors.white70
-                      : Colors.grey[600],
+                  ? Colors.white70
+                  : Colors.grey[600],
             ),
           ),
           title: Text(
@@ -323,8 +404,8 @@ class ModernDrawer extends StatelessWidget {
               color: isActive
                   ? const Color(0xFF00BCD4)
                   : isDarkMode
-                      ? Colors.white
-                      : Colors.black,
+                  ? Colors.white
+                  : Colors.black,
               fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
             ),
           ),

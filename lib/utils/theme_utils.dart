@@ -1,22 +1,43 @@
 import 'package:flutter/material.dart';
 
 class AppThemes {
-  // Color Palette from specification
+  // Modern Color Palette
   static const Color primaryColor = Color(0xFF00BCD4); // Cyan/Teal
-  static const Color greenAccent = Color(0xFF4CAF50); // Green for positive statuses
-  static const Color orangeAccent = Color(0xFFFF9800); // Orange for warnings/holds
-  static const Color redAccent = Color(0xFFF44336); // Red for errors/dues
-  static const Color blueAccent = Color(0xFF2196F3); // Blue for info
-  static const Color lightBackground = Color(0xFFFFFFFF); // White background
-  static const Color lightCardBackground = Color(0xFFF5F5F5); // Light gray for cards
-  static const Color darkBackground = Color(0xFF121212); // Dark gray/black background
-  static const Color darkCardBackground = Color(0xFF1E1E1E); // Slightly lighter gray for cards
-  static const Color lightPrimaryText = Color(0xFF000000); // Black for primary text
-  static const Color lightSecondaryText = Color(0xFF757575); // Gray for secondary text
-  static const Color darkPrimaryText = Color(0xFFFFFFFF); // White for primary text
-  static const Color darkSecondaryText = Color(0xFFBDBDBD); // Light gray for secondary text
-  static const Color lightBorder = Color(0xFFE0E0E0); // Subtle gray for borders in light mode
-  static const Color darkBorder = Color(0xFF424242); // Subtle gray for borders in dark mode
+  static const Color primaryDark = Color(0xFF0097A7);
+  static const Color primaryLight = Color(0xFF4DD0E1);
+  
+  // Status Colors
+  static const Color greenAccent = Color(0xFF4CAF50); // Success
+  static const Color orangeAccent = Color(0xFFFF9800); // Warning
+  static const Color redAccent = Color(0xFFF44336); // Error
+  static const Color blueAccent = Color(0xFF2196F3); // Info
+  static const Color purpleAccent = Color(0xFF9C27B0); // Premium
+  
+  // Background Colors
+  static const Color lightBackground = Color(0xFFF8FAFC);
+  static const Color lightCardBackground = Color(0xFFFFFFFF);
+  static const Color lightSurfaceBackground = Color(0xFFF1F5F9);
+  static const Color darkBackground = Color(0xFF0A0A0A);
+  static const Color darkCardBackground = Color(0xFF1A1A1A);
+  static const Color darkSurfaceBackground = Color(0xFF2D2D2D);
+  
+  // Text Colors
+  static const Color lightPrimaryText = Color(0xFF1A1A1A);
+  static const Color lightSecondaryText = Color(0xFF64748B);
+  static const Color lightTertiaryText = Color(0xFF94A3B8);
+  static const Color darkPrimaryText = Color(0xFFFFFFFF);
+  static const Color darkSecondaryText = Color(0xFFE2E8F0);
+  static const Color darkTertiaryText = Color(0xFF94A3B8);
+  
+  // Border Colors
+  static const Color lightBorder = Color(0xFFE2E8F0);
+  static const Color darkBorder = Color(0xFF334155);
+  
+  // Gradient Colors
+  static const List<Color> primaryGradient = [primaryColor, primaryDark];
+  static const List<Color> successGradient = [Color(0xFF10B981), Color(0xFF059669)];
+  static const List<Color> warningGradient = [Color(0xFFF59E0B), Color(0xFFD97706)];
+  static const List<Color> errorGradient = [Color(0xFFEF4444), Color(0xFFDC2626)];
 
   // Light theme
   static final lightTheme = ThemeData(
@@ -24,7 +45,7 @@ class AppThemes {
     brightness: Brightness.light,
     primaryColor: primaryColor,
     scaffoldBackgroundColor: lightBackground,
-    fontFamily: 'Roboto', // Sans-serif font
+    fontFamily: 'Inter', // Modern font
     appBarTheme: AppBarTheme(
       backgroundColor: primaryColor,
       foregroundColor: lightBackground,
@@ -90,12 +111,13 @@ class AppThemes {
       filled: true,
       fillColor: lightCardBackground,
     ),
-    cardTheme: const CardThemeData(
-      color: Color(0xFFF5F5F5),
-      elevation: 2,
+    cardTheme: CardThemeData(
+      color: lightCardBackground,
+      elevation: 0,
+      shadowColor: Colors.black.withOpacity(0.05),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(Radius.circular(12)), // 12px rounded corners
-        side: BorderSide(color: Color(0xFFE0E0E0)),
+        borderRadius: const BorderRadius.all(Radius.circular(16)),
+        side: BorderSide(color: lightBorder.withOpacity(0.5)),
       ),
     ),
     drawerTheme: const DrawerThemeData(
@@ -162,7 +184,7 @@ class AppThemes {
     brightness: Brightness.dark,
     primaryColor: primaryColor,
     scaffoldBackgroundColor: darkBackground,
-    fontFamily: 'Roboto', // Sans-serif font
+    fontFamily: 'Inter', // Modern font
     appBarTheme: AppBarTheme(
       backgroundColor: primaryColor,
       foregroundColor: darkBackground,
@@ -228,12 +250,13 @@ class AppThemes {
       filled: true,
       fillColor: darkCardBackground,
     ),
-    cardTheme: const CardThemeData(
-      color: Color(0xFF1E1E1E),
-      elevation: 4, // Deeper shadows in dark mode
+    cardTheme: CardThemeData(
+      color: darkCardBackground,
+      elevation: 0,
+      shadowColor: Colors.black.withOpacity(0.3),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(Radius.circular(12)), // 12px rounded corners
-        side: BorderSide(color: Color(0xFF424242)),
+        borderRadius: const BorderRadius.all(Radius.circular(16)),
+        side: BorderSide(color: darkBorder.withOpacity(0.3)),
       ),
     ),
     drawerTheme: const DrawerThemeData(
@@ -300,15 +323,84 @@ class AppThemes {
       case 'completed':
       case 'client replied':
       case 'accepted':
+      case 'success':
         return greenAccent;
       case 'hold':
       case 'new':
+      case 'pending':
+      case 'warning':
         return orangeAccent;
       case 'due':
       case 'error':
+      case 'failed':
+      case 'rejected':
         return redAccent;
+      case 'info':
+      case 'in progress':
+        return blueAccent;
+      case 'premium':
+      case 'priority':
+        return purpleAccent;
       default:
         return primaryColor;
     }
+  }
+  
+  // Modern shadows
+  static List<BoxShadow> getCardShadow(bool isDarkMode) {
+    return [
+      BoxShadow(
+        color: isDarkMode 
+            ? Colors.black.withOpacity(0.3)
+            : Colors.grey.withOpacity(0.1),
+        blurRadius: 10,
+        offset: const Offset(0, 4),
+      ),
+    ];
+  }
+  
+  static List<BoxShadow> getElevatedShadow(bool isDarkMode) {
+    return [
+      BoxShadow(
+        color: isDarkMode 
+            ? Colors.black.withOpacity(0.4)
+            : Colors.grey.withOpacity(0.15),
+        blurRadius: 20,
+        offset: const Offset(0, 8),
+      ),
+    ];
+  }
+  
+  // Modern gradients
+  static LinearGradient getPrimaryGradient() {
+    return const LinearGradient(
+      colors: primaryGradient,
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+  }
+  
+  static LinearGradient getSuccessGradient() {
+    return const LinearGradient(
+      colors: successGradient,
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+  }
+  
+  static LinearGradient getWarningGradient() {
+    return const LinearGradient(
+      colors: warningGradient,
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+  }
+  
+  static LinearGradient getErrorGradient() {
+    return const LinearGradient(
+      colors: errorGradient,
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
   }
 }

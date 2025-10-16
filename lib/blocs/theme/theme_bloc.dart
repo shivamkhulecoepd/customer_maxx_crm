@@ -111,12 +111,7 @@ class ThemeBloc extends Bloc<ThemeEvent, ThemeState> with WidgetsBindingObserver
       final platformBrightness = WidgetsBinding.instance.platformDispatcher.platformBrightness;
       final isDarkMode = platformBrightness == Brightness.dark;
       
-      emit(state.copyWith(
-        themeMode: platformBrightness == Brightness.dark 
-            ? ThemeMode.dark 
-            : ThemeMode.light,
-        isDarkMode: isDarkMode,
-      ));
+      add(ThemeChanged(state.currentThemeMode));
     }
   }
 

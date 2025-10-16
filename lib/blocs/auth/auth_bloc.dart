@@ -15,24 +15,24 @@ class AppStarted extends AuthEvent {}
 class LoginRequested extends AuthEvent {
   final String email;
   final String password;
-  final String role;
+  final String? role;
 
-  const LoginRequested(this.email, this.password, this.role);
+  const LoginRequested({required this.email, required this.password, this.role});
 
   @override
-  List<Object> get props => [email, password, role];
+  List<Object> get props => [email, password, role ?? ''];
 }
 
 class RegisterRequested extends AuthEvent {
   final String name;
   final String email;
   final String password;
-  final String role;
+  final String? role;
 
-  const RegisterRequested(this.name, this.email, this.password, this.role);
+  const RegisterRequested({required this.name, required this.email, required this.password, this.role});
 
   @override
-  List<Object> get props => [name, email, password, role];
+  List<Object> get props => [name, email, password, role ?? ''];
 }
 
 class LogoutRequested extends AuthEvent {}
@@ -105,7 +105,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final result = await _authService.login(
         event.email,
         event.password,
-        event.role,
+        event.role ?? 'Admin',
       );
       
       if (result['success']) {
@@ -128,7 +128,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         event.name,
         event.email,
         event.password,
-        event.role,
+        event.role ?? 'Lead Manager',
       );
       
       if (result['success']) {

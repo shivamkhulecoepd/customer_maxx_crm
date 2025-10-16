@@ -38,7 +38,7 @@ class UpdateLead extends LeadsEvent {
 }
 
 class DeleteLead extends LeadsEvent {
-  final int id;
+  final String id;
 
   const DeleteLead(this.id);
 
@@ -109,7 +109,7 @@ class ExportCSV extends LeadsEvent {}
 class ImportCSV extends LeadsEvent {}
 
 class DeleteSelectedLeads extends LeadsEvent {
-  final List<int> selectedLeadIds;
+  final List<String> selectedLeadIds;
 
   const DeleteSelectedLeads(this.selectedLeadIds);
 
