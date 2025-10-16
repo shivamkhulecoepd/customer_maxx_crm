@@ -11,7 +11,9 @@ import 'package:customer_maxx_crm/widgets/modern_table_view.dart';
 import 'package:customer_maxx_crm/models/lead.dart';
 
 class ModernLeadManagerDashboard extends StatefulWidget {
-  const ModernLeadManagerDashboard({super.key});
+  final int initialIndex;
+
+  const ModernLeadManagerDashboard({super.key, this.initialIndex = 0});
 
   @override
   State<ModernLeadManagerDashboard> createState() =>
@@ -20,13 +22,14 @@ class ModernLeadManagerDashboard extends StatefulWidget {
 
 class _ModernLeadManagerDashboardState
     extends State<ModernLeadManagerDashboard> {
-  int _currentNavIndex = 0;
+  late int _currentNavIndex;
   String _userName = '';
   String _userRole = '';
 
   @override
   void initState() {
     super.initState();
+    _currentNavIndex = widget.initialIndex;
     _loadUserData();
   }
 

@@ -4,9 +4,9 @@ import 'package:customer_maxx_crm/blocs/auth/auth_bloc.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_bloc.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_event.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_state.dart';
-import 'package:customer_maxx_crm/widgets/modern_app_bar.dart';
-import 'package:customer_maxx_crm/widgets/modern_drawer.dart';
+import 'package:customer_maxx_crm/widgets/modern_layout.dart';
 import 'package:customer_maxx_crm/screens/auth/modern_auth_screen.dart';
+import 'package:customer_maxx_crm/utils/theme_utils.dart';
 
 class ModernSettingsScreen extends StatefulWidget {
   const ModernSettingsScreen({super.key});
@@ -41,13 +41,8 @@ class _ModernSettingsScreenState extends State<ModernSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: ModernAppBar(
-        title: 'Settings',
-        userName: _userName,
-        userEmail: _userEmail,
-      ),
-      drawer: const ModernDrawer(), // No parameters needed now
+    return ModernLayout(
+      title: 'Settings',
       body: BlocBuilder<ThemeBloc, ThemeState>(
         builder: (context, themeState) {
           final isDarkMode = themeState.isDarkMode;
@@ -57,60 +52,96 @@ class _ModernSettingsScreenState extends State<ModernSettingsScreen> {
               // Refresh settings
               await Future.delayed(const Duration(seconds: 1));
             },
-            child: CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Account Settings',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header Section
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        gradient: AppThemes.getPrimaryGradient(),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: AppThemes.getElevatedShadow(isDarkMode),
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.settings_outlined,
+                            size: 48,
+                            color: Colors.white,
                           ),
-                        ),
-                        const SizedBox(height: 16),
-                        _buildProfileCard(context, isDarkMode),
-                        const SizedBox(height: 20),
-                        const Text(
-                          'Preferences',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Settings',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                            textAlign: TextAlign.center,
                           ),
-                        ),
-                        const SizedBox(height: 16),
-                        _buildThemeCard(context, themeState),
-                        const SizedBox(height: 20),
-                        const Text(
-                          'Notifications',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Customize your experience and manage your account',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white70,
+                            ),
+                            textAlign: TextAlign.center,
                           ),
-                        ),
-                        const SizedBox(height: 16),
-                        _buildNotificationsCard(context),
-                        const SizedBox(height: 20),
-                        const Text(
-                          'Security',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        _buildSecurityCard(context),
-                        const SizedBox(height: 20),
-                        _buildLogoutButton(context),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 24),
+                    
+                    const Text(
+                      'Account Settings',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildProfileCard(context, isDarkMode),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Preferences',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildThemeCard(context, themeState),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Notifications',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildNotificationsCard(context),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Security',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildSecurityCard(context),
+                    const SizedBox(height: 20),
+                    _buildLogoutButton(context),
+                  ],
                 ),
-              ],
+              ),
             ),
           );
         },

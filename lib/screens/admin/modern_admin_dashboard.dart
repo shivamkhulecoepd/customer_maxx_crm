@@ -19,20 +19,23 @@ import 'package:customer_maxx_crm/models/lead.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
 class ModernAdminDashboard extends StatefulWidget {
-  const ModernAdminDashboard({super.key});
+  final int initialIndex;
+
+  const ModernAdminDashboard({super.key, this.initialIndex = 0});
 
   @override
   State<ModernAdminDashboard> createState() => _ModernAdminDashboardState();
 }
 
 class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
-  int _currentNavIndex = 0;
+  late int _currentNavIndex;
   String _userName = '';
   String _userRole = '';
 
   @override
   void initState() {
     super.initState();
+    _currentNavIndex = widget.initialIndex;
     _loadUserData();
     // Initialize data loading
     WidgetsBinding.instance.addPostFrameCallback((_) {

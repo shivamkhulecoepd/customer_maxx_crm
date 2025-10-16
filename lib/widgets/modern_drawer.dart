@@ -1,10 +1,8 @@
-import 'package:customer_maxx_crm/screens/admin/all_leads_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:customer_maxx_crm/blocs/auth/auth_bloc.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_bloc.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_state.dart';
-import 'package:customer_maxx_crm/screens/admin/modern_user_management_screen.dart';
 import 'package:customer_maxx_crm/screens/admin/modern_admin_dashboard.dart';
 import 'package:customer_maxx_crm/screens/lead_manager/add_lead_screen.dart';
 import 'package:customer_maxx_crm/screens/lead_manager/view_leads_screen.dart';
@@ -12,6 +10,7 @@ import 'package:customer_maxx_crm/screens/lead_manager/modern_lead_manager_dashb
 import 'package:customer_maxx_crm/screens/ba_specialist/registered_leads_screen.dart';
 import 'package:customer_maxx_crm/screens/ba_specialist/modern_ba_specialist_dashboard.dart';
 import 'package:customer_maxx_crm/screens/settings_screen.dart';
+import 'package:customer_maxx_crm/screens/help_support_screen.dart';
 import 'package:customer_maxx_crm/main.dart';
 
 class ModernDrawer extends StatelessWidget {
@@ -168,30 +167,12 @@ class ModernDrawer extends StatelessWidget {
                 'Dashboard',
                 () {
                   Navigator.pop(context);
-                  if (userRole == 'Admin') {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ModernAdminDashboard(),
-                      ),
-                    );
-                  } else if (userRole == 'Lead Manager') {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            const ModernLeadManagerDashboard(),
-                      ),
-                    );
-                  } else if (userRole == 'BA Specialist') {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            const ModernBASpecialistDashboard(),
-                      ),
-                    );
-                  }
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AuthWrapper(),
+                    ),
+                  );
                 },
                 isActive: true,
               ),
@@ -203,11 +184,10 @@ class ModernDrawer extends StatelessWidget {
                   'User Management',
                   () {
                     Navigator.pop(context);
-                    Navigator.push(
+                    Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) =>
-                            const ModernUserManagementScreen(),
+                        builder: (context) => const ModernAdminDashboard(initialIndex: 1),
                       ),
                     );
                   },
@@ -218,10 +198,10 @@ class ModernDrawer extends StatelessWidget {
                   'All Leads',
                   () {
                     Navigator.pop(context);
-                    Navigator.push(
+                    Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const AllLeadsScreen(),
+                        builder: (context) => const ModernAdminDashboard(initialIndex: 2),
                       ),
                     );
                   },
@@ -233,10 +213,10 @@ class ModernDrawer extends StatelessWidget {
                   'Add Lead',
                   () {
                     Navigator.pop(context);
-                    Navigator.push(
+                    Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const AddLeadScreen(),
+                        builder: (context) => const ModernLeadManagerDashboard(initialIndex: 1),
                       ),
                     );
                   },
@@ -247,10 +227,10 @@ class ModernDrawer extends StatelessWidget {
                   'View Leads',
                   () {
                     Navigator.pop(context);
-                    Navigator.push(
+                    Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const ViewLeadsScreen(),
+                        builder: (context) => const ModernLeadManagerDashboard(initialIndex: 2),
                       ),
                     );
                   },
@@ -262,10 +242,10 @@ class ModernDrawer extends StatelessWidget {
                   'Registered Leads',
                   () {
                     Navigator.pop(context);
-                    Navigator.push(
+                    Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const RegisteredLeadsScreen(),
+                        builder: (context) => const ModernBASpecialistDashboard(initialIndex: 1),
                       ),
                     );
                   },
@@ -276,10 +256,10 @@ class ModernDrawer extends StatelessWidget {
                   'View Leads',
                   () {
                     Navigator.pop(context);
-                    Navigator.push(
+                    Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const ViewLeadsScreen(),
+                        builder: (context) => const ModernBASpecialistDashboard(initialIndex: 2),
                       ),
                     );
                   },
@@ -295,7 +275,7 @@ class ModernDrawer extends StatelessWidget {
                 'Settings',
                 () {
                   Navigator.pop(context);
-                  Navigator.push(
+                  Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
                       builder: (context) => const ModernSettingsScreen(),
@@ -311,7 +291,12 @@ class ModernDrawer extends StatelessWidget {
                 'Help & Support',
                 () {
                   Navigator.pop(context);
-                  // Navigate to help page or show dialog
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const HelpSupportScreen(),
+                    ),
+                  );
                 },
               ),
 

@@ -11,20 +11,23 @@ import 'package:customer_maxx_crm/widgets/modern_table_view.dart';
 import 'package:customer_maxx_crm/models/lead.dart';
 
 class ModernBASpecialistDashboard extends StatefulWidget {
-  const ModernBASpecialistDashboard({super.key});
+  final int initialIndex;
+
+  const ModernBASpecialistDashboard({super.key, this.initialIndex = 0});
 
   @override
   State<ModernBASpecialistDashboard> createState() => _ModernBASpecialistDashboardState();
 }
 
 class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboard> {
-  int _currentNavIndex = 0;
+  late int _currentNavIndex;
   String _userName = '';
   String _userRole = '';
 
   @override
   void initState() {
     super.initState();
+    _currentNavIndex = widget.initialIndex;
     _loadUserData();
   }
 
@@ -733,66 +736,114 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
           ),
           const SizedBox(height: 24),
           Expanded(
-            child: Container(
-              width: double.infinity,
-              margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.01, vertical: 8),
-              padding: EdgeInsets.all(screenWidth * 0.04),
-              decoration: BoxDecoration(
-                color: isDarkMode ? const Color(0xFF1A1A1A) : Colors.white,
-                borderRadius: BorderRadius.circular(screenWidth * 0.04),
-                boxShadow: [
-                  BoxShadow(
-                    color: isDarkMode ? Colors.black.withOpacity(0.15) : Colors.grey.withOpacity(0.06),
-                    blurRadius: screenWidth * 0.01,
-                    offset: const Offset(0, 1),
+            child: Column(
+              children: [
+                _buildTaskFilter(isDarkMode),
+                const Divider(),
+                Expanded(
+                  child: ListView(
+                    padding: EdgeInsets.zero,
+                    children: [
+                      _buildTaskItem(
+                        'Follow up with Alice Johnson',
+                        'Call regarding proposal discussion',
+                        'High',
+                        '10:00 AM',
+                        false,
+                        isDarkMode,
+                      ),
+                      _buildTaskItem(
+                        'Demo preparation for Bob Smith',
+                        'Prepare product demo materials',
+                        'Medium',
+                        '2:00 PM',
+                        false,
+                        isDarkMode,
+                      ),
+                      _buildTaskItem(
+                        'Send proposal to Carol Davis',
+                        'Email customized proposal document',
+                        'High',
+                        '4:00 PM',
+                        true,
+                        isDarkMode,
+                      ),
+                      _buildTaskItem(
+                        'Client meeting with David Wilson',
+                        'Discuss project timeline and requirements',
+                        'Medium',
+                        'Tomorrow 9:00 AM',
+                        false,
+                        isDarkMode,
+                      ),
+                      _buildTaskItem(
+                        'Follow up with Alice Johnson',
+                        'Call regarding proposal discussion',
+                        'High',
+                        '10:00 AM',
+                        false,
+                        isDarkMode,
+                      ),
+                      _buildTaskItem(
+                        'Demo preparation for Bob Smith',
+                        'Prepare product demo materials',
+                        'Medium',
+                        '2:00 PM',
+                        false,
+                        isDarkMode,
+                      ),
+                      _buildTaskItem(
+                        'Send proposal to Carol Davis',
+                        'Email customized proposal document',
+                        'High',
+                        '4:00 PM',
+                        true,
+                        isDarkMode,
+                      ),
+                      _buildTaskItem(
+                        'Client meeting with David Wilson',
+                        'Discuss project timeline and requirements',
+                        'Medium',
+                        'Tomorrow 9:00 AM',
+                        false,
+                        isDarkMode,
+                      ),
+                      _buildTaskItem(
+                        'Follow up with Alice Johnson',
+                        'Call regarding proposal discussion',
+                        'High',
+                        '10:00 AM',
+                        false,
+                        isDarkMode,
+                      ),
+                      _buildTaskItem(
+                        'Demo preparation for Bob Smith',
+                        'Prepare product demo materials',
+                        'Medium',
+                        '2:00 PM',
+                        false,
+                        isDarkMode,
+                      ),
+                      _buildTaskItem(
+                        'Send proposal to Carol Davis',
+                        'Email customized proposal document',
+                        'High',
+                        '4:00 PM',
+                        true,
+                        isDarkMode,
+                      ),
+                      _buildTaskItem(
+                        'Client meeting with David Wilson',
+                        'Discuss project timeline and requirements',
+                        'Medium',
+                        'Tomorrow 9:00 AM',
+                        false,
+                        isDarkMode,
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  _buildTaskFilter(isDarkMode),
-                  const Divider(),
-                  Expanded(
-                    child: ListView(
-                      padding: EdgeInsets.zero,
-                      children: [
-                        _buildTaskItem(
-                          'Follow up with Alice Johnson',
-                          'Call regarding proposal discussion',
-                          'High',
-                          '10:00 AM',
-                          false,
-                          isDarkMode,
-                        ),
-                        _buildTaskItem(
-                          'Demo preparation for Bob Smith',
-                          'Prepare product demo materials',
-                          'Medium',
-                          '2:00 PM',
-                          false,
-                          isDarkMode,
-                        ),
-                        _buildTaskItem(
-                          'Send proposal to Carol Davis',
-                          'Email customized proposal document',
-                          'High',
-                          '4:00 PM',
-                          true,
-                          isDarkMode,
-                        ),
-                        _buildTaskItem(
-                          'Client meeting with David Wilson',
-                          'Discuss project timeline and requirements',
-                          'Medium',
-                          'Tomorrow 9:00 AM',
-                          false,
-                          isDarkMode,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ],
@@ -804,47 +855,44 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
     final width = MediaQuery.of(context).size.width;
     final padding = width < 360 ? 12.0 : 16.0;
     
-    return Padding(
-      padding: EdgeInsets.all(padding),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Search tasks...',
-                prefixIcon: Icon(Icons.search_rounded, size: width < 360 ? 20 : 24),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(width < 360 ? 10 : 12),
-                  borderSide: BorderSide.none,
-                ),
-                filled: true,
-                fillColor: isDarkMode 
-                    ? AppThemes.darkSurfaceBackground
-                    : AppThemes.lightSurfaceBackground,
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: width < 360 ? 12 : 16,
-                  vertical: width < 360 ? 12 : 16,
-                ),
+    return Row(
+      children: [
+        Expanded(
+          child: TextField(
+            decoration: InputDecoration(
+              hintText: 'Search tasks...',
+              prefixIcon: Icon(Icons.search_rounded, size: width < 360 ? 20 : 24),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(width < 360 ? 10 : 12),
+                borderSide: BorderSide.none,
+              ),
+              filled: true,
+              fillColor: isDarkMode 
+                  ? AppThemes.darkSurfaceBackground
+                  : AppThemes.lightSurfaceBackground,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: width < 360 ? 12 : 16,
+                vertical: width < 360 ? 12 : 16,
               ),
             ),
           ),
-          SizedBox(width: width < 360 ? 8 : 12),
-          Container(
-            decoration: BoxDecoration(
-              color: AppThemes.primaryColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(width < 360 ? 10 : 12),
-            ),
-            child: IconButton(
-              icon: Icon(
-                Icons.filter_list_rounded,
-                color: AppThemes.primaryColor,
-                size: width < 360 ? 20 : 24,
-              ),
-              onPressed: () {},
-            ),
+        ),
+        SizedBox(width: width < 360 ? 8 : 12),
+        Container(
+          decoration: BoxDecoration(
+            color: AppThemes.primaryColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(width < 360 ? 10 : 12),
           ),
-        ],
-      ),
+          child: IconButton(
+            icon: Icon(
+              Icons.filter_list_rounded,
+              color: AppThemes.primaryColor,
+              size: width < 360 ? 20 : 24,
+            ),
+            onPressed: () {},
+          ),
+        ),
+      ],
     );
   }
 
