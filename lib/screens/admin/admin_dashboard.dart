@@ -172,8 +172,8 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
         boxShadow: [
           BoxShadow(
             color: isDarkMode
-                ? Colors.black.withOpacity(0.15)
-                : Colors.grey.withOpacity(0.06),
+                ? Colors.black.withValues(alpha: 0.15)
+                : Colors.grey.withValues(alpha: 0.06),
             blurRadius: screenWidth * 0.01,
             offset: const Offset(0, 1),
           ),
@@ -186,7 +186,7 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
             width: 60,
             height: 60,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(16),
             ),
             child: const Icon(
@@ -212,7 +212,7 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
                 Text(
                   'Admin Dashboard - CustomerMaxx CRM',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                     fontSize: 14,
                   ),
                 ),
@@ -222,7 +222,7 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(20),
             ),
             child: const Text(
@@ -339,8 +339,8 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
         boxShadow: [
           BoxShadow(
             color: isDarkMode
-                ? Colors.black.withOpacity(0.15)
-                : Colors.grey.withOpacity(0.06),
+                ? Colors.black.withValues(alpha: 0.15)
+                : Colors.grey.withValues(alpha: 0.06),
             blurRadius: screenWidth * 0.01,
             offset: const Offset(0, 1),
           ),
@@ -355,7 +355,7 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
               Container(
                 padding: EdgeInsets.all(screenWidth * 0.03),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(screenWidth * 0.03),
                 ),
                 child: Icon(icon, color: color, size: screenWidth * 0.06),
@@ -366,7 +366,7 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: AppThemes.greenAccent.withOpacity(0.1),
+                  color: AppThemes.greenAccent.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(screenWidth * 0.02),
                 ),
                 child: Text(
@@ -461,8 +461,8 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
           boxShadow: AppThemes.getCardShadow(isDarkMode),
           border: Border.all(
             color: isDarkMode
-                ? AppThemes.darkBorder.withOpacity(0.3)
-                : AppThemes.lightBorder.withOpacity(0.5),
+                ? AppThemes.darkBorder.withValues(alpha: 0.3)
+                : AppThemes.lightBorder.withValues(alpha: 0.5),
           ),
         ),
         child: Row(
@@ -470,7 +470,7 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
             Container(
               padding: EdgeInsets.all(width < 360 ? 12 : 16),
               decoration: BoxDecoration(
-                color: AppThemes.primaryColor.withOpacity(0.1),
+                color: AppThemes.primaryColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(width < 360 ? 10 : 12),
               ),
               child: Icon(
@@ -529,8 +529,8 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
             boxShadow: [
               BoxShadow(
                 color: isDarkMode
-                    ? Colors.black.withOpacity(0.15)
-                    : Colors.grey.withOpacity(0.06),
+                    ? Colors.black.withValues(alpha: 0.15)
+                    : Colors.grey.withValues(alpha: 0.06),
                 blurRadius: MediaQuery.of(context).size.width * 0.01,
                 offset: const Offset(0, 1),
               ),
@@ -582,7 +582,7 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
           Container(
             padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.02),
             decoration: BoxDecoration(
-              color: AppThemes.primaryColor.withOpacity(0.1),
+              color: AppThemes.primaryColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(
                 MediaQuery.of(context).size.width * 0.02,
               ),
@@ -648,7 +648,7 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
                 children: [
                   CircleAvatar(
                     radius: 16,
-                    backgroundColor: AppThemes.primaryColor.withOpacity(0.1),
+                    backgroundColor: AppThemes.primaryColor.withValues(alpha: 0.1),
                     child: Text(
                       user.name[0].toUpperCase(),
                       style: const TextStyle(
@@ -669,7 +669,7 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
               builder: (user) => Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppThemes.getStatusColor(user.role).withOpacity(0.1),
+                  color: AppThemes.getStatusColor(user.role).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -688,7 +688,7 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
               builder: (user) => Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppThemes.greenAccent.withOpacity(0.1),
+                  color: AppThemes.greenAccent.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Text(
@@ -730,7 +730,7 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
               builder: (lead) => Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppThemes.getStatusColor(lead.status).withOpacity(0.1),
+                  color: AppThemes.getStatusColor(lead.status).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -819,8 +819,8 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
       margin: const EdgeInsets.only(left: 8),
       decoration: BoxDecoration(
         color: isDarkMode
-            ? Colors.white.withOpacity(0.1)
-            : Colors.grey.withOpacity(0.1),
+            ? Colors.white.withValues(alpha: 0.1)
+            : Colors.grey.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: IconButton(
@@ -849,8 +849,8 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
         boxShadow: [
           BoxShadow(
             color: isDarkMode
-                ? Colors.black.withOpacity(0.15)
-                : Colors.grey.withOpacity(0.06),
+                ? Colors.black.withValues(alpha: 0.15)
+                : Colors.grey.withValues(alpha: 0.06),
             blurRadius: screenWidth * 0.01,
             offset: const Offset(0, 1),
           ),
@@ -945,7 +945,7 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
               height: 4,
               margin: const EdgeInsets.only(top: 12),
               decoration: BoxDecoration(
-                color: Colors.grey.withOpacity(0.3),
+                color: Colors.grey.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),

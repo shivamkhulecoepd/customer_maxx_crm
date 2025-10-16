@@ -218,7 +218,7 @@ class _ModernSplashScreenState extends State<ModernSplashScreen>
                 borderRadius: BorderRadius.circular(30),
                 boxShadow: [
                   BoxShadow(
-                    color: AppThemes.primaryColor.withOpacity(0.3),
+                    color: AppThemes.primaryColor.withValues(alpha: 0.3),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -271,10 +271,10 @@ class _ModernSplashScreenState extends State<ModernSplashScreen>
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
-                    color: AppThemes.primaryColor.withOpacity(0.1),
+                    color: AppThemes.primaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: AppThemes.primaryColor.withOpacity(0.2),
+                      color: AppThemes.primaryColor.withValues(alpha: 0.2),
                     ),
                   ),
                   child: const Text(
@@ -305,8 +305,8 @@ class _ModernSplashScreenState extends State<ModernSplashScreen>
               height: 4,
               decoration: BoxDecoration(
                 color: isDarkMode 
-                    ? Colors.white.withOpacity(0.1)
-                    : Colors.grey.withOpacity(0.2),
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : Colors.grey.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(2),
               ),
               child: Align(
@@ -319,7 +319,7 @@ class _ModernSplashScreenState extends State<ModernSplashScreen>
                     borderRadius: BorderRadius.circular(2),
                     boxShadow: [
                       BoxShadow(
-                        color: AppThemes.primaryColor.withOpacity(0.3),
+                        color: AppThemes.primaryColor.withValues(alpha: 0.3),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
@@ -380,13 +380,13 @@ class _ModernSplashScreenState extends State<ModernSplashScreen>
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: isDarkMode 
-            ? Colors.white.withOpacity(0.05)
-            : Colors.black.withOpacity(0.05),
+            ? Colors.white.withValues(alpha: 0.05)
+            : Colors.black.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isDarkMode 
-              ? Colors.white.withOpacity(0.1)
-              : Colors.black.withOpacity(0.1),
+              ? Colors.white.withValues(alpha: 0.1)
+              : Colors.black.withValues(alpha: 0.1),
         ),
       ),
       child: Row(

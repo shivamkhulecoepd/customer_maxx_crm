@@ -327,7 +327,7 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(
-                          color: Colors.grey.withOpacity(0.3),
+                          color: Colors.grey.withValues(alpha: 0.3),
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
@@ -497,7 +497,7 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(
-                color: Colors.grey.withOpacity(0.3),
+                color: Colors.grey.withValues(alpha: 0.3),
               ),
             ),
             focusedBorder: OutlineInputBorder(

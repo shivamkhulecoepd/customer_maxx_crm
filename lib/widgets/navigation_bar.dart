@@ -27,8 +27,8 @@ class ModernNavigationBar extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: isDarkMode 
-                ? Colors.black.withOpacity(0.3)
-                : Colors.grey.withOpacity(0.1),
+                ? Colors.black.withValues(alpha: 0.3)
+                : Colors.grey.withValues(alpha: 0.1),
             blurRadius: width < 360 ? 8 : 10,
             offset: const Offset(0, -2),
           ),
@@ -81,7 +81,7 @@ class ModernNavigationBar extends StatelessWidget {
           padding: EdgeInsets.symmetric(horizontal: padding * 0.5, vertical: 8),
           decoration: BoxDecoration(
             color: isSelected
-                ? const Color(0xFF00BCD4).withOpacity(0.1)
+                ? const Color(0xFF00BCD4).withValues(alpha: 0.1)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(width < 360 ? 12 : 16),
           ),
@@ -266,8 +266,8 @@ class FloatingNavigationBar extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: isDarkMode 
-                ? Colors.black.withOpacity(0.4)
-                : Colors.grey.withOpacity(0.2),
+                ? Colors.black.withValues(alpha: 0.4)
+                : Colors.grey.withValues(alpha: 0.2),
             blurRadius: width < 360 ? 16 : 20,
             offset: const Offset(0, 8),
           ),

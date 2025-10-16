@@ -122,7 +122,7 @@ class _ModernLeadManagerDashboardState
             width: 60,
             height: 60,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(16),
             ),
             child: const Icon(
@@ -148,7 +148,7 @@ class _ModernLeadManagerDashboardState
                 Text(
                   'Lead Manager Dashboard',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                     fontSize: 14,
                   ),
                 ),
@@ -156,7 +156,7 @@ class _ModernLeadManagerDashboardState
                 Text(
                   'You have 12 new leads today',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
+                    color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 12,
                   ),
                 ),
@@ -244,8 +244,8 @@ class _ModernLeadManagerDashboardState
         boxShadow: [
           BoxShadow(
             color: isDarkMode
-                ? Colors.black.withOpacity(0.15)
-                : Colors.grey.withOpacity(0.06),
+                ? Colors.black.withValues(alpha: 0.15)
+                : Colors.grey.withValues(alpha: 0.06),
             blurRadius: screenWidth * 0.01,
             offset: const Offset(0, 1),
           ),
@@ -261,7 +261,7 @@ class _ModernLeadManagerDashboardState
               Container(
                 padding: EdgeInsets.all(screenWidth * 0.02),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(screenWidth * 0.02),
                 ),
                 child: Icon(icon, color: color, size: screenWidth * 0.05),
@@ -356,8 +356,8 @@ class _ModernLeadManagerDashboardState
             boxShadow: [
               BoxShadow(
                 color: isDarkMode
-                    ? Colors.black.withOpacity(0.15)
-                    : Colors.grey.withOpacity(0.06),
+                    ? Colors.black.withValues(alpha: 0.15)
+                    : Colors.grey.withValues(alpha: 0.06),
                 blurRadius: MediaQuery.of(context).size.width * 0.01,
                 offset: const Offset(0, 1),
               ),
@@ -383,7 +383,7 @@ class _ModernLeadManagerDashboardState
             radius: 20,
             backgroundColor: AppThemes.getStatusColor(
               lead.status,
-            ).withOpacity(0.1),
+            ).withValues(alpha: 0.1),
             child: Text(
               lead.name[0].toUpperCase(),
               style: TextStyle(
@@ -421,7 +421,7 @@ class _ModernLeadManagerDashboardState
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: AppThemes.getStatusColor(lead.status).withOpacity(0.1),
+              color: AppThemes.getStatusColor(lead.status).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -466,8 +466,8 @@ class _ModernLeadManagerDashboardState
             boxShadow: [
               BoxShadow(
                 color: isDarkMode
-                    ? Colors.black.withOpacity(0.15)
-                    : Colors.grey.withOpacity(0.06),
+                    ? Colors.black.withValues(alpha: 0.15)
+                    : Colors.grey.withValues(alpha: 0.06),
                 blurRadius: MediaQuery.of(context).size.width * 0.01,
                 offset: const Offset(0, 1),
               ),
@@ -543,7 +543,7 @@ class _ModernLeadManagerDashboardState
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -769,7 +769,7 @@ class _ModernLeadManagerDashboardState
                 radius: 16,
                 backgroundColor: AppThemes.getStatusColor(
                   lead.status,
-                ).withOpacity(0.1),
+                ).withValues(alpha: 0.1),
                 child: Text(
                   lead.name[0].toUpperCase(),
                   style: TextStyle(
@@ -803,7 +803,7 @@ class _ModernLeadManagerDashboardState
           builder: (lead) => Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: AppThemes.getStatusColor(lead.status).withOpacity(0.1),
+              color: AppThemes.getStatusColor(lead.status).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -938,8 +938,8 @@ class _ModernLeadManagerDashboardState
       margin: EdgeInsets.only(left: margin),
       decoration: BoxDecoration(
         color: isDarkMode
-            ? Colors.white.withOpacity(0.1)
-            : Colors.grey.withOpacity(0.1),
+            ? Colors.white.withValues(alpha: 0.1)
+            : Colors.grey.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(width < 360 ? 6 : 8),
       ),
       child: IconButton(
@@ -974,8 +974,8 @@ class _ModernLeadManagerDashboardState
         boxShadow: [
           BoxShadow(
             color: isDarkMode
-                ? Colors.black.withOpacity(0.15)
-                : Colors.grey.withOpacity(0.06),
+                ? Colors.black.withValues(alpha: 0.15)
+                : Colors.grey.withValues(alpha: 0.06),
             blurRadius: screenWidth * 0.01,
             offset: const Offset(0, 1),
           ),
@@ -988,7 +988,7 @@ class _ModernLeadManagerDashboardState
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppThemes.primaryColor.withOpacity(0.1),
+              color: AppThemes.primaryColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: AppThemes.primaryColor, size: 20),
@@ -1025,7 +1025,7 @@ class _ModernLeadManagerDashboardState
             child: ElevatedButton(
               onPressed: () {},
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppThemes.primaryColor.withOpacity(0.1),
+                backgroundColor: AppThemes.primaryColor.withValues(alpha: 0.1),
                 foregroundColor: AppThemes.primaryColor,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(vertical: 8),
@@ -1074,7 +1074,7 @@ class _ModernLeadManagerDashboardState
               height: 4,
               margin: const EdgeInsets.only(top: 12),
               decoration: BoxDecoration(
-                color: Colors.grey.withOpacity(0.3),
+                color: Colors.grey.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),

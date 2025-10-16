@@ -99,14 +99,14 @@ class _ModernTableViewState<T> extends State<ModernTableView<T>> {
     return Scrollbar(
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        child: Container(
+        child: SizedBox(
           width: totalWidth,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildTableHeaderRow(isDarkMode, totalWidth),
-              Container(
+              SizedBox(
                 height: 400,
                 child: ListView.builder(
                   itemCount: _filteredData.length,
@@ -144,8 +144,8 @@ class _ModernTableViewState<T> extends State<ModernTableView<T>> {
         border: Border(
           bottom: BorderSide(
             color: isDarkMode
-                ? Colors.white.withOpacity(0.1)
-                : Colors.grey.withOpacity(0.2),
+                ? Colors.white.withValues(alpha: 0.1)
+                : Colors.grey.withValues(alpha: 0.2),
           ),
         ),
       ),
@@ -201,8 +201,8 @@ class _ModernTableViewState<T> extends State<ModernTableView<T>> {
           border: Border(
             bottom: BorderSide(
               color: isDarkMode
-                  ? Colors.white.withOpacity(0.05)
-                  : Colors.grey.withOpacity(0.1),
+                  ? Colors.white.withValues(alpha: 0.05)
+                  : Colors.grey.withValues(alpha: 0.1),
             ),
           ),
         ),
@@ -311,8 +311,8 @@ class _ModernTableViewState<T> extends State<ModernTableView<T>> {
       margin: const EdgeInsets.only(left: 8),
       decoration: BoxDecoration(
         color: isDarkMode
-            ? Colors.white.withOpacity(0.1)
-            : Colors.grey.withOpacity(0.1),
+            ? Colors.white.withValues(alpha: 0.1)
+            : Colors.grey.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: IconButton(
@@ -592,8 +592,8 @@ class TableColumn {
 //         // boxShadow: [
 //         //   BoxShadow(
 //         //     color: isDarkMode
-//         //         ? Colors.black.withOpacity(0.3)
-//         //         : Colors.grey.withOpacity(0.1),
+//         //         ? Colors.black.withValues(alpha: 0.3)
+//         //         : Colors.grey.withValues(alpha: 0.1),
 //         //     blurRadius: 10,
 //         //     offset: const Offset(0, 4),
 //         //   ),
@@ -681,8 +681,8 @@ class TableColumn {
 //       margin: EdgeInsets.only(left: margin),
 //       decoration: BoxDecoration(
 //         color: isDarkMode
-//             ? Colors.white.withOpacity(0.1)
-//             : Colors.grey.withOpacity(0.1),
+//             ? Colors.white.withValues(alpha: 0.1)
+//             : Colors.grey.withValues(alpha: 0.1),
 //         borderRadius: BorderRadius.circular(width < 360 ? 6 : 8),
 //       ),
 //       child: IconButton(
@@ -786,8 +786,8 @@ class TableColumn {
 //         border: Border(
 //           bottom: BorderSide(
 //             color: isDarkMode
-//                 ? Colors.white.withOpacity(0.1)
-//                 : Colors.grey.withOpacity(0.2),
+//                 ? Colors.white.withValues(alpha: 0.1)
+//                 : Colors.grey.withValues(alpha: 0.2),
 //           ),
 //         ),
 //       ),
@@ -828,8 +828,8 @@ class TableColumn {
 //           border: Border(
 //             bottom: BorderSide(
 //               color: isDarkMode
-//                   ? Colors.white.withOpacity(0.05)
-//                   : Colors.grey.withOpacity(0.1),
+//                   ? Colors.white.withValues(alpha: 0.05)
+//                   : Colors.grey.withValues(alpha: 0.1),
 //             ),
 //           ),
 //         ),

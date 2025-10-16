@@ -45,7 +45,7 @@ class ModernLayout extends StatelessWidget {
                 _buildCustomAppBar(context, isDarkMode),
                 // Use Expanded to ensure the body takes available space
                 Expanded(
-                  child: Container(width: double.infinity, child: body),
+                  child: SizedBox(width: double.infinity, child: body),
                 ),
               ],
             ),
@@ -73,8 +73,8 @@ class ModernLayout extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: isDarkMode
-                ? Colors.black.withOpacity(0.3)
-                : Colors.grey.withOpacity(0.1),
+                ? Colors.black.withValues(alpha: 0.3)
+                : Colors.grey.withValues(alpha: 0.1),
             blurRadius: width < 360 ? 8 : 10,
             offset: const Offset(0, 2),
           ),
@@ -155,8 +155,8 @@ class ModernLayout extends StatelessWidget {
       height: buttonSize,
       decoration: BoxDecoration(
         color: isDarkMode
-            ? Colors.white.withOpacity(0.1)
-            : Colors.grey.withOpacity(0.1),
+            ? Colors.white.withValues(alpha: 0.1)
+            : Colors.grey.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(width < 360 ? 10 : 12),
       ),
       child: IconButton(
@@ -197,7 +197,7 @@ class ModernLayout extends StatelessWidget {
               borderRadius: BorderRadius.circular(width < 360 ? 10 : 12),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF00BCD4).withOpacity(0.3),
+                  color: const Color(0xFF00BCD4).withValues(alpha: 0.3),
                   blurRadius: width < 360 ? 6 : 8,
                   offset: const Offset(0, 2),
                 ),
@@ -237,7 +237,7 @@ class ModernLayout extends StatelessWidget {
               height: 4,
               margin: const EdgeInsets.only(top: 12),
               decoration: BoxDecoration(
-                color: Colors.grey.withOpacity(0.3),
+                color: Colors.grey.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),

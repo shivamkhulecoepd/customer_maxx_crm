@@ -114,10 +114,10 @@ class AppThemes {
     cardTheme: CardThemeData(
       color: lightCardBackground,
       elevation: 0,
-      shadowColor: Colors.black.withOpacity(0.05),
+      shadowColor: Colors.black.withValues(alpha: 0.05),
       shape: RoundedRectangleBorder(
         borderRadius: const BorderRadius.all(Radius.circular(16)),
-        side: BorderSide(color: lightBorder.withOpacity(0.5)),
+        side: BorderSide(color: lightBorder.withValues(alpha: 0.5)),
       ),
     ),
     drawerTheme: const DrawerThemeData(
@@ -253,10 +253,10 @@ class AppThemes {
     cardTheme: CardThemeData(
       color: darkCardBackground,
       elevation: 0,
-      shadowColor: Colors.black.withOpacity(0.3),
+      shadowColor: Colors.black.withValues(alpha: 0.3),
       shape: RoundedRectangleBorder(
         borderRadius: const BorderRadius.all(Radius.circular(16)),
-        side: BorderSide(color: darkBorder.withOpacity(0.3)),
+        side: BorderSide(color: darkBorder.withValues(alpha: 0.3)),
       ),
     ),
     drawerTheme: const DrawerThemeData(
@@ -351,8 +351,8 @@ class AppThemes {
     return [
       BoxShadow(
         color: isDarkMode 
-            ? Colors.black.withOpacity(0.3)
-            : Colors.grey.withOpacity(0.1),
+            ? Colors.black.withValues(alpha: 0.3)
+            : Colors.grey.withValues(alpha: 0.1),
         blurRadius: 10,
         offset: const Offset(0, 4),
       ),
@@ -363,8 +363,8 @@ class AppThemes {
     return [
       BoxShadow(
         color: isDarkMode 
-            ? Colors.black.withOpacity(0.4)
-            : Colors.grey.withOpacity(0.15),
+            ? Colors.black.withValues(alpha: 0.4)
+            : Colors.grey.withValues(alpha: 0.15),
         blurRadius: 20,
         offset: const Offset(0, 8),
       ),

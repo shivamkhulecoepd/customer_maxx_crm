@@ -111,7 +111,7 @@ class ModernDrawer extends StatelessWidget {
                         children: [
                           CircleAvatar(
                             radius: avatarRadius,
-                            backgroundColor: Colors.white.withOpacity(0.2),
+                            backgroundColor: Colors.white.withValues(alpha: 0.2),
                             child: Text(
                               userName.isNotEmpty
                                   ? userName[0].toUpperCase()
@@ -146,7 +146,7 @@ class ModernDrawer extends StatelessWidget {
                                     userRole,
                                     style: TextStyle(
                                       fontSize: roleFontSize,
-                                      color: Colors.white.withOpacity(0.9),
+                                      color: Colors.white.withValues(alpha: 0.9),
                                     ),
                                   ),
                                 ),

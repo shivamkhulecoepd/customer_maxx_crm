@@ -51,6 +51,7 @@ class MainApp extends StatelessWidget {
           theme: AppThemes.lightTheme,
           darkTheme: AppThemes.darkTheme,
           themeMode: themeState.themeMode,
+          debugShowCheckedModeBanner: false,
           home: const ModernSplashScreen(),
         );
       },

@@ -116,7 +116,7 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
         borderRadius: BorderRadius.circular(screenWidth * 0.04),
         boxShadow: [
           BoxShadow(
-            color: isDarkMode ? Colors.black.withOpacity(0.15) : Colors.grey.withOpacity(0.06),
+            color: isDarkMode ? Colors.black.withValues(alpha: 0.15) : Colors.grey.withValues(alpha: 0.06),
             blurRadius: screenWidth * 0.01,
             offset: const Offset(0, 1),
           ),
@@ -129,7 +129,7 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
               width: 60,
               height: 60,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: const Icon(
@@ -155,7 +155,7 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
                   Text(
                     'BA Specialist Dashboard - CustomerMaxx CRM',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                       fontSize: 14,
                     ),
                   ),
@@ -165,7 +165,7 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: const Text(
@@ -257,7 +257,7 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
         borderRadius: BorderRadius.circular(screenWidth * 0.03),
         boxShadow: [
           BoxShadow(
-            color: isDarkMode ? Colors.black.withOpacity(0.15) : Colors.grey.withOpacity(0.06),
+            color: isDarkMode ? Colors.black.withValues(alpha: 0.15) : Colors.grey.withValues(alpha: 0.06),
             blurRadius: screenWidth * 0.01,
             offset: const Offset(0, 1),
           ),
@@ -273,7 +273,7 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
               Container(
                 padding: EdgeInsets.all(screenWidth * 0.03),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(screenWidth * 0.03),
                 ),
                 child: Icon(icon, color: color, size: screenWidth * 0.06),
@@ -284,7 +284,7 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: AppThemes.greenAccent.withOpacity(0.1),
+                  color: AppThemes.greenAccent.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(screenWidth * 0.02),
                 ),
                 child: Text(
@@ -357,7 +357,7 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
             borderRadius: BorderRadius.circular(MediaQuery.of(context).size.width * 0.04),
             boxShadow: [
               BoxShadow(
-                color: isDarkMode ? Colors.black.withOpacity(0.15) : Colors.grey.withOpacity(0.06),
+                color: isDarkMode ? Colors.black.withValues(alpha: 0.15) : Colors.grey.withValues(alpha: 0.06),
                 blurRadius: MediaQuery.of(context).size.width * 0.01,
                 offset: const Offset(0, 1),
               ),
@@ -454,7 +454,7 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: priorityColor.withOpacity(0.1),
+                  color: priorityColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -505,7 +505,7 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
             borderRadius: BorderRadius.circular(MediaQuery.of(context).size.width * 0.04),
             boxShadow: [
               BoxShadow(
-                color: isDarkMode ? Colors.black.withOpacity(0.15) : Colors.grey.withOpacity(0.06),
+                color: isDarkMode ? Colors.black.withValues(alpha: 0.15) : Colors.grey.withValues(alpha: 0.06),
                 blurRadius: MediaQuery.of(context).size.width * 0.01,
                 offset: const Offset(0, 1),
               ),
@@ -557,7 +557,7 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppThemes.primaryColor.withOpacity(0.1),
+              color: AppThemes.primaryColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
@@ -617,7 +617,7 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
             children: [
               CircleAvatar(
                 radius: 16,
-                backgroundColor: AppThemes.getStatusColor(lead.status).withOpacity(0.1),
+                backgroundColor: AppThemes.getStatusColor(lead.status).withValues(alpha: 0.1),
                 child: Text(
                   lead.name[0].toUpperCase(),
                   style: TextStyle(
@@ -661,7 +661,7 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
           builder: (lead) => Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: AppThemes.getStatusColor(lead.status).withOpacity(0.1),
+              color: AppThemes.getStatusColor(lead.status).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -680,7 +680,7 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
           builder: (lead) => Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: AppThemes.redAccent.withOpacity(0.1),
+              color: AppThemes.redAccent.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Text(
@@ -880,7 +880,7 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
         SizedBox(width: width < 360 ? 8 : 12),
         Container(
           decoration: BoxDecoration(
-            color: AppThemes.primaryColor.withOpacity(0.1),
+            color: AppThemes.primaryColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(width < 360 ? 10 : 12),
           ),
           child: IconButton(
@@ -941,7 +941,7 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
                 borderRadius: BorderRadius.circular(screenWidth * 0.04),
                 boxShadow: [
                   BoxShadow(
-                    color: isDarkMode ? Colors.black.withOpacity(0.15) : Colors.grey.withOpacity(0.06),
+                    color: isDarkMode ? Colors.black.withValues(alpha: 0.15) : Colors.grey.withValues(alpha: 0.06),
                     blurRadius: screenWidth * 0.01,
                     offset: const Offset(0, 1),
                   ),
@@ -951,7 +951,7 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
                 children: [
                   CircleAvatar(
                     radius: screenWidth < 360 ? 40 : 50,
-                    backgroundColor: AppThemes.primaryColor.withOpacity(0.1),
+                    backgroundColor: AppThemes.primaryColor.withValues(alpha: 0.1),
                     child: Text(
                       _userName.isNotEmpty ? _userName[0].toUpperCase() : 'U',
                       style: TextStyle(
@@ -992,7 +992,7 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
                 borderRadius: BorderRadius.circular(screenWidth * 0.04),
                 boxShadow: [
                   BoxShadow(
-                    color: isDarkMode ? Colors.black.withOpacity(0.15) : Colors.grey.withOpacity(0.06),
+                    color: isDarkMode ? Colors.black.withValues(alpha: 0.15) : Colors.grey.withValues(alpha: 0.06),
                     blurRadius: screenWidth * 0.01,
                     offset: const Offset(0, 1),
                   ),
@@ -1046,8 +1046,8 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
       margin: const EdgeInsets.only(left: 8),
       decoration: BoxDecoration(
         color: isDarkMode
-            ? Colors.white.withOpacity(0.1)
-            : Colors.grey.withOpacity(0.1),
+            ? Colors.white.withValues(alpha: 0.1)
+            : Colors.grey.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: IconButton(
@@ -1137,7 +1137,7 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
               height: 4,
               margin: const EdgeInsets.only(top: 12),
               decoration: BoxDecoration(
-                color: Colors.grey.withOpacity(0.3),
+                color: Colors.grey.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
