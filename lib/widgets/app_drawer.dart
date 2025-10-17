@@ -4,10 +4,7 @@ import 'package:customer_maxx_crm/blocs/auth/auth_bloc.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_bloc.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_state.dart';
 import 'package:customer_maxx_crm/screens/admin/admin_dashboard.dart';
-import 'package:customer_maxx_crm/screens/lead_manager/add_lead_screen.dart';
-import 'package:customer_maxx_crm/screens/lead_manager/view_leads_screen.dart';
 import 'package:customer_maxx_crm/screens/lead_manager/lead_manager_dashboard.dart';
-import 'package:customer_maxx_crm/screens/ba_specialist/registered_leads_screen.dart';
 import 'package:customer_maxx_crm/screens/ba_specialist/ba_specialist_dashboard.dart';
 import 'package:customer_maxx_crm/screens/settings_screen.dart';
 import 'package:customer_maxx_crm/screens/help_support_screen.dart';
@@ -32,52 +29,6 @@ class ModernDrawer extends StatelessWidget {
           child: ListView(
             padding: EdgeInsets.zero,
             children: [
-              // Drawer Header
-              // DrawerHeader(
-              //   decoration: const BoxDecoration(
-              //     gradient: LinearGradient(
-              //       colors: [Color(0xFF00BCD4), Color(0xFF0097A7)],
-              //       begin: Alignment.topLeft,
-              //       end: Alignment.bottomRight,
-              //     ),
-              //   ),
-              //   child: Column(
-              //     crossAxisAlignment: CrossAxisAlignment.start,
-              //     mainAxisAlignment: MainAxisAlignment.center,
-              //     children: [
-              //       CircleAvatar(
-              //         radius: 30,
-              //         backgroundColor: Colors.white.withValues(alpha: 0.2),
-              //         child: Text(
-              //           userName.isNotEmpty
-              //               ? userName[0].toUpperCase()
-              //               : 'A',
-              //           style: const TextStyle(
-              //             color: Colors.white,
-              //             fontSize: 24,
-              //             fontWeight: FontWeight.bold,
-              //           ),
-              //         ),
-              //       ),
-              //       const SizedBox(height: 12),
-              //       Text(
-              //         userName,
-              //         style: const TextStyle(
-              //           fontSize: 20,
-              //           fontWeight: FontWeight.bold,
-              //           color: Colors.white,
-              //         ),
-              //       ),
-              //       Text(
-              //         userRole,
-              //         style: TextStyle(
-              //           fontSize: 14,
-              //           color: Colors.white.withValues(alpha: 0.9),
-              //         ),
-              //       ),
-              //     ],
-              //   ),
-              // ),
               DrawerHeader(
                 margin: EdgeInsets.zero,
                 padding: EdgeInsets.zero,
