@@ -226,7 +226,7 @@ class ModernDrawer extends StatelessWidget {
                 'Settings',
                 () {
                   Navigator.pop(context);
-                  Navigator.pushReplacement(
+                  Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => const ModernSettingsScreen(),
@@ -242,7 +242,7 @@ class ModernDrawer extends StatelessWidget {
                 'Help & Support',
                 () {
                   Navigator.pop(context);
-                  Navigator.pushReplacement(
+                  Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => const HelpSupportScreen(),

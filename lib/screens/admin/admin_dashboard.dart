@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:customer_maxx_crm/blocs/auth/auth_bloc.dart';
@@ -269,8 +271,10 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: crossAxisCount,
-                crossAxisSpacing: spacing,
-                mainAxisSpacing: spacing,
+                // crossAxisSpacing: spacing,
+                // mainAxisSpacing: spacing,
+                mainAxisSpacing: screenWidth * 0.03,
+                crossAxisSpacing: screenWidth * 0.03,
                 childAspectRatio: screenWidth < 400 ? 1.1 : 1.2,
               ),
               itemCount: 4,
@@ -331,16 +335,20 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
     bool isDarkMode,
   ) {
     final screenWidth = MediaQuery.of(context).size.width;
+
     return Container(
       padding: EdgeInsets.all(screenWidth * 0.04),
+      constraints: BoxConstraints(
+        minHeight: screenWidth * 0.3, // Minimum height constraint
+      ),
       decoration: BoxDecoration(
         color: isDarkMode ? const Color(0xFF1A1A1A) : Colors.white,
         borderRadius: BorderRadius.circular(screenWidth * 0.03),
         boxShadow: [
           BoxShadow(
             color: isDarkMode
-                ? Colors.black.withValues(alpha: 0.15)
-                : Colors.grey.withValues(alpha: 0.06),
+                ? Colors.black.withOpacity(0.15)
+                : Colors.grey.withOpacity(0.06),
             blurRadius: screenWidth * 0.01,
             offset: const Offset(0, 1),
           ),
@@ -348,6 +356,8 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment:
+            MainAxisAlignment.spaceBetween, // Distribute space evenly
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -355,7 +365,7 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
               Container(
                 padding: EdgeInsets.all(screenWidth * 0.03),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
+                  color: color.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(screenWidth * 0.03),
                 ),
                 child: Icon(icon, color: color, size: screenWidth * 0.06),
@@ -363,10 +373,10 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
               Container(
                 padding: EdgeInsets.symmetric(
                   horizontal: screenWidth * 0.02,
-                  vertical: 4,
+                  vertical: screenWidth * 0.01,
                 ),
                 decoration: BoxDecoration(
-                  color: AppThemes.greenAccent.withValues(alpha: 0.1),
+                  color: AppThemes.greenAccent.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(screenWidth * 0.02),
                 ),
                 child: Text(
@@ -380,24 +390,30 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: screenWidth * 0.07,
-              fontWeight: FontWeight.w700,
-              color: isDarkMode ? Colors.white : AppThemes.lightPrimaryText,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: screenWidth * 0.035,
-              color: isDarkMode
-                  ? AppThemes.darkSecondaryText
-                  : AppThemes.lightSecondaryText,
-            ),
+
+          // Content section with minimal spacing
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: screenWidth * 0.07,
+                  fontWeight: FontWeight.w700,
+                  color: isDarkMode ? Colors.white : AppThemes.lightPrimaryText,
+                ),
+              ),
+              SizedBox(height: screenWidth * 0.01), // Minimal spacing
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: screenWidth * 0.035,
+                  color: isDarkMode
+                      ? AppThemes.darkSecondaryText
+                      : AppThemes.lightSecondaryText,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -648,7 +664,9 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
                 children: [
                   CircleAvatar(
                     radius: 16,
-                    backgroundColor: AppThemes.primaryColor.withValues(alpha: 0.1),
+                    backgroundColor: AppThemes.primaryColor.withValues(
+                      alpha: 0.1,
+                    ),
                     child: Text(
                       user.name[0].toUpperCase(),
                       style: const TextStyle(
@@ -669,7 +687,9 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
               builder: (user) => Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppThemes.getStatusColor(user.role).withValues(alpha: 0.1),
+                  color: AppThemes.getStatusColor(
+                    user.role,
+                  ).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -730,7 +750,9 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
               builder: (lead) => Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppThemes.getStatusColor(lead.status).withValues(alpha: 0.1),
+                  color: AppThemes.getStatusColor(
+                    lead.status,
+                  ).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(

@@ -184,6 +184,7 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
 
   Widget _buildWorkStatsGrid(bool isDarkMode) {
     final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
     final crossAxisCount = screenWidth < 600 ? 2 : 4;
     final spacing = screenWidth * 0.03;
     
@@ -194,7 +195,7 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
         crossAxisCount: crossAxisCount,
         crossAxisSpacing: spacing,
         mainAxisSpacing: spacing,
-        childAspectRatio: screenWidth < 400 ? 1.1 : 1.2,
+        childAspectRatio: screenWidth < 400 ? 1.1 : 1.1,
       ),
       itemCount: 4,
       itemBuilder: (context, index) {

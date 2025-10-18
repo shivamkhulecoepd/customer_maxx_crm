@@ -168,6 +168,170 @@ class _ModernLeadManagerDashboardState
     );
   }
 
+  // Widget _buildLeadStatsGrid(bool isDarkMode) {
+  //   final screenWidth = MediaQuery.of(context).size.width;
+  //   final crossAxisCount = screenWidth < 600 ? 2 : 4;
+  //   final spacing = screenWidth * 0.03;
+
+  //   return GridView.builder(
+  //     shrinkWrap: true,
+  //     physics: const NeverScrollableScrollPhysics(),
+  //     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+  //       crossAxisCount: crossAxisCount,
+  //       crossAxisSpacing: spacing,
+  //       mainAxisSpacing: spacing,
+  //       childAspectRatio: screenWidth < 400 ? 1.0 : 1.1,
+  //     ),
+  //     itemCount: 4,
+  //     itemBuilder: (context, index) {
+  //       final stats = [
+  //         {
+  //           'title': 'Total Leads',
+  //           'value': '1,247',
+  //           'icon': Icons.people_rounded,
+  //           'color': AppThemes.blueAccent,
+  //           'subtitle': '+23 today',
+  //         },
+  //         {
+  //           'title': 'Hot Leads',
+  //           'value': '89',
+  //           'icon': Icons.local_fire_department_rounded,
+  //           'color': AppThemes.redAccent,
+  //           'subtitle': '+5 today',
+  //         },
+  //         {
+  //           'title': 'Converted',
+  //           'value': '156',
+  //           'icon': Icons.check_circle_rounded,
+  //           'color': AppThemes.greenAccent,
+  //           'subtitle': '+12 this week',
+  //         },
+  //         {
+  //           'title': 'Follow-ups',
+  //           'value': '34',
+  //           'icon': Icons.schedule_rounded,
+  //           'color': AppThemes.orangeAccent,
+  //           'subtitle': 'Due today',
+  //         },
+  //       ];
+  //       final stat = stats[index];
+  //       return _buildStatCard(
+  //         stat['title'] as String,
+  //         stat['value'] as String,
+  //         stat['icon'] as IconData,
+  //         stat['color'] as Color,
+  //         stat['subtitle'] as String,
+  //         isDarkMode,
+  //       );
+  //     },
+  //   );
+  // }
+
+  // Widget _buildStatCard(
+  //   String title,
+  //   String value,
+  //   IconData icon,
+  //   Color color,
+  //   String subtitle,
+  //   bool isDarkMode,
+  // ) {
+  //   final screenWidth = MediaQuery.of(context).size.width;
+
+  //   return Container(
+  //     padding: EdgeInsets.all(screenWidth * 0.04),
+  //     decoration: BoxDecoration(
+  //       color: isDarkMode ? const Color(0xFF1A1A1A) : Colors.white,
+  //       borderRadius: BorderRadius.circular(screenWidth * 0.03),
+  //       boxShadow: [
+  //         BoxShadow(
+  //           color: isDarkMode
+  //               ? Colors.black.withOpacity(0.15)
+  //               : Colors.grey.withOpacity(0.06),
+  //           blurRadius: screenWidth * 0.01,
+  //           offset: const Offset(0, 1),
+  //         ),
+  //       ],
+  //     ),
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       mainAxisSize: MainAxisSize.min,
+  //       children: [
+  //         // Top row with icon and menu
+  //         Row(
+  //           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //           children: [
+  //             Container(
+  //               padding: EdgeInsets.all(screenWidth * 0.02),
+  //               decoration: BoxDecoration(
+  //                 color: color.withOpacity(0.1),
+  //                 borderRadius: BorderRadius.circular(screenWidth * 0.02),
+  //               ),
+  //               child: Icon(icon, color: color, size: screenWidth * 0.05),
+  //             ),
+  //             Icon(
+  //               Icons.more_vert_rounded,
+  //               color: isDarkMode ? Colors.white54 : Colors.grey[600],
+  //               size: screenWidth * 0.04, // Responsive icon size
+  //             ),
+  //           ],
+  //         ),
+
+  //         SizedBox(
+  //           height: screenWidth * 0.03,
+  //         ), // Responsive spacing (replaces const 12)
+  //         // Value - Made responsive
+  //         Text(
+  //           value,
+  //           style: TextStyle(
+  //             fontSize:
+  //                 screenWidth *
+  //                 0.065, // Responsive font size (replaces fixed 24)
+  //             fontWeight: FontWeight.w700,
+  //             color: isDarkMode ? Colors.white : AppThemes.lightPrimaryText,
+  //           ),
+  //           maxLines: 1,
+  //           overflow: TextOverflow.ellipsis,
+  //         ),
+
+  //         SizedBox(
+  //           height: screenWidth * 0.005,
+  //         ), // Responsive spacing (replaces const 2)
+  //         // Title - Made responsive
+  //         Text(
+  //           title,
+  //           style: TextStyle(
+  //             fontSize:
+  //                 screenWidth *
+  //                 0.032, // Responsive font size (replaces fixed 12)
+  //             fontWeight: FontWeight.w500,
+  //             color: isDarkMode
+  //                 ? AppThemes.darkSecondaryText
+  //                 : AppThemes.lightSecondaryText,
+  //           ),
+  //           maxLines: 1,
+  //           overflow: TextOverflow.ellipsis,
+  //         ),
+
+  //         SizedBox(
+  //           height: screenWidth * 0.01,
+  //         ), // Responsive spacing (replaces const 4)
+  //         // Subtitle - Made responsive
+  //         Text(
+  //           subtitle,
+  //           style: TextStyle(
+  //             fontSize:
+  //                 screenWidth *
+  //                 0.028, // Responsive font size (replaces fixed 10)
+  //             color: color,
+  //             fontWeight: FontWeight.w500,
+  //           ),
+  //           maxLines: 1,
+  //           overflow: TextOverflow.ellipsis,
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
   Widget _buildLeadStatsGrid(bool isDarkMode) {
     final screenWidth = MediaQuery.of(context).size.width;
     final crossAxisCount = screenWidth < 600 ? 2 : 4;
@@ -180,7 +344,9 @@ class _ModernLeadManagerDashboardState
         crossAxisCount: crossAxisCount,
         crossAxisSpacing: spacing,
         mainAxisSpacing: spacing,
-        childAspectRatio: screenWidth < 400 ? 1.0 : 1.1,
+        childAspectRatio: screenWidth < 400
+            ? 1.2
+            : 1.1, // Reduced aspect ratio for small screens
       ),
       itemCount: 4,
       itemBuilder: (context, index) {
@@ -236,16 +402,28 @@ class _ModernLeadManagerDashboardState
     bool isDarkMode,
   ) {
     final screenWidth = MediaQuery.of(context).size.width;
+
+    // Calculate responsive spacing based on screen size
+    final double paddingValue = screenWidth < 400
+        ? screenWidth * 0.03
+        : screenWidth * 0.04;
+    final double smallSpacing = screenWidth < 400
+        ? screenWidth * 0.015
+        : screenWidth * 0.02;
+    final double tinySpacing = screenWidth < 400
+        ? screenWidth * 0.005
+        : screenWidth * 0.01;
+
     return Container(
-      padding: EdgeInsets.all(screenWidth * 0.04),
+      padding: EdgeInsets.all(paddingValue),
       decoration: BoxDecoration(
         color: isDarkMode ? const Color(0xFF1A1A1A) : Colors.white,
         borderRadius: BorderRadius.circular(screenWidth * 0.03),
         boxShadow: [
           BoxShadow(
             color: isDarkMode
-                ? Colors.black.withValues(alpha: 0.15)
-                : Colors.grey.withValues(alpha: 0.06),
+                ? Colors.black.withOpacity(0.15)
+                : Colors.grey.withOpacity(0.06),
             blurRadius: screenWidth * 0.01,
             offset: const Offset(0, 1),
           ),
@@ -255,13 +433,14 @@ class _ModernLeadManagerDashboardState
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
+          // Top row with icon and menu
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
                 padding: EdgeInsets.all(screenWidth * 0.02),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
+                  color: color.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(screenWidth * 0.02),
                 ),
                 child: Icon(icon, color: color, size: screenWidth * 0.05),
@@ -269,46 +448,50 @@ class _ModernLeadManagerDashboardState
               Icon(
                 Icons.more_vert_rounded,
                 color: isDarkMode ? Colors.white54 : Colors.grey[600],
-                size: 16,
+                size: screenWidth * 0.04,
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Flexible(
-            child: Text(
-              value,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
-                color: isDarkMode ? Colors.white : AppThemes.lightPrimaryText,
-              ),
+
+          SizedBox(height: smallSpacing), // Reduced spacing
+          // Value
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: screenWidth * 0.065,
+              fontWeight: FontWeight.w700,
+              color: isDarkMode ? Colors.white : AppThemes.lightPrimaryText,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 2),
-          Flexible(
-            child: Text(
-              title,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: isDarkMode
-                    ? AppThemes.darkSecondaryText
-                    : AppThemes.lightSecondaryText,
-              ),
-              overflow: TextOverflow.ellipsis,
+
+          SizedBox(height: tinySpacing), // Reduced spacing
+          // Title
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: screenWidth * 0.032,
+              fontWeight: FontWeight.w500,
+              color: isDarkMode
+                  ? AppThemes.darkSecondaryText
+                  : AppThemes.lightSecondaryText,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 4),
-          Flexible(
-            child: Text(
-              subtitle,
-              style: TextStyle(
-                fontSize: 10,
-                color: color,
-                fontWeight: FontWeight.w500,
-              ),
-              overflow: TextOverflow.ellipsis,
+
+          SizedBox(height: tinySpacing), // Reduced spacing
+          // Subtitle - Made to take minimal space
+          Text(
+            subtitle,
+            style: TextStyle(
+              fontSize: screenWidth * 0.028,
+              color: color,
+              fontWeight: FontWeight.w500,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -421,7 +604,9 @@ class _ModernLeadManagerDashboardState
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: AppThemes.getStatusColor(lead.status).withValues(alpha: 0.1),
+              color: AppThemes.getStatusColor(
+                lead.status,
+              ).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -803,7 +988,9 @@ class _ModernLeadManagerDashboardState
           builder: (lead) => Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: AppThemes.getStatusColor(lead.status).withValues(alpha: 0.1),
+              color: AppThemes.getStatusColor(
+                lead.status,
+              ).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(

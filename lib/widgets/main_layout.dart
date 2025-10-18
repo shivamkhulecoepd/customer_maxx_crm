@@ -270,6 +270,4 @@ class ModernLayout extends StatelessWidget {
   Widget _buildModernDrawer(BuildContext context, bool isDarkMode) {
     return const ModernDrawer();
   }
-
-  // Drawer implementation moved to ModernDrawer widget
 }
