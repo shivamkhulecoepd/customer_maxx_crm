@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'package:customer_maxx_crm/blocs/theme/theme_event.dart';
+import 'package:customer_maxx_crm/widgets/app_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:customer_maxx_crm/blocs/auth/auth_bloc.dart';
@@ -12,7 +14,6 @@ import 'package:customer_maxx_crm/blocs/users/users_bloc.dart';
 import 'package:customer_maxx_crm/blocs/users/users_event.dart';
 import 'package:customer_maxx_crm/blocs/users/users_state.dart';
 import 'package:customer_maxx_crm/utils/theme_utils.dart';
-import 'package:customer_maxx_crm/widgets/main_layout.dart';
 import 'package:customer_maxx_crm/widgets/navigation_bar.dart';
 
 import 'package:customer_maxx_crm/widgets/standard_table_view.dart';
@@ -33,6 +34,9 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
   late int _currentNavIndex;
   String _userName = '';
   String _userRole = '';
+
+  final List<Widget>? actions = [];
+  final bool showDrawer = true;
 
   @override
   void initState() {
@@ -91,9 +95,15 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
         builder: (context, themeState) {
           final isDarkMode = themeState.isDarkMode;
 
-          return ModernLayout(
-            title: 'Admin Dashboard',
-            body: _buildBody(isDarkMode),
+          return Scaffold(
+            appBar: AppBar(
+              automaticallyImplyLeading: false,
+              title: _buildCustomAppBar(context, isDarkMode),
+              centerTitle: true,
+              backgroundColor: isDarkMode ? Colors.black : Colors.white,
+            ),
+            // drawer: _buildModernDrawer(context),
+            drawer: ModernDrawer(),
             bottomNavigationBar: FloatingNavigationBar(
               currentIndex: _currentNavIndex,
               userRole: _userRole,
@@ -103,11 +113,196 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
                 });
               },
             ),
-            floatingActionButton: _buildFloatingActionButton(isDarkMode),
+            body: _buildContentView(isDarkMode),
           );
         },
       ),
     );
+  }
+  
+  Widget _buildCustomAppBar(BuildContext context, bool isDarkMode) {
+    final width = MediaQuery.of(context).size.width;
+
+    return Container(
+      color: Colors.transparent,
+      child: Row(
+        children: [
+          // Menu/Back Button
+          if (showDrawer)
+            Builder(
+              builder: (BuildContext context) {
+                return _buildIconButton(
+                  context,
+                  Icons.menu_rounded,
+                  () => Scaffold.of(context).openDrawer(),
+                  isDarkMode,
+                );
+              },
+            ),
+          SizedBox(width: width < 360 ? 8 : 12),
+      
+          // Title
+          Expanded(
+            child: Text(
+              "Admin Dashboard",
+              style: TextStyle(
+                fontSize: width < 360 ? 18 : 20,
+                fontWeight: FontWeight.w600,
+                color: isDarkMode ? Colors.white : const Color(0xFF1A1A1A),
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+      
+          // Actions
+          if (actions != null) ...actions!,
+      
+          // Theme Toggle
+          _buildIconButton(
+            context,
+            isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+            () => context.read<ThemeBloc>().add(ToggleTheme()),
+            isDarkMode,
+          ),
+      
+          SizedBox(width: width < 360 ? 6 : 8),
+      
+          // Profile Avatar
+          _buildProfileAvatar(context, isDarkMode),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIconButton(
+    BuildContext context,
+    IconData icon,
+    VoidCallback onPressed,
+    bool isDarkMode,
+  ) {
+    final width = MediaQuery.of(context).size.width;
+    final buttonSize = width < 360 ? 36.0 : 44.0;
+    final iconSize = width < 360 ? 18.0 : 20.0;
+
+    return Container(
+      width: buttonSize,
+      height: buttonSize,
+      decoration: BoxDecoration(
+        color: isDarkMode
+            ? Colors.white.withValues(alpha: 0.1)
+            : Colors.grey.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(width < 360 ? 10 : 12),
+      ),
+      child: IconButton(
+        icon: Icon(
+          icon,
+          color: isDarkMode ? Colors.white : const Color(0xFF1A1A1A),
+          size: iconSize,
+        ),
+        onPressed: onPressed,
+        padding: EdgeInsets.zero,
+      ),
+    );
+  }
+
+  Widget _buildProfileAvatar(BuildContext context, bool isDarkMode) {
+    final width = MediaQuery.of(context).size.width;
+    final avatarSize = width < 360 ? 36.0 : 44.0;
+    final fontSize = width < 360 ? 14.0 : 16.0;
+
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, authState) {
+        String userName = 'User';
+        if (authState is Authenticated && authState.user != null) {
+          userName = authState.user!.name;
+        }
+
+        return GestureDetector(
+          onTap: () => _showProfileMenu(context),
+          child: Container(
+            width: avatarSize,
+            height: avatarSize,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF00BCD4), Color(0xFF0097A7)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(width < 360 ? 10 : 12),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF00BCD4).withValues(alpha: 0.3),
+                  blurRadius: width < 360 ? 6 : 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Center(
+              child: Text(
+                userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: fontSize,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showProfileMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        margin: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(top: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: const Icon(Icons.person_outline_rounded),
+              title: const Text('Profile'),
+              onTap: () => Navigator.pop(context),
+            ),
+            ListTile(
+              leading: const Icon(Icons.settings_outlined),
+              title: const Text('Settings'),
+              onTap: () => Navigator.pop(context),
+            ),
+            ListTile(
+              leading: const Icon(Icons.logout_rounded),
+              title: const Text('Logout'),
+              onTap: () {
+                Navigator.pop(context);
+                context.read<AuthBloc>().add(LogoutRequested());
+              },
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModernDrawer(BuildContext context) {
+    return const ModernDrawer();
   }
 
   Widget _buildBody(bool isDarkMode) {
@@ -167,7 +362,6 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
     final screenWidth = MediaQuery.of(context).size.width;
     return Container(
       width: double.infinity,
-      // margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.01, vertical: 8),
       decoration: BoxDecoration(
         gradient: AppThemes.getPrimaryGradient(),
         borderRadius: BorderRadius.circular(screenWidth * 0.04),
@@ -264,7 +458,6 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
 
             final screenWidth = MediaQuery.of(context).size.width;
             final crossAxisCount = screenWidth < 600 ? 2 : 4;
-            final spacing = screenWidth * 0.03;
 
             return GridView.builder(
               shrinkWrap: true,
@@ -347,8 +540,8 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
         boxShadow: [
           BoxShadow(
             color: isDarkMode
-                ? Colors.black.withOpacity(0.15)
-                : Colors.grey.withOpacity(0.06),
+                ? Colors.black.withValues(alpha: 0.15)
+                : Colors.grey.withValues(alpha: 0.06),
             blurRadius: screenWidth * 0.01,
             offset: const Offset(0, 1),
           ),
@@ -365,7 +558,7 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
               Container(
                 padding: EdgeInsets.all(screenWidth * 0.03),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(screenWidth * 0.03),
                 ),
                 child: Icon(icon, color: color, size: screenWidth * 0.06),
@@ -376,7 +569,7 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
                   vertical: screenWidth * 0.01,
                 ),
                 decoration: BoxDecoration(
-                  color: AppThemes.greenAccent.withOpacity(0.1),
+                  color: AppThemes.greenAccent.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(screenWidth * 0.02),
                 ),
                 child: Text(
