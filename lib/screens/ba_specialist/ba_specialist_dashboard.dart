@@ -1,3 +1,5 @@
+import 'package:customer_maxx_crm/blocs/theme/theme_event.dart';
+import 'package:customer_maxx_crm/widgets/app_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:customer_maxx_crm/blocs/auth/auth_bloc.dart';
@@ -16,13 +18,18 @@ class ModernBASpecialistDashboard extends StatefulWidget {
   const ModernBASpecialistDashboard({super.key, this.initialIndex = 0});
 
   @override
-  State<ModernBASpecialistDashboard> createState() => _ModernBASpecialistDashboardState();
+  State<ModernBASpecialistDashboard> createState() =>
+      _ModernBASpecialistDashboardState();
 }
 
-class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboard> {
+class _ModernBASpecialistDashboardState
+    extends State<ModernBASpecialistDashboard> {
   late int _currentNavIndex;
   String _userName = '';
   String _userRole = '';
+
+  final List<Widget>? actions = [];
+  final bool showDrawer = true;
 
   @override
   void initState() {
@@ -46,10 +53,16 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
     return BlocBuilder<ThemeBloc, ThemeState>(
       builder: (context, themeState) {
         final isDarkMode = themeState.isDarkMode;
-        
-        return ModernLayout(
-          title: 'BA Specialist',
-          body: _buildBody(isDarkMode),
+
+        return Scaffold(
+          appBar: AppBar(
+            automaticallyImplyLeading: false,
+            title: _buildCustomAppBar(context, isDarkMode),
+            centerTitle: true,
+            backgroundColor: isDarkMode ? Colors.black : Colors.white,
+          ),
+          // drawer: _buildModernDrawer(context),
+          drawer: ModernDrawer(),
           bottomNavigationBar: FloatingNavigationBar(
             currentIndex: _currentNavIndex,
             userRole: _userRole,
@@ -59,7 +72,7 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
               });
             },
           ),
-          floatingActionButton: _buildFloatingActionButton(isDarkMode),
+          body: _buildBody(isDarkMode),
         );
       },
     );
@@ -78,6 +91,187 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
       default:
         return _buildDashboardView(isDarkMode);
     }
+  }
+
+  Widget _buildCustomAppBar(BuildContext context, bool isDarkMode) {
+    final width = MediaQuery.of(context).size.width;
+
+    return Container(
+      color: Colors.transparent,
+      child: Row(
+        children: [
+          // Menu/Back Button
+          if (showDrawer)
+            Builder(
+              builder: (BuildContext context) {
+                return _buildIconButton(
+                  context,
+                  Icons.menu_rounded,
+                  () => Scaffold.of(context).openDrawer(),
+                  isDarkMode,
+                );
+              },
+            ),
+          SizedBox(width: width < 360 ? 8 : 12),
+
+          // Title
+          Expanded(
+            child: Text(
+              "BA Specialist",
+              style: TextStyle(
+                fontSize: width < 360 ? 18 : 20,
+                fontWeight: FontWeight.w600,
+                color: isDarkMode ? Colors.white : const Color(0xFF1A1A1A),
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+
+          // Actions
+          if (actions != null) ...actions!,
+
+          // Theme Toggle
+          _buildIconButton(
+            context,
+            isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+            () => context.read<ThemeBloc>().add(ToggleTheme()),
+            isDarkMode,
+          ),
+
+          SizedBox(width: width < 360 ? 6 : 8),
+
+          // Profile Avatar
+          _buildProfileAvatar(context, isDarkMode),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIconButton(
+    BuildContext context,
+    IconData icon,
+    VoidCallback onPressed,
+    bool isDarkMode,
+  ) {
+    final width = MediaQuery.of(context).size.width;
+    final buttonSize = width < 360 ? 36.0 : 44.0;
+    final iconSize = width < 360 ? 18.0 : 20.0;
+
+    return Container(
+      width: buttonSize,
+      height: buttonSize,
+      decoration: BoxDecoration(
+        color: isDarkMode
+            ? Colors.white.withValues(alpha: 0.1)
+            : Colors.grey.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(width < 360 ? 10 : 12),
+      ),
+      child: IconButton(
+        icon: Icon(
+          icon,
+          color: isDarkMode ? Colors.white : const Color(0xFF1A1A1A),
+          size: iconSize,
+        ),
+        onPressed: onPressed,
+        padding: EdgeInsets.zero,
+      ),
+    );
+  }
+
+  Widget _buildProfileAvatar(BuildContext context, bool isDarkMode) {
+    final width = MediaQuery.of(context).size.width;
+    final avatarSize = width < 360 ? 36.0 : 44.0;
+    final fontSize = width < 360 ? 14.0 : 16.0;
+
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, authState) {
+        String userName = 'User';
+        if (authState is Authenticated && authState.user != null) {
+          userName = authState.user!.name;
+        }
+
+        return GestureDetector(
+          onTap: () => _showProfileMenu(context),
+          child: Container(
+            width: avatarSize,
+            height: avatarSize,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF00BCD4), Color(0xFF0097A7)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(width < 360 ? 10 : 12),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF00BCD4).withValues(alpha: 0.3),
+                  blurRadius: width < 360 ? 6 : 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Center(
+              child: Text(
+                userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: fontSize,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showProfileMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        margin: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(top: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: const Icon(Icons.person_outline_rounded),
+              title: const Text('Profile'),
+              onTap: () => Navigator.pop(context),
+            ),
+            ListTile(
+              leading: const Icon(Icons.settings_outlined),
+              title: const Text('Settings'),
+              onTap: () => Navigator.pop(context),
+            ),
+            ListTile(
+              leading: const Icon(Icons.logout_rounded),
+              title: const Text('Logout'),
+              onTap: () {
+                Navigator.pop(context);
+                context.read<AuthBloc>().add(LogoutRequested());
+              },
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildDashboardView(bool isDarkMode) {
@@ -116,69 +310,71 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
         borderRadius: BorderRadius.circular(screenWidth * 0.04),
         boxShadow: [
           BoxShadow(
-            color: isDarkMode ? Colors.black.withValues(alpha: 0.15) : Colors.grey.withValues(alpha: 0.06),
+            color: isDarkMode
+                ? Colors.black.withValues(alpha: 0.15)
+                : Colors.grey.withValues(alpha: 0.06),
             blurRadius: screenWidth * 0.01,
             offset: const Offset(0, 1),
           ),
         ],
       ),
       padding: EdgeInsets.all(screenWidth * 0.06),
-        child: Row(
-          children: [
-            Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Icon(
-                Icons.business_center_rounded,
-                color: Colors.white,
-                size: 30,
-              ),
+      child: Row(
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(16),
             ),
-            const SizedBox(width: 20),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Welcome back, $_userName!',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'BA Specialist Dashboard - CustomerMaxx CRM',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
+            child: const Icon(
+              Icons.business_center_rounded,
+              color: Colors.white,
+              size: 30,
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Text(
-                'Online',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
+          ),
+          const SizedBox(width: 20),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Welcome back, $_userName!',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
+                const SizedBox(height: 4),
+                Text(
+                  'BA Specialist Dashboard - CustomerMaxx CRM',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Text(
+              'Online',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -187,7 +383,7 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
     final screenHeight = MediaQuery.of(context).size.height;
     final crossAxisCount = screenWidth < 600 ? 2 : 4;
     final spacing = screenWidth * 0.03;
-    
+
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -258,7 +454,9 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
         borderRadius: BorderRadius.circular(screenWidth * 0.03),
         boxShadow: [
           BoxShadow(
-            color: isDarkMode ? Colors.black.withValues(alpha: 0.15) : Colors.grey.withValues(alpha: 0.06),
+            color: isDarkMode
+                ? Colors.black.withValues(alpha: 0.15)
+                : Colors.grey.withValues(alpha: 0.06),
             blurRadius: screenWidth * 0.01,
             offset: const Offset(0, 1),
           ),
@@ -351,14 +549,21 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
         const SizedBox(height: 16),
         Container(
           width: double.infinity,
-          margin: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.01, vertical: 8),
+          margin: EdgeInsets.symmetric(
+            horizontal: MediaQuery.of(context).size.width * 0.01,
+            vertical: 8,
+          ),
           padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.04),
           decoration: BoxDecoration(
             color: isDarkMode ? const Color(0xFF1A1A1A) : Colors.white,
-            borderRadius: BorderRadius.circular(MediaQuery.of(context).size.width * 0.04),
+            borderRadius: BorderRadius.circular(
+              MediaQuery.of(context).size.width * 0.04,
+            ),
             boxShadow: [
               BoxShadow(
-                color: isDarkMode ? Colors.black.withValues(alpha: 0.15) : Colors.grey.withValues(alpha: 0.06),
+                color: isDarkMode
+                    ? Colors.black.withValues(alpha: 0.15)
+                    : Colors.grey.withValues(alpha: 0.06),
                 blurRadius: MediaQuery.of(context).size.width * 0.01,
                 offset: const Offset(0, 1),
               ),
@@ -407,11 +612,11 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
     bool isCompleted,
     bool isDarkMode,
   ) {
-    final priorityColor = priority == 'High' 
-        ? AppThemes.redAccent 
-        : priority == 'Medium' 
-            ? AppThemes.orangeAccent 
-            : AppThemes.greenAccent;
+    final priorityColor = priority == 'High'
+        ? AppThemes.redAccent
+        : priority == 'Medium'
+        ? AppThemes.orangeAccent
+        : AppThemes.greenAccent;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -431,7 +636,9 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
                   title,
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
-                    color: isDarkMode ? Colors.white : AppThemes.lightPrimaryText,
+                    color: isDarkMode
+                        ? Colors.white
+                        : AppThemes.lightPrimaryText,
                     decoration: isCompleted ? TextDecoration.lineThrough : null,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -441,7 +648,9 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
                   description,
                   style: TextStyle(
                     fontSize: 12,
-                    color: isDarkMode ? AppThemes.darkSecondaryText : AppThemes.lightSecondaryText,
+                    color: isDarkMode
+                        ? AppThemes.darkSecondaryText
+                        : AppThemes.lightSecondaryText,
                   ),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
@@ -473,7 +682,9 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
                 time,
                 style: TextStyle(
                   fontSize: 12,
-                  color: isDarkMode ? AppThemes.darkTertiaryText : AppThemes.lightTertiaryText,
+                  color: isDarkMode
+                      ? AppThemes.darkTertiaryText
+                      : AppThemes.lightTertiaryText,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -499,14 +710,21 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
         const SizedBox(height: 16),
         Container(
           width: double.infinity,
-          margin: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.01, vertical: 8),
+          margin: EdgeInsets.symmetric(
+            horizontal: MediaQuery.of(context).size.width * 0.01,
+            vertical: 8,
+          ),
           padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.04),
           decoration: BoxDecoration(
             color: isDarkMode ? const Color(0xFF1A1A1A) : Colors.white,
-            borderRadius: BorderRadius.circular(MediaQuery.of(context).size.width * 0.04),
+            borderRadius: BorderRadius.circular(
+              MediaQuery.of(context).size.width * 0.04,
+            ),
             boxShadow: [
               BoxShadow(
-                color: isDarkMode ? Colors.black.withValues(alpha: 0.15) : Colors.grey.withValues(alpha: 0.06),
+                color: isDarkMode
+                    ? Colors.black.withValues(alpha: 0.15)
+                    : Colors.grey.withValues(alpha: 0.06),
                 blurRadius: MediaQuery.of(context).size.width * 0.01,
                 offset: const Offset(0, 1),
               ),
@@ -561,11 +779,7 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
               color: AppThemes.primaryColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(
-              icon,
-              color: AppThemes.primaryColor,
-              size: 20,
-            ),
+            child: Icon(icon, color: AppThemes.primaryColor, size: 20),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -576,7 +790,9 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
                   title,
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
-                    color: isDarkMode ? Colors.white : AppThemes.lightPrimaryText,
+                    color: isDarkMode
+                        ? Colors.white
+                        : AppThemes.lightPrimaryText,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -584,7 +800,9 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
                   description,
                   style: TextStyle(
                     fontSize: 12,
-                    color: isDarkMode ? AppThemes.darkSecondaryText : AppThemes.lightSecondaryText,
+                    color: isDarkMode
+                        ? AppThemes.darkSecondaryText
+                        : AppThemes.lightSecondaryText,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -595,7 +813,9 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
             time,
             style: TextStyle(
               fontSize: 12,
-              color: isDarkMode ? AppThemes.darkTertiaryText : AppThemes.lightTertiaryText,
+              color: isDarkMode
+                  ? AppThemes.darkTertiaryText
+                  : AppThemes.lightTertiaryText,
             ),
             overflow: TextOverflow.ellipsis,
           ),
@@ -606,7 +826,7 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
 
   Widget _buildRegisteredLeadsView(bool isDarkMode) {
     final leads = _getAssignedLeads();
-    
+
     return ModernTableView<Lead>(
       title: 'Assigned Leads',
       data: leads,
@@ -618,7 +838,9 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
             children: [
               CircleAvatar(
                 radius: 16,
-                backgroundColor: AppThemes.getStatusColor(lead.status).withValues(alpha: 0.1),
+                backgroundColor: AppThemes.getStatusColor(
+                  lead.status,
+                ).withValues(alpha: 0.1),
                 child: Text(
                   lead.name[0].toUpperCase(),
                   style: TextStyle(
@@ -640,10 +862,7 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
                     ),
                     Text(
                       lead.email,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
@@ -652,17 +871,16 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
             ],
           ),
         ),
-        TableColumn(
-          title: 'Phone',
-          value: (lead) => lead.phone,
-        ),
+        TableColumn(title: 'Phone', value: (lead) => lead.phone),
         TableColumn(
           title: 'Status',
           value: (lead) => lead.status,
           builder: (lead) => Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: AppThemes.getStatusColor(lead.status).withValues(alpha: 0.1),
+              color: AppThemes.getStatusColor(
+                lead.status,
+              ).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -720,7 +938,9 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w600,
-                      color: isDarkMode ? Colors.white : const Color(0xFF1A1A1A),
+                      color: isDarkMode
+                          ? Colors.white
+                          : const Color(0xFF1A1A1A),
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -855,20 +1075,23 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
   Widget _buildTaskFilter(bool isDarkMode) {
     final width = MediaQuery.of(context).size.width;
     final padding = width < 360 ? 12.0 : 16.0;
-    
+
     return Row(
       children: [
         Expanded(
           child: TextField(
             decoration: InputDecoration(
               hintText: 'Search tasks...',
-              prefixIcon: Icon(Icons.search_rounded, size: width < 360 ? 20 : 24),
+              prefixIcon: Icon(
+                Icons.search_rounded,
+                size: width < 360 ? 20 : 24,
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(width < 360 ? 10 : 12),
                 borderSide: BorderSide.none,
               ),
               filled: true,
-              fillColor: isDarkMode 
+              fillColor: isDarkMode
                   ? AppThemes.darkSurfaceBackground
                   : AppThemes.lightSurfaceBackground,
               contentPadding: EdgeInsets.symmetric(
@@ -917,7 +1140,9 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w600,
-                        color: isDarkMode ? Colors.white : const Color(0xFF1A1A1A),
+                        color: isDarkMode
+                            ? Colors.white
+                            : const Color(0xFF1A1A1A),
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -935,14 +1160,19 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
             const SizedBox(height: 24),
             Container(
               width: double.infinity,
-              margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.01, vertical: 8),
+              margin: EdgeInsets.symmetric(
+                horizontal: screenWidth * 0.01,
+                vertical: 8,
+              ),
               padding: EdgeInsets.all(screenWidth * 0.04),
               decoration: BoxDecoration(
                 color: isDarkMode ? const Color(0xFF1A1A1A) : Colors.white,
                 borderRadius: BorderRadius.circular(screenWidth * 0.04),
                 boxShadow: [
                   BoxShadow(
-                    color: isDarkMode ? Colors.black.withValues(alpha: 0.15) : Colors.grey.withValues(alpha: 0.06),
+                    color: isDarkMode
+                        ? Colors.black.withValues(alpha: 0.15)
+                        : Colors.grey.withValues(alpha: 0.06),
                     blurRadius: screenWidth * 0.01,
                     offset: const Offset(0, 1),
                   ),
@@ -952,7 +1182,9 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
                 children: [
                   CircleAvatar(
                     radius: screenWidth < 360 ? 40 : 50,
-                    backgroundColor: AppThemes.primaryColor.withValues(alpha: 0.1),
+                    backgroundColor: AppThemes.primaryColor.withValues(
+                      alpha: 0.1,
+                    ),
                     child: Text(
                       _userName.isNotEmpty ? _userName[0].toUpperCase() : 'U',
                       style: TextStyle(
@@ -968,14 +1200,18 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
                     style: TextStyle(
                       fontSize: screenWidth < 360 ? 20 : 24,
                       fontWeight: FontWeight.w600,
-                      color: isDarkMode ? Colors.white : AppThemes.lightPrimaryText,
+                      color: isDarkMode
+                          ? Colors.white
+                          : AppThemes.lightPrimaryText,
                     ),
                   ),
                   Text(
                     _userRole,
                     style: TextStyle(
                       fontSize: screenWidth < 360 ? 14 : 16,
-                      color: isDarkMode ? AppThemes.darkSecondaryText : AppThemes.lightSecondaryText,
+                      color: isDarkMode
+                          ? AppThemes.darkSecondaryText
+                          : AppThemes.lightSecondaryText,
                     ),
                   ),
                   const SizedBox(height: 30),
@@ -986,14 +1222,19 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
             const SizedBox(height: 24),
             Container(
               width: double.infinity,
-              margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.01, vertical: 8),
+              margin: EdgeInsets.symmetric(
+                horizontal: screenWidth * 0.01,
+                vertical: 8,
+              ),
               padding: EdgeInsets.all(screenWidth * 0.04),
               decoration: BoxDecoration(
                 color: isDarkMode ? const Color(0xFF1A1A1A) : Colors.white,
                 borderRadius: BorderRadius.circular(screenWidth * 0.04),
                 boxShadow: [
                   BoxShadow(
-                    color: isDarkMode ? Colors.black.withValues(alpha: 0.15) : Colors.grey.withValues(alpha: 0.06),
+                    color: isDarkMode
+                        ? Colors.black.withValues(alpha: 0.15)
+                        : Colors.grey.withValues(alpha: 0.06),
                     blurRadius: screenWidth * 0.01,
                     offset: const Offset(0, 1),
                   ),
@@ -1007,14 +1248,32 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: isDarkMode ? Colors.white : AppThemes.lightPrimaryText,
+                      color: isDarkMode
+                          ? Colors.white
+                          : AppThemes.lightPrimaryText,
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _buildSettingsItem(Icons.notifications_rounded, 'Notifications', isDarkMode),
-                  _buildSettingsItem(Icons.security_rounded, 'Privacy & Security', isDarkMode),
-                  _buildSettingsItem(Icons.help_rounded, 'Help & Support', isDarkMode),
-                  _buildSettingsItem(Icons.logout_rounded, 'Logout', isDarkMode),
+                  _buildSettingsItem(
+                    Icons.notifications_rounded,
+                    'Notifications',
+                    isDarkMode,
+                  ),
+                  _buildSettingsItem(
+                    Icons.security_rounded,
+                    'Privacy & Security',
+                    isDarkMode,
+                  ),
+                  _buildSettingsItem(
+                    Icons.help_rounded,
+                    'Help & Support',
+                    isDarkMode,
+                  ),
+                  _buildSettingsItem(
+                    Icons.logout_rounded,
+                    'Logout',
+                    isDarkMode,
+                  ),
                 ],
               ),
             ),
@@ -1080,7 +1339,9 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
           label,
           style: TextStyle(
             fontSize: 12,
-            color: isDarkMode ? AppThemes.darkSecondaryText : AppThemes.lightSecondaryText,
+            color: isDarkMode
+                ? AppThemes.darkSecondaryText
+                : AppThemes.lightSecondaryText,
           ),
         ),
       ],
@@ -1145,10 +1406,7 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
             const SizedBox(height: 20),
             const Text(
               'Lead Actions',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 20),
             ListTile(
@@ -1223,10 +1481,74 @@ class _ModernBASpecialistDashboardState extends State<ModernBASpecialistDashboar
 
   List<Lead> _getAssignedLeads() {
     return [
-      Lead(id: '1', date: DateTime.now(), name: 'Alice Johnson', email: 'alice@example.com', phone: '123-456-7890', leadManager: 'achal', status: 'New', feedback: '', education: '', experience: '', location: '', orderBy: '', assignedBy: 'Nikita', discount: '', baSpecialist: 'Nikita'),
-      Lead(id: '2', date: DateTime.now(), name: 'Bob Smith', email: 'bob@example.com', phone: '098-765-4321', leadManager: 'achal', status: 'Contacted', feedback: '', education: '', experience: '', location: '', orderBy: '', assignedBy: 'Nikita', discount: '', baSpecialist: 'Nikita'),
-      Lead(id: '3', date: DateTime.now(), name: 'Carol Davis', email: 'carol@example.com', phone: '555-123-4567', leadManager: 'achal', status: 'Qualified', feedback: '', education: '', experience: '', location: '', orderBy: '', assignedBy: 'Nikita', discount: '', baSpecialist: 'Nikita'),
-      Lead(id: '4', date: DateTime.now(), name: 'David Wilson', email: 'david@example.com', phone: '444-555-6666', leadManager: 'achal', status: 'Proposal Sent', feedback: '', education: '', experience: '', location: '', orderBy: '', assignedBy: 'Nikita', discount: '', baSpecialist: 'Nikita'),
+      Lead(
+        id: '1',
+        date: DateTime.now(),
+        name: 'Alice Johnson',
+        email: 'alice@example.com',
+        phone: '123-456-7890',
+        leadManager: 'achal',
+        status: 'New',
+        feedback: '',
+        education: '',
+        experience: '',
+        location: '',
+        orderBy: '',
+        assignedBy: 'Nikita',
+        discount: '',
+        baSpecialist: 'Nikita',
+      ),
+      Lead(
+        id: '2',
+        date: DateTime.now(),
+        name: 'Bob Smith',
+        email: 'bob@example.com',
+        phone: '098-765-4321',
+        leadManager: 'achal',
+        status: 'Contacted',
+        feedback: '',
+        education: '',
+        experience: '',
+        location: '',
+        orderBy: '',
+        assignedBy: 'Nikita',
+        discount: '',
+        baSpecialist: 'Nikita',
+      ),
+      Lead(
+        id: '3',
+        date: DateTime.now(),
+        name: 'Carol Davis',
+        email: 'carol@example.com',
+        phone: '555-123-4567',
+        leadManager: 'achal',
+        status: 'Qualified',
+        feedback: '',
+        education: '',
+        experience: '',
+        location: '',
+        orderBy: '',
+        assignedBy: 'Nikita',
+        discount: '',
+        baSpecialist: 'Nikita',
+      ),
+      Lead(
+        id: '4',
+        date: DateTime.now(),
+        name: 'David Wilson',
+        email: 'david@example.com',
+        phone: '444-555-6666',
+        leadManager: 'achal',
+        status: 'Proposal Sent',
+        feedback: '',
+        education: '',
+        experience: '',
+        location: '',
+        orderBy: '',
+        assignedBy: 'Nikita',
+        discount: '',
+        baSpecialist: 'Nikita',
+      ),
     ];
   }
 }
