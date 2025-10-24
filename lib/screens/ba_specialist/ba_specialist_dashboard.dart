@@ -6,7 +6,6 @@ import 'package:customer_maxx_crm/blocs/auth/auth_bloc.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_bloc.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_state.dart';
 import 'package:customer_maxx_crm/utils/theme_utils.dart';
-import 'package:customer_maxx_crm/widgets/main_layout.dart';
 import 'package:customer_maxx_crm/widgets/navigation_bar.dart';
 
 import 'package:customer_maxx_crm/widgets/standard_table_view.dart';
@@ -72,6 +71,7 @@ class _ModernBASpecialistDashboardState
               });
             },
           ),
+          floatingActionButton: _buildFloatingActionButton(isDarkMode),
           body: _buildBody(isDarkMode),
         );
       },
@@ -380,7 +380,6 @@ class _ModernBASpecialistDashboardState
 
   Widget _buildWorkStatsGrid(bool isDarkMode) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
     final crossAxisCount = screenWidth < 600 ? 2 : 4;
     final spacing = screenWidth * 0.03;
 
@@ -1074,7 +1073,6 @@ class _ModernBASpecialistDashboardState
 
   Widget _buildTaskFilter(bool isDarkMode) {
     final width = MediaQuery.of(context).size.width;
-    final padding = width < 360 ? 12.0 : 16.0;
 
     return Row(
       children: [

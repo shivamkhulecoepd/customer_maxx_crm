@@ -108,8 +108,6 @@ class ThemeBloc extends Bloc<ThemeEvent, ThemeState> with WidgetsBindingObserver
     // Notify when system theme changes
     // This will only affect the UI if we're in system theme mode
     if (state.currentThemeMode == _systemTheme) {
-      final platformBrightness = WidgetsBinding.instance.platformDispatcher.platformBrightness;
-      final isDarkMode = platformBrightness == Brightness.dark;
       
       add(ThemeChanged(state.currentThemeMode));
     }

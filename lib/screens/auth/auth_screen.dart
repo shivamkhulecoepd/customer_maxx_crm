@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:customer_maxx_crm/blocs/auth/auth_bloc.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_bloc.dart';
-import 'package:customer_maxx_crm/blocs/theme/theme_event.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_state.dart';
 import 'package:customer_maxx_crm/utils/theme_utils.dart';
 
@@ -544,79 +543,6 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildThemeToggle(bool isDarkMode) {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: isDarkMode 
-            ? AppThemes.darkCardBackground 
-            : AppThemes.lightSurfaceBackground,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildThemeButton(
-            icon: Icons.light_mode_rounded,
-            label: 'Light',
-            isSelected: !isDarkMode,
-            onTap: () {
-              if (isDarkMode) {
-                context.read<ThemeBloc>().add(ToggleTheme());
-              }
-            },
-          ),
-          _buildThemeButton(
-            icon: Icons.dark_mode_rounded,
-            label: 'Dark',
-            isSelected: isDarkMode,
-            onTap: () {
-              if (!isDarkMode) {
-                context.read<ThemeBloc>().add(ToggleTheme());
-              }
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildThemeButton({
-    required IconData icon,
-    required String label,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? AppThemes.primaryColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              color: isSelected ? Colors.white : Colors.grey,
-              size: 16,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? Colors.white : Colors.grey,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 

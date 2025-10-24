@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:customer_maxx_crm/blocs/theme/theme_event.dart';
 import 'package:customer_maxx_crm/widgets/app_drawer.dart';
 import 'package:flutter/material.dart';
@@ -113,6 +111,7 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
                 });
               },
             ),
+            floatingActionButton: _buildFloatingActionButton(isDarkMode),
             body: _buildContentView(isDarkMode),
           );
         },
@@ -298,19 +297,6 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildModernDrawer(BuildContext context) {
-    return const ModernDrawer();
-  }
-
-  Widget _buildBody(bool isDarkMode) {
-    // Wrap the content in a container with proper constraints
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      child: _buildContentView(isDarkMode),
     );
   }
 
