@@ -43,6 +43,36 @@ class Lead {
   });
 
   factory Lead.fromJson(Map<String, dynamic> json) {
+    // Helper function to safely convert dynamic values to double
+    double? _toDouble(dynamic value) {
+      if (value == null) return null;
+      if (value is double) return value;
+      if (value is int) return value.toDouble();
+      if (value is String) {
+        try {
+          return double.parse(value);
+        } catch (e) {
+          return null;
+        }
+      }
+      return null;
+    }
+    
+    // Helper function to safely convert dynamic values to int
+    int? _toInt(dynamic value) {
+      if (value == null) return null;
+      if (value is int) return value;
+      if (value is double) return value.toInt();
+      if (value is String) {
+        try {
+          return int.parse(value);
+        } catch (e) {
+          return null;
+        }
+      }
+      return null;
+    }
+    
     return Lead(
       id: json['id'] as int,
       name: json['name'] as String,
@@ -57,9 +87,9 @@ class Lead {
       ownerName: json['owner_name'] as String,
       assignedName: json['assigned_name'] as String,
       latestHistory: json['latest_history'] as String,
-      discount: json['discount'] as int?,
-      installment1: json['installment1'] as double?,
-      installment2: json['installment2'] as double?,
+      discount: _toInt(json['discount']),
+      installment1: _toDouble(json['installment1']),
+      installment2: _toDouble(json['installment2']),
       date: json['created_at'] != null ? DateTime.tryParse(json['created_at']) : null,
       ownerId: null, // Not returned by API
       assignedTo: null, // Not returned by API
@@ -82,8 +112,8 @@ class Lead {
       'assigned_name': assignedName,
       'latest_history': latestHistory,
       if (discount != null) 'discount': discount,
-      if (installment1 != null) 'installment1': installment1,
-      if (installment2 != null) 'installment2': installment2,
+      if (installment1 != null) 'installment1': installment1.toString(),
+      if (installment2 != null) 'installment2': installment2.toString(),
     };
     
     // For creation, use ID fields instead of name fields if IDs are provided

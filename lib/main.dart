@@ -14,6 +14,9 @@ import 'package:customer_maxx_crm/screens/lead_manager/lead_manager_dashboard.da
 import 'package:customer_maxx_crm/screens/ba_specialist/ba_specialist_dashboard.dart';
 // import 'package:customer_maxx_crm/services/auth_service.dart';
 import 'package:customer_maxx_crm/utils/theme_utils.dart';
+import 'package:customer_maxx_crm/screens/dummy_data_example.dart';
+import 'package:customer_maxx_crm/screens/comprehensive_table_example.dart';
+import 'package:customer_maxx_crm/screens/table_examples_menu.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -55,6 +58,11 @@ class MainApp extends StatelessWidget {
           themeMode: themeState.themeMode,
           debugShowCheckedModeBanner: false,
           home: const ModernSplashScreen(),
+          routes: {
+            '/dummy-data-example': (context) => const DummyDataExampleScreen(),
+            '/comprehensive-table-example': (context) => const ComprehensiveTableExample(),
+            '/table-examples': (context) => const TableExamplesMenu(),
+          },
         );
       },
     );

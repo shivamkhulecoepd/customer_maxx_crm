@@ -11,6 +11,7 @@ import 'package:customer_maxx_crm/utils/theme_utils.dart';
 import 'package:customer_maxx_crm/widgets/navigation_bar.dart';
 
 import 'package:customer_maxx_crm/widgets/standard_table_view.dart';
+import 'package:customer_maxx_crm/widgets/generic_table_view.dart';
 import 'package:customer_maxx_crm/models/lead.dart';
 import 'package:customer_maxx_crm/models/dropdown_data.dart';
 import 'package:customer_maxx_crm/utils/api_service_locator.dart';
@@ -1352,11 +1353,16 @@ class _ModernLeadManagerDashboardState
           
           final leads = state.leads;
           
-          return ModernTableView<Lead>(
+          return GenericTableView<Lead>(
             title: 'All Leads',
             data: leads,
             columns: [
-              TableColumn(
+              GenericTableColumn(
+                title: 'ID',
+                value: (lead) => lead.id,
+                width: 60,
+              ),
+              GenericTableColumn(
                 title: 'Name',
                 value: (lead) => lead.name,
                 builder: (lead) => Row(
@@ -1367,8 +1373,7 @@ class _ModernLeadManagerDashboardState
                         lead.status,
                       ).withValues(alpha: 0.1),
                       child: Text(
-                        // lead.name[0].toUpperCase(),
-                        lead.id.toString(),
+                        lead.name[0].toUpperCase(),
                         style: TextStyle(
                           color: AppThemes.getStatusColor(lead.status),
                           fontWeight: FontWeight.w600,
@@ -1395,8 +1400,11 @@ class _ModernLeadManagerDashboardState
                   ],
                 ),
               ),
-              TableColumn(title: 'Phone', value: (lead) => lead.phone),
-              TableColumn(
+              GenericTableColumn(title: 'Phone', value: (lead) => lead.phone),
+              GenericTableColumn(title: 'Education', value: (lead) => lead.education),
+              GenericTableColumn(title: 'Experience', value: (lead) => lead.experience),
+              GenericTableColumn(title: 'Location', value: (lead) => lead.location),
+              GenericTableColumn(
                 title: 'Status',
                 value: (lead) => lead.status,
                 builder: (lead) => Container(
@@ -1408,15 +1416,20 @@ class _ModernLeadManagerDashboardState
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    lead.status,
+                    lead.status.isEmpty ? 'N/A' : lead.status,
                     style: TextStyle(
-                      color: AppThemes.getStatusColor(lead.status),
+                      color: AppThemes.getStatusColor(lead.status.isEmpty ? 'New' : lead.status),
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
               ),
+              GenericTableColumn(title: 'Feedback', value: (lead) => lead.feedback),
+              GenericTableColumn(title: 'Created At', value: (lead) => lead.createdAt),
+              GenericTableColumn(title: 'Owner', value: (lead) => lead.ownerName),
+              GenericTableColumn(title: 'Assigned To', value: (lead) => lead.assignedName),
+              GenericTableColumn(title: 'Latest History', value: (lead) => lead.latestHistory),
             ],
             onRowTap: (lead) {
               _showLeadDetails(lead);
@@ -1464,6 +1477,13 @@ class _ModernLeadManagerDashboardState
                     Icons.upload_file_rounded,
                     'CSV file Upload',
                     () => _uploadData(),
+                    isDarkMode,
+                  ),
+                  _buildActionButton(
+                    context,
+                    Icons.table_chart,
+                    'Table Examples',
+                    () => Navigator.pushNamed(context, '/table-examples'),
                     isDarkMode,
                   ),
                 ],
