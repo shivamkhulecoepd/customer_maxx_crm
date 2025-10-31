@@ -1,3 +1,4 @@
+import 'package:customer_maxx_crm/utils/api_service_locator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:customer_maxx_crm/blocs/auth/auth_bloc.dart';
@@ -11,12 +12,13 @@ import 'package:customer_maxx_crm/screens/auth/auth_screen.dart';
 import 'package:customer_maxx_crm/screens/admin/admin_dashboard.dart';
 import 'package:customer_maxx_crm/screens/lead_manager/lead_manager_dashboard.dart';
 import 'package:customer_maxx_crm/screens/ba_specialist/ba_specialist_dashboard.dart';
-import 'package:customer_maxx_crm/services/auth_service.dart';
+// import 'package:customer_maxx_crm/services/auth_service.dart';
 import 'package:customer_maxx_crm/utils/theme_utils.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await AuthService.init();
+  // Initialize services through ServiceLocator
+  await ServiceLocator.init();
   
   runApp(
     MultiBlocProvider(
@@ -87,14 +89,23 @@ class AuthWrapper extends StatelessWidget {
           final userRole = authState.user?.role;
           if (userRole != null) {
             switch (userRole) {
-              case 'Admin':
+              case 'admin':
                 return const ModernAdminDashboard();
-              case 'Lead Manager':
+              case 'lead_manager':
                 return const ModernLeadManagerDashboard();
-              case 'BA Specialist':
+              case 'ba_specialist':
                 return const ModernBASpecialistDashboard();
               default:
-                return const ModernAuthScreen(authMode: AuthMode.login);
+                // Handle case where role names don't match exactly
+                if (userRole.toLowerCase().contains('admin')) {
+                  return const ModernAdminDashboard();
+                } else if (userRole.toLowerCase().contains('lead')) {
+                  return const ModernLeadManagerDashboard();
+                } else if (userRole.toLowerCase().contains('ba') || userRole.toLowerCase().contains('specialist')) {
+                  return const ModernBASpecialistDashboard();
+                } else {
+                  return const ModernAuthScreen(authMode: AuthMode.login);
+                }
             }
           }
         }

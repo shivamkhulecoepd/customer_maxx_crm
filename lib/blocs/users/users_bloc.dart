@@ -1,11 +1,12 @@
 import 'package:bloc/bloc.dart';
 import 'package:customer_maxx_crm/models/user.dart';
 import 'package:customer_maxx_crm/services/user_service.dart';
+import 'package:customer_maxx_crm/utils/api_service_locator.dart';
 import 'users_event.dart';
 import 'users_state.dart';
 
 class UsersBloc extends Bloc<UsersEvent, UsersState> {
-  final UserService _userService = UserService();
+  final UserService _userService = ServiceLocator.userService;
 
   UsersBloc() : super(UsersState.initial()) {
     on<LoadAllUsers>(_onLoadAllUsers);
@@ -33,7 +34,9 @@ class UsersBloc extends Bloc<UsersEvent, UsersState> {
   Future<void> _onAddUser(AddUser event, Emitter<UsersState> emit) async {
     emit(state.copyWith(isLoading: true, error: null));
     try {
-      final success = await _userService.addUser(event.user);
+      // For now, we'll need to provide a default password
+      final response = await _userService.createUser(event.user, 'defaultPassword123');
+      final success = response['status'] == 'success';
       if (success) {
         final updatedUsers = List<User>.from(state.users)..add(event.user);
         emit(state.copyWith(isLoading: false, users: updatedUsers));
@@ -57,7 +60,8 @@ class UsersBloc extends Bloc<UsersEvent, UsersState> {
   ) async {
     emit(state.copyWith(isLoading: true, error: null));
     try {
-      final success = await _userService.updateUser(event.user);
+      final response = await _userService.updateUser(event.user);
+      final success = response['status'] == 'success';
       if (success) {
         final updatedUsers = List<User>.from(state.users);
         final index = updatedUsers.indexWhere((u) => u.id == event.user.id);
@@ -85,7 +89,8 @@ class UsersBloc extends Bloc<UsersEvent, UsersState> {
   ) async {
     emit(state.copyWith(isLoading: true, error: null));
     try {
-      final success = await _userService.deleteUser(event.id);
+      final response = await _userService.deleteUser(int.parse(event.id));
+      final success = response['status'] == 'success';
       if (success) {
         final updatedUsers =
             state.users.where((user) => user.id != event.id).toList();

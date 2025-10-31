@@ -1,327 +1,257 @@
-import 'package:customer_maxx_crm/models/lead.dart';
+import 'dart:developer';
+
+import '../api/api_client.dart';
+import '../api/api_endpoints.dart';
+import '../models/lead.dart';
+import '../models/dropdown_data.dart';
+import '../models/user.dart';
 
 class LeadService {
-  // Mock leads for demonstration - matching the screenshots
-  static final List<Lead> _leads = [
-    Lead(
-      id: '1',
-      date: DateTime(2025, 10, 9, 6, 19),
-      name: 'pranali',
-      phone: '8888888889',
-      email: '',
-      leadManager: 'achal',
-      status: 'Registered',
-      feedback: '',
-      education: 'MBA',
-      experience: '',
-      location: 'Pune',
-      orderBy: '',
-      assignedBy: 'Nikita',
-      discount: '',
-      baSpecialist: 'Nikita',
-    ),
-    Lead(
-      id: '2',
-      date: DateTime(2025, 10, 9, 5, 36),
-      name: 'pranali',
-      phone: '8888888800',
-      email: '',
-      leadManager: 'achal',
-      status: 'Demo Attended',
-      feedback: 'No feedback',
-      education: 'MBA',
-      experience: '',
-      location: 'Akola',
-      orderBy: '',
-      assignedBy: 'Nikita',
-      discount: '',
-      baSpecialist: 'Nikita',
-    ),
-    Lead(
-      id: '3',
-      date: DateTime(2025, 10, 7, 6, 22),
-      name: 'pranali',
-      phone: '8888888888',
-      email: 'p@gmail.com',
-      leadManager: 'achal',
-      status: 'Demo Attended',
-      feedback: 'No feedback',
-      education: 'MBA',
-      experience: '2 years as software developer',
-      location: 'Akola',
-      orderBy: '',
-      assignedBy: 'Nikita',
-      discount: '',
-      baSpecialist: 'Nikita',
-    ),
-    Lead(
-      id: '4',
-      date: DateTime(2025, 10, 7, 6, 5),
-      name: 'pranali',
-      phone: '9876543210',
-      email: 'facilities.pune@coepd.com',
-      leadManager: 'achal',
-      status: 'Not Connected',
-      feedback: 'No feedback',
-      education: 'MBA',
-      experience: '',
-      location: 'Akola',
-      orderBy: '',
-      assignedBy: 'Nikita',
-      discount: '',
-      baSpecialist: 'Nikita',
-    ),
-    Lead(
-      id: '5',
-      date: DateTime(2025, 10, 5, 2, 53),
-      name: 'Bhargavi',
-      phone: '9999999888',
-      email: 'bhargavi@gmail.com',
-      leadManager: 'achal',
-      status: 'Not Connected',
-      feedback: 'No feedback',
-      education: 'B.Com',
-      experience: '10',
-      location: 'Pune',
-      orderBy: '',
-      assignedBy: 'Nikita',
-      discount: '',
-      baSpecialist: 'Nikita',
-    ),
-    Lead(
-      id: '6',
-      date: DateTime(2025, 10, 5, 2, 50),
-      name: 'Raju',
-      phone: '9988755466',
-      email: 'raju@gmail.com',
-      leadManager: 'D V P Sridhar',
-      status: 'Not Connected',
-      feedback: 'No feedback',
-      education: 'B.Tech',
-      experience: '2',
-      location: 'Hyderabad',
-      orderBy: '',
-      assignedBy: 'shrikant',
-      discount: '',
-      baSpecialist: 'shrikant',
-    ),
-    Lead(
-      id: '7',
-      date: DateTime(2025, 9, 30, 7, 1),
-      name: 'nilesh',
-      phone: '9876567890',
-      email: 'nrghode491@gmail.com',
-      leadManager: 'achal',
-      status: 'Demo Interested',
-      feedback: 'call at 4 Pm',
-      education: 'MBA',
-      experience: '2 years in marketing',
-      location: 'Pune',
-      orderBy: '',
-      assignedBy: 'Nikita',
-      discount: '',
-      baSpecialist: 'Nikita',
-    ),
-    Lead(
-      id: '8',
-      date: DateTime(2025, 9, 30, 5, 22),
-      name: 'Achal',
-      phone: '9786789098',
-      email: '',
-      leadManager: 'achal',
-      status: 'Registered',
-      feedback: 'No feedback',
-      education: 'BBA',
-      experience: '2 years',
-      location: 'Pune',
-      orderBy: '',
-      assignedBy: 'shrikant',
-      discount: '',
-      baSpecialist: 'shrikant',
-    ),
-    Lead(
-      id: '9',
-      date: DateTime(2025, 9, 30, 5, 14),
-      name: 'Purva',
-      phone: '9999999988',
-      email: '',
-      leadManager: 'achal',
-      status: 'Not Connected',
-      feedback: 'No feedback',
-      education: '',
-      experience: '',
-      location: '',
-      orderBy: '',
-      assignedBy: 'Nikita',
-      discount: '',
-      baSpecialist: 'Nikita',
-    ),
-    Lead(
-      id: '10',
-      date: DateTime(2025, 9, 30, 5, 0),
-      name: 'Gayatri',
-      phone: '9604111799',
-      email: 'gayatri@gmail.com',
-      leadManager: 'achal',
-      status: 'Demo Attended',
-      feedback: 'she attended the demo',
-      education: 'BBA',
-      experience: '2 years',
-      location: 'Pune',
-      orderBy: '',
-      assignedBy: 'Nikita',
-      discount: '',
-      baSpecialist: 'Nikita',
-    ),
-    Lead(
-      id: '11',
-      date: DateTime(2025, 9, 28, 5, 40),
-      name: 'pranali',
-      phone: '1234567890',
-      email: 'p@gmail.com',
-      leadManager: 'achal',
-      status: 'Pending',
-      feedback: 'No feedback',
-      education: '',
-      experience: '2 years as software developer',
-      location: 'Akola',
-      orderBy: '',
-      assignedBy: 'Nikita',
-      discount: '',
-      baSpecialist: 'Nikita',
-    ),
-  ];
-
-  // Get all leads
-  Future<List<Lead>> getAllLeads() async {
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 500));
-    return List.from(_leads);
-  }
-
-  // Get leads by status
-  Future<List<Lead>> getLeadsByStatus(String status) async {
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 500));
-    if (status == 'All' || status == '-- Filter by Status --') {
-      return List.from(_leads);
+  final ApiClient apiClient;
+  
+  LeadService(this.apiClient);
+  
+  // Get all leads with optional filtering and pagination
+  Future<List<Lead>> getAllLeads({String? status, int page = 1, int limit = 10}) async {
+    try {
+      final queryParameters = {
+        if (status != null) 'status': status,
+        'page': page.toString(),
+        'limit': limit.toString(),
+      };
+      
+      final response = await apiClient.get(
+        ApiEndpoints.getLeads,
+        queryParameters: queryParameters,
+        authenticated: true,
+      );
+      
+      if (response['status'] == 'success') {
+        final leads = (response['leads'] as List)
+            .map((leadJson) => Lead.fromJson(leadJson))
+            .toList();
+        
+        return leads;
+      } else {
+        throw Exception(response['message'] ?? 'Failed to fetch leads');
+      }
+    } catch (e) {
+      rethrow;
     }
-    return _leads.where((lead) => lead.status == status).toList();
   }
-
-  // Add a new lead
-  Future<bool> addLead(Lead lead) async {
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 500));
-    
-    // Assign a new ID
-    final newId = _leads.isEmpty ? '1' : (int.parse(_leads.map((l) => l.id).reduce((a, b) => int.parse(a) > int.parse(b) ? a : b)) + 1).toString();
-    final newLead = Lead(
-      id: newId,
-      date: lead.date,
-      name: lead.name,
-      phone: lead.phone,
-      email: lead.email,
-      leadManager: lead.leadManager,
-      status: lead.status,
-      feedback: lead.feedback,
-      education: lead.education,
-      experience: lead.experience,
-      location: lead.location,
-      orderBy: lead.orderBy,
-      assignedBy: lead.assignedBy,
-      discount: lead.discount,
-      baSpecialist: lead.baSpecialist,
-    );
-    
-    _leads.add(newLead);
-    return true;
-  }
-
-  // Update a lead
-  Future<bool> updateLead(Lead lead) async {
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 500));
-    
-    final index = _leads.indexWhere((l) => l.id == lead.id);
-    if (index != -1) {
-      _leads[index] = lead;
-      return true;
+  
+  // Create a new lead
+  Future<Map<String, dynamic>> createLead(Lead lead) async {
+    try {
+      final response = await apiClient.post(
+        ApiEndpoints.createLead,
+        lead.toJson(),
+        authenticated: true,
+      );
+      
+      return response;
+    } catch (e) {
+      rethrow;
     }
-    return false;
   }
-
+  
+  // Update an existing lead
+  Future<Map<String, dynamic>> updateLead(Lead lead) async {
+    try {
+      final response = await apiClient.put(
+        ApiEndpoints.updateLead,
+        lead.toJson(),
+        authenticated: true,
+      );
+      
+      return response;
+    } catch (e) {
+      rethrow;
+    }
+  }
+  
   // Delete a lead
-  Future<bool> deleteLead(String id) async {
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 500));
-    
-    final index = _leads.indexWhere((l) => l.id == id);
-    if (index != -1) {
-      _leads.removeAt(index);
-      return true;
+  Future<Map<String, dynamic>> deleteLead(int leadId) async {
+    try {
+      final response = await apiClient.delete(
+        ApiEndpoints.deleteLead,
+        queryParameters: {'id': leadId.toString()},
+        authenticated: true,
+      );
+      
+      return response;
+    } catch (e) {
+      rethrow;
     }
-    return false;
   }
-
-  // Filter leads based on criteria
-  Future<List<Lead>> filterLeads({
-    String? name,
-    String? phone,
-    String? email,
-    String? education,
-    String? experience,
-    String? location,
-    String? status,
-    String? feedback,
-    String? orderBy,
-    String? assignedBy,
-  }) async {
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 500));
-    
-    List<Lead> filteredLeads = List.from(_leads);
-    
-    if (name != null && name.isNotEmpty) {
-      filteredLeads = filteredLeads.where((l) => l.name.toLowerCase().contains(name.toLowerCase())).toList();
+  
+  // Get lead history
+  Future<List<LeadHistory>> getLeadHistory(int leadId) async {
+    try {
+      final response = await apiClient.get(
+        ApiEndpoints.getLeadHistory,
+        queryParameters: {'lead_id': leadId.toString()},
+        authenticated: true,
+      );
+      
+      if (response['status'] == 'success') {
+        final history = (response['history'] as List)
+            .map((historyJson) => LeadHistory.fromJson(historyJson))
+            .toList();
+        
+        return history;
+      } else {
+        throw Exception(response['message'] ?? 'Failed to fetch lead history');
+      }
+    } catch (e) {
+      rethrow;
     }
-    
-    if (phone != null && phone.isNotEmpty) {
-      filteredLeads = filteredLeads.where((l) => l.phone.contains(phone)).toList();
+  }
+  
+  // Import leads from CSV file
+  Future<Map<String, dynamic>> importLeads(Map<String, dynamic> formData) async {
+    try {
+      final response = await apiClient.post(
+        ApiEndpoints.importLeads,
+        formData,
+        authenticated: true,
+      );
+      
+      return response;
+    } catch (e) {
+      rethrow;
     }
-    
-    if (email != null && email.isNotEmpty) {
-      filteredLeads = filteredLeads.where((l) => l.email.toLowerCase().contains(email.toLowerCase())).toList();
+  }
+  
+  // Export leads to CSV file
+  Future<Map<String, dynamic>> exportLeads() async {
+    try {
+      final response = await apiClient.get(
+        ApiEndpoints.exportLeads,
+        authenticated: true,
+      );
+      
+      return response;
+    } catch (e) {
+      rethrow;
     }
-    
-    if (education != null && education.isNotEmpty) {
-      filteredLeads = filteredLeads.where((l) => l.education.toLowerCase().contains(education.toLowerCase())).toList();
+  }
+  
+  // Update fee information for a lead
+  Future<Map<String, dynamic>> updateFee(int leadId, int discount, double installment1, double installment2) async {
+    try {
+      final response = await apiClient.post(
+        ApiEndpoints.updateFee,
+        {
+          'id': leadId,
+          'discount': discount,
+          'installment1': installment1,
+          'installment2': installment2,
+        },
+        authenticated: true,
+      );
+      
+      return response;
+    } catch (e) {
+      rethrow;
     }
-    
-    if (experience != null && experience.isNotEmpty) {
-      filteredLeads = filteredLeads.where((l) => l.experience.toLowerCase().contains(experience.toLowerCase())).toList();
+  }
+  
+  // Update feedback for a lead
+  Future<Map<String, dynamic>> updateFeedback(int leadId, String feedback) async {
+    try {
+      final response = await apiClient.post(
+        ApiEndpoints.updateFeedback,
+        {
+          'id': leadId,
+          'feedback': feedback,
+        },
+        authenticated: true,
+      );
+      
+      return response;
+    } catch (e) {
+      rethrow;
     }
-    
-    if (location != null && location.isNotEmpty) {
-      filteredLeads = filteredLeads.where((l) => l.location.toLowerCase().contains(location.toLowerCase())).toList();
+  }
+  
+  // Update status for a lead
+  Future<Map<String, dynamic>> updateStatus(int leadId, String status) async {
+    try {
+      final response = await apiClient.post(
+        ApiEndpoints.updateStatus,
+        {
+          'id': leadId,
+          'status': status,
+        },
+        authenticated: true,
+      );
+      
+      return response;
+    } catch (e) {
+      rethrow;
     }
-    
-    if (status != null && status.isNotEmpty && status != 'All' && status != 'All Status') {
-      filteredLeads = filteredLeads.where((l) => l.status == status).toList();
+  }
+  
+  // Get lead managers for dropdown
+  Future<List<UserRole>> getLeadManagers() async {
+    try {
+      final response = await apiClient.get(
+        ApiEndpoints.getLeadManagers,
+        authenticated: true,
+      );
+      
+      if (response['status'] == 'success') {
+        final leadManagers = (response['lead_managers'] as List)
+            .map((managerJson) => UserRole.fromJson(managerJson))
+            .toList();
+        
+        return leadManagers;
+      } else {
+        throw Exception(response['message'] ?? 'Failed to fetch lead managers');
+      }
+    } catch (e) {
+      rethrow;
     }
-    
-    if (feedback != null && feedback.isNotEmpty) {
-      filteredLeads = filteredLeads.where((l) => l.feedback.toLowerCase().contains(feedback.toLowerCase())).toList();
+  }
+  
+  // Get BA specialists for dropdown
+  Future<List<UserRole>> getBASpecialists() async {
+    try {
+      final response = await apiClient.get(
+        ApiEndpoints.getBASpecialists,
+        authenticated: true,
+      );
+      
+      if (response['status'] == 'success') {
+        final baSpecialists = (response['ba_specialists'] as List)
+            .map((specialistJson) => UserRole.fromJson(specialistJson))
+            .toList();
+        
+        return baSpecialists;
+      } else {
+        throw Exception(response['message'] ?? 'Failed to fetch BA specialists');
+      }
+    } catch (e) {
+      rethrow;
     }
-    
-    if (orderBy != null && orderBy.isNotEmpty) {
-      filteredLeads = filteredLeads.where((l) => l.orderBy.toLowerCase().contains(orderBy.toLowerCase())).toList();
+  }
+  
+  // Get all dropdown data in one call
+  Future<DropdownData> getDropdownData() async {
+    try {
+      final response = await apiClient.get(
+        ApiEndpoints.getDropdownData,
+        authenticated: true,
+      );
+      
+      if (response['status'] == 'success') {
+        return DropdownData.fromJson(response['dropdown_data']);
+      } else {
+        throw Exception(response['message'] ?? 'Failed to fetch dropdown data');
+      }
+    } catch (e) {
+      rethrow;
     }
-    
-    if (assignedBy != null && assignedBy.isNotEmpty) {
-      filteredLeads = filteredLeads.where((l) => l.assignedBy.toLowerCase().contains(assignedBy.toLowerCase())).toList();
-    }
-    
-    return filteredLeads.cast<Lead>();
   }
 }

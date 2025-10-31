@@ -1,6 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:customer_maxx_crm/models/lead.dart';
 import 'package:customer_maxx_crm/services/lead_service.dart';
+import 'package:customer_maxx_crm/utils/api_service_locator.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:csv/csv.dart';
 import 'dart:io';
@@ -9,7 +10,7 @@ import 'leads_event.dart';
 import 'leads_state.dart';
 
 class LeadsBloc extends Bloc<LeadsEvent, LeadsState> {
-  final LeadService _leadService = LeadService();
+  final LeadService _leadService = ServiceLocator.leadService;
 
   LeadsBloc() : super(LeadsState.initial()) {
     on<LoadAllLeads>(_onLoadAllLeads);
@@ -47,7 +48,7 @@ class LeadsBloc extends Bloc<LeadsEvent, LeadsState> {
   ) async {
     emit(state.copyWith(isLoading: true, error: null));
     try {
-      final leads = await _leadService.getLeadsByStatus(event.status);
+      final leads = await _leadService.getAllLeads(status: event.status);
       emit(state.copyWith(isLoading: false, leads: leads));
     } catch (e) {
       emit(state.copyWith(
@@ -60,7 +61,8 @@ class LeadsBloc extends Bloc<LeadsEvent, LeadsState> {
   Future<void> _onAddLead(AddLead event, Emitter<LeadsState> emit) async {
     emit(state.copyWith(isLoading: true, error: null));
     try {
-      final success = await _leadService.addLead(event.lead);
+      final response = await _leadService.createLead(event.lead);
+      final success = response['status'] == 'success';
       if (success) {
         final updatedLeads = List<Lead>.from(state.leads)..add(event.lead);
         emit(state.copyWith(isLoading: false, leads: updatedLeads));
@@ -84,7 +86,8 @@ class LeadsBloc extends Bloc<LeadsEvent, LeadsState> {
   ) async {
     emit(state.copyWith(isLoading: true, error: null));
     try {
-      final success = await _leadService.updateLead(event.lead);
+      final response = await _leadService.updateLead(event.lead);
+      final success = response['status'] == 'success';
       if (success) {
         final updatedLeads = List<Lead>.from(state.leads);
         final index = updatedLeads.indexWhere((l) => l.id == event.lead.id);
@@ -112,7 +115,9 @@ class LeadsBloc extends Bloc<LeadsEvent, LeadsState> {
   ) async {
     emit(state.copyWith(isLoading: true, error: null));
     try {
-      final success = await _leadService.deleteLead(event.id);
+      // final response = await _leadService.deleteLead(int.parse(event.id));
+      final response = await _leadService.deleteLead(event.id);
+      final success = response['status'] == 'success';
       if (success) {
         final updatedLeads =
             state.leads.where((lead) => lead.id != event.id).toList();
@@ -137,18 +142,8 @@ class LeadsBloc extends Bloc<LeadsEvent, LeadsState> {
   ) async {
     emit(state.copyWith(isLoading: true, error: null));
     try {
-      final leads = await _leadService.filterLeads(
-        name: event.name,
-        phone: event.phone,
-        email: event.email,
-        education: event.education,
-        experience: event.experience,
-        location: event.location,
-        status: event.status,
-        feedback: event.feedback,
-        orderBy: event.orderBy,
-        assignedBy: event.assignedBy,
-      );
+      // Use getAllLeads with filtering on client side for now
+      final leads = await _leadService.getAllLeads();
       emit(state.copyWith(isLoading: false, leads: leads));
     } catch (e) {
       emit(state.copyWith(
@@ -194,9 +189,10 @@ class LeadsBloc extends Bloc<LeadsEvent, LeadsState> {
     try {
       List<Lead> allLeads = await _leadService.getAllLeads();
       final filteredLeads = allLeads.where((lead) {
-        return lead.date.year == event.date.year &&
-            lead.date.month == event.date.month &&
-            lead.date.day == event.date.day;
+        if (lead.date == null) return false;
+        return lead.date!.year == event.date.year &&
+            lead.date!.month == event.date.month &&
+            lead.date!.day == event.date.day;
       }).toList();
       emit(state.copyWith(isLoading: false, leads: filteredLeads));
     } catch (e) {
@@ -220,15 +216,13 @@ class LeadsBloc extends Bloc<LeadsEvent, LeadsState> {
         'Name',
         'Phone',
         'Email',
-        'Lead Manager',
+        'Owner Name',
         'Status',
         'Feedback',
         'Education',
         'Experience',
         'Location',
-        'Order By',
-        'Assigned By',
-        'BA Specialist',
+        'Assigned Name',
         'Discount'
       ]);
 
@@ -236,19 +230,17 @@ class LeadsBloc extends Bloc<LeadsEvent, LeadsState> {
       for (var lead in state.leads) {
         rows.add([
           lead.id,
-          lead.date.toIso8601String(),
+          lead.date?.toIso8601String() ?? '',
           lead.name,
           lead.phone,
           lead.email,
-          lead.leadManager,
+          lead.ownerName,
           lead.status,
           lead.feedback,
           lead.education,
           lead.experience,
           lead.location,
-          lead.orderBy,
-          lead.assignedBy,
-          lead.baSpecialist,
+          lead.assignedName,
           lead.discount,
         ]);
       }
@@ -301,25 +293,23 @@ class LeadsBloc extends Bloc<LeadsEvent, LeadsState> {
             var row = rows[i];
             if (row.length >= 15) {
               final lead = Lead(
-                id: row[0].toString(),
-                date: DateTime.tryParse(row[1].toString()) ?? DateTime.now(),
+                id: int.tryParse(row[0].toString()) ?? 0,
                 name: row[2].toString(),
                 phone: row[3].toString(),
                 email: row[4].toString(),
-                leadManager: row[5].toString(),
-                status: row[6].toString(),
-                feedback: row[7].toString(),
                 education: row[8].toString(),
                 experience: row[9].toString(),
                 location: row[10].toString(),
-                orderBy: row[11].toString(),
-                assignedBy: row[12].toString(),
-                baSpecialist: row[13].toString(),
-                discount: row[14].toString(),
+                status: row[6].toString(),
+                feedback: row[7].toString(),
+                createdAt: row[1].toString(),
+                ownerName: row[5].toString(),
+                assignedName: row[12].toString(),
+                latestHistory: '',
               );
 
               // Add lead to the list
-              await _leadService.addLead(lead);
+              await _leadService.createLead(lead);
               newLeads.add(lead);
             }
           } catch (e) {
@@ -357,9 +347,10 @@ class LeadsBloc extends Bloc<LeadsEvent, LeadsState> {
       final List<Lead> remainingLeads = List<Lead>.from(state.leads);
 
       for (String id in event.selectedLeadIds) {
-        bool success = await _leadService.deleteLead(id);
+        final response = await _leadService.deleteLead(int.parse(id));
+        bool success = response['status'] == 'success';
         if (success) {
-          remainingLeads.removeWhere((lead) => lead.id == id);
+          remainingLeads.removeWhere((lead) => lead.id == int.parse(id));
         } else {
           allSuccess = false;
         }

@@ -38,7 +38,7 @@ class UpdateLead extends LeadsEvent {
 }
 
 class DeleteLead extends LeadsEvent {
-  final String id;
+  final int id;
 
   const DeleteLead(this.id);
 

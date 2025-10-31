@@ -1,7 +1,8 @@
 import 'package:bloc/bloc.dart';
-import 'package:equatable/equatable.dart';
 import 'package:customer_maxx_crm/models/user.dart';
 import 'package:customer_maxx_crm/services/auth_service.dart';
+import 'package:customer_maxx_crm/utils/api_service_locator.dart';
+import 'package:equatable/equatable.dart';
 
 abstract class AuthEvent extends Equatable {
   const AuthEvent();
@@ -71,7 +72,7 @@ class AuthError extends AuthState {
 }
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
-  final AuthService _authService = AuthService();
+  final AuthService _authService = ServiceLocator.authService;
 
   AuthBloc() : super(AuthInitial()) {
     on<AppStarted>(_onAppStarted);
@@ -84,8 +85,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   Future<void> _onAppStarted(AppStarted event, Emitter<AuthState> emit) async {
     emit(AuthLoading());
     try {
-      await AuthService.init();
-      final user = AuthService.currentUser;
+      await _authService.init();
+      final user = _authService.currentUser;
       if (user != null) {
         emit(Authenticated(user));
       } else {
@@ -102,19 +103,30 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
+      // Log the login attempt
+      // ignore: avoid_print
+      print('Attempting login with email: ${event.email}, role: ${event.role}');
       final result = await _authService.login(
         event.email,
         event.password,
-        event.role ?? 'Admin',
+        event.role ?? 'admin',
       );
+      
+      // Log successful login
+      // ignore: avoid_print
+      print('Login successful: ${result['success']}');
       
       if (result['success']) {
         emit(Authenticated(result['user']));
       } else {
-        emit(AuthError(result['error']));
+        emit(AuthError(result['message'] ?? 'Login failed'));
       }
     } catch (e) {
-      emit(AuthError('Login failed: ${e.toString()}'));
+      // Log login error
+      // ignore: avoid_print
+      print('Login failed with error: $e');
+      // Pass through the actual backend message without prefix
+      emit(AuthError(e.toString()));
     }
   }
 
@@ -128,16 +140,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         event.name,
         event.email,
         event.password,
-        event.role ?? 'Lead Manager',
+        event.role ?? 'lead_manager',
       );
       
       if (result['success']) {
-        emit(AuthInitial()); // Return to initial state after successful registration
+        // Revert to the previous approach that was working
+        emit(AuthInitial());
       } else {
-        emit(AuthError(result['error']));
+        emit(AuthError(result['message'] ?? 'Registration failed'));
       }
     } catch (e) {
-      emit(AuthError('Registration failed: ${e.toString()}'));
+      // Pass through the actual backend message without prefix
+      emit(AuthError(e.toString()));
     }
   }
 
@@ -147,9 +161,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
+      // Log the logout attempt
+      // ignore: avoid_print
+      print('Attempting logout');
       await _authService.logout();
+      // Log successful logout
+      // ignore: avoid_print
+      print('Logout successful');
       emit(Unauthenticated());
     } catch (e) {
+      // Log logout error
+      // ignore: avoid_print
+      print('Logout failed with error: $e');
       emit(Unauthenticated()); // Even if logout fails, clear local state
     }
   }
@@ -158,7 +181,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     CheckAuthStatus event,
     Emitter<AuthState> emit,
   ) async {
-    final user = AuthService.currentUser;
+    final user = _authService.currentUser;
     if (user != null) {
       emit(Authenticated(user));
     } else {

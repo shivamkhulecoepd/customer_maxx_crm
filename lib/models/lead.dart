@@ -1,75 +1,138 @@
 class Lead {
-  final String id;
-  final DateTime date;
+  final int id;
   final String name;
   final String phone;
   final String email;
-  final String leadManager;
-  final String status;
-  final String feedback;
   final String education;
   final String experience;
   final String location;
-  final String orderBy;
-  final String assignedBy;
-  final String discount;
-  final String baSpecialist;
+  final String status;
+  final String feedback;
+  final String createdAt;
+  final String ownerName;
+  final String assignedName;
+  final String latestHistory;
+  final int? discount;
+  final double? installment1;
+  final double? installment2;
+  final DateTime? date;
+  // Optional fields for creation
+  final int? ownerId;
+  final int? assignedTo;
 
-  const Lead({
+  Lead({
     required this.id,
-    required this.date,
     required this.name,
     required this.phone,
     required this.email,
-    required this.leadManager,
-    required this.status,
-    required this.feedback,
     required this.education,
     required this.experience,
     required this.location,
-    required this.orderBy,
-    required this.assignedBy,
-    required this.discount,
-    required this.baSpecialist,
+    required this.status,
+    required this.feedback,
+    required this.createdAt,
+    required this.ownerName,
+    required this.assignedName,
+    required this.latestHistory,
+    this.discount,
+    this.installment1,
+    this.installment2,
+    this.date,
+    this.ownerId,
+    this.assignedTo,
   });
 
   factory Lead.fromJson(Map<String, dynamic> json) {
     return Lead(
-      id: json['id'].toString(),
-      date: json['date'] != null ? DateTime.parse(json['date'] as String) : DateTime.now(),
-      name: json['name'] as String? ?? '',
-      phone: json['phone'] as String? ?? '',
-      email: json['email'] as String? ?? '',
-      leadManager: json['leadManager'] as String? ?? '',
-      status: json['status'] as String? ?? 'Pending',
+      id: json['id'] as int,
+      name: json['name'] as String,
+      phone: json['phone'] as String,
+      email: json['email'] as String,
+      education: json['education'] as String,
+      experience: json['experience'] as String,
+      location: json['location'] as String,
+      status: json['status'] as String,
       feedback: json['feedback'] as String? ?? '',
-      education: json['education'] as String? ?? '',
-      experience: json['experience'] as String? ?? '',
-      location: json['location'] as String? ?? '',
-      orderBy: json['orderBy'] as String? ?? '',
-      assignedBy: json['assignedBy'] as String? ?? '',
-      discount: json['discount'] as String? ?? '',
-      baSpecialist: json['baSpecialist'] as String? ?? '',
+      createdAt: json['created_at'] as String,
+      ownerName: json['owner_name'] as String,
+      assignedName: json['assigned_name'] as String,
+      latestHistory: json['latest_history'] as String,
+      discount: json['discount'] as int?,
+      installment1: json['installment1'] as double?,
+      installment2: json['installment2'] as double?,
+      date: json['created_at'] != null ? DateTime.tryParse(json['created_at']) : null,
+      ownerId: null, // Not returned by API
+      assignedTo: null, // Not returned by API
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> json = {
+      'id': id,
+      'name': name,
+      'phone': phone,
+      'email': email,
+      'education': education,
+      'experience': experience,
+      'location': location,
+      'status': status,
+      'feedback': feedback,
+      'created_at': createdAt,
+      'owner_name': ownerName,
+      'assigned_name': assignedName,
+      'latest_history': latestHistory,
+      if (discount != null) 'discount': discount,
+      if (installment1 != null) 'installment1': installment1,
+      if (installment2 != null) 'installment2': installment2,
+    };
+    
+    // For creation, use ID fields instead of name fields if IDs are provided
+    if (ownerId != null) {
+      json['owner_id'] = ownerId;
+      json.remove('owner_name');
+    }
+    
+    if (assignedTo != null) {
+      json['assigned_to'] = assignedTo;
+      json.remove('assigned_name');
+    }
+    
+    return json;
+  }
+}
+
+class LeadHistory {
+  final String status;
+  final String feedback;
+  final String updatedAt;
+  final String updatedBy;
+  final String role;
+
+  LeadHistory({
+    required this.status,
+    required this.feedback,
+    required this.updatedAt,
+    required this.updatedBy,
+    required this.role,
+  });
+
+  factory LeadHistory.fromJson(Map<String, dynamic> json) {
+    return LeadHistory(
+      status: json['status'] as String,
+      feedback: json['feedback'] as String,
+      updatedAt: json['updated_at'] as String,
+      updatedBy: json['updated_by'] as String,
+      role: json['role'] as String,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
-      'date': date.toIso8601String(),
-      'name': name,
-      'phone': phone,
-      'email': email,
-      'leadManager': leadManager,
       'status': status,
       'feedback': feedback,
-      'education': education,
-      'experience': experience,
-      'location': location,
-      'orderBy': orderBy,
-      'assignedBy': assignedBy,
-      'discount': discount,
-      'baSpecialist': baSpecialist,
+      'updated_at': updatedAt,
+      'updated_by': updatedBy,
+      'role': role,
     };
   }
 }

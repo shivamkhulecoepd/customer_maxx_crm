@@ -9,6 +9,9 @@ import 'package:customer_maxx_crm/screens/admin/admin_dashboard.dart';
 import 'package:customer_maxx_crm/screens/lead_manager/lead_manager_dashboard.dart';
 import 'package:customer_maxx_crm/screens/ba_specialist/ba_specialist_dashboard.dart';
 
+// Add logging import
+import 'dart:developer' as developer;
+
 enum AuthMode { login, register }
 
 class ModernAuthScreen extends StatefulWidget {
@@ -39,6 +42,18 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
   String _selectedRole = 'Admin';
+  
+  // Error handling state
+  String _errorMessage = '';
+  bool _showError = false;
+  bool _isSuccessMessage = false;  // Flag to indicate if the message is a success message
+  
+  // Map display names to API role values
+  final Map<String, String> _roleMap = {
+    'Admin': 'admin',
+    'Lead Manager': 'lead_manager',
+    'BA Specialist': 'ba_specialist',
+  };
   
   final List<String> _roles = ['Admin', 'Lead Manager', 'BA Specialist'];
 
@@ -85,47 +100,88 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
+        // Add logging to see what state is being emitted
+        developer.log('AuthScreen received state: ${state.runtimeType}', name: 'AuthScreen');
+        
         if (state is AuthError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: AppThemes.redAccent,
-            ),
-          );
-        } else if (state is Authenticated) {
-          final userRole = state.user?.role;
-          if (userRole != null) {
-            Widget dashboard;
-            switch (userRole) {
-              case 'Admin':
-                dashboard = const ModernAdminDashboard();
-                break;
-              case 'Lead Manager':
-                dashboard = const ModernLeadManagerDashboard();
-                break;
-              case 'BA Specialist':
-                dashboard = const ModernBASpecialistDashboard();
-                break;
-              default:
-                return;
-            }
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => dashboard),
-            );
-          }
-        } else if (state is AuthInitial && _currentMode == AuthMode.register) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Registration successful! Please login.'),
-              backgroundColor: Colors.green,
-            ),
-          );
+          // Log the technical error details
+          developer.log('Authentication error: ${state.message}', name: 'AuthScreen');
+          
+          // Show the actual backend error message to the user
           setState(() {
+            _errorMessage = state.message;  // Display the actual backend message
+            _showError = true;
+            _isSuccessMessage = false;  // Flag to indicate this is an error message
+          });
+          
+          // Automatically hide the error after 5 seconds
+          Future.delayed(const Duration(seconds: 5), () {
+            if (mounted) {
+              setState(() {
+                _showError = false;
+                _isSuccessMessage = false;  // Reset the flag
+              });
+            }
+          });
+        } else if (state is AuthInitial && _currentMode == AuthMode.register) {
+          // Show success message for registration
+          developer.log('Registration success: Switching to login mode', name: 'AuthScreen');
+          setState(() {
+            _errorMessage = 'Registration successful! Please login.';
+            _showError = true;
+            _isSuccessMessage = true;  // Flag to indicate this is a success message
             _currentMode = AuthMode.login;
             _nameController.clear();
             _emailController.clear();
             _passwordController.clear();
             _confirmPasswordController.clear();
+          });
+          
+          // Automatically hide the message after 3 seconds
+          Future.delayed(const Duration(seconds: 3), () {
+            if (mounted) {
+              setState(() {
+                _showError = false;
+                _isSuccessMessage = false;  // Reset the flag
+              });
+            }
+          });
+        } else if (state is Authenticated) {
+          final userRole = state.user?.role;
+          if (userRole != null) {
+            Widget dashboard;
+            switch (userRole) {
+              case 'admin':
+                dashboard = const ModernAdminDashboard();
+                break;
+              case 'lead_manager':
+                dashboard = const ModernLeadManagerDashboard();
+                break;
+              case 'ba_specialist':
+                dashboard = const ModernBASpecialistDashboard();
+                break;
+              default:
+                // Handle case where role names don't match exactly
+                if (userRole.toLowerCase().contains('admin')) {
+                  dashboard = const ModernAdminDashboard();
+                } else if (userRole.toLowerCase().contains('lead')) {
+                  dashboard = const ModernLeadManagerDashboard();
+                } else if (userRole.toLowerCase().contains('ba') || userRole.toLowerCase().contains('specialist')) {
+                  dashboard = const ModernBASpecialistDashboard();
+                } else {
+                  return;
+                }
+            }
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => dashboard),
+            );
+          }
+        } else if (state is Unauthenticated) {
+          // Clear any error messages when user is unauthenticated (after logout)
+          setState(() {
+            _showError = false;
+            _isSuccessMessage = false;
+            _errorMessage = '';
           });
         }
       },
@@ -243,6 +299,12 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
                 ),
               ),
               const SizedBox(height: 24),
+              
+              // Error/SUCCESS message display
+              if (_showError) ...[
+                _buildMessageDisplay(_errorMessage, isDarkMode, _isSuccessMessage),
+                const SizedBox(height: 16),
+              ],
               
               if (_currentMode == AuthMode.register) ...[
                 _buildTextField(
@@ -546,6 +608,68 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
     );
   }
 
+  // New method to build user-friendly message display (both error and success)
+  Widget _buildMessageDisplay(String message, bool isDarkMode, bool isSuccess) {
+    // Determine colors based on message type
+    final Color backgroundColor = isSuccess 
+        ? AppThemes.greenAccent.withValues(alpha: 0.1) 
+        : AppThemes.redAccent.withValues(alpha: 0.1);
+    final Color borderColor = isSuccess 
+        ? AppThemes.greenAccent.withValues(alpha: 0.3) 
+        : AppThemes.redAccent.withValues(alpha: 0.3);
+    final Color iconColor = isSuccess 
+        ? AppThemes.greenAccent 
+        : AppThemes.redAccent;
+    final IconData icon = isSuccess 
+        ? Icons.check_circle_outline 
+        : Icons.error_outline;
+    
+    return Container(
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: borderColor,
+          width: 1,
+        ),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            color: iconColor,
+            size: 24,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                color: isDarkMode ? AppThemes.darkPrimaryText : AppThemes.lightPrimaryText,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          IconButton(
+            icon: Icon(
+              Icons.close,
+              color: iconColor,
+              size: 20,
+            ),
+            onPressed: () {
+              setState(() {
+                _showError = false;
+                _isSuccessMessage = false;  // Reset the flag
+              });
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   void _handleSubmit() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -558,7 +682,7 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
           LoginRequested(
             email: _emailController.text.trim(),
             password: _passwordController.text,
-            role: _selectedRole,
+            role: _roleMap[_selectedRole], // Use mapped role value
           ),
         );
       } else {
@@ -568,18 +692,30 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
             name: _nameController.text.trim(),
             email: _emailController.text.trim(),
             password: _passwordController.text,
-            role: _selectedRole,
+            role: _roleMap[_selectedRole], // Use mapped role value
           ),
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: ${e.toString()}'),
-          backgroundColor: AppThemes.redAccent,
-        ),
-      );
-      // Error handled by BlocListener
+      // Log the exception
+      developer.log('Exception in _handleSubmit: $e', name: 'AuthScreen', error: e);
+      
+      // Show user-friendly error message
+      setState(() {
+        _errorMessage = 'An unexpected error occurred. Please try again.';
+        _showError = true;
+        _isSuccessMessage = false;  // Flag to indicate this is an error message
+      });
+      
+      // Automatically hide the error after 5 seconds
+      Future.delayed(const Duration(seconds: 5), () {
+        if (mounted) {
+          setState(() {
+            _showError = false;
+            _isSuccessMessage = false;  // Reset the flag
+          });
+        }
+      });
     }
   }
 }

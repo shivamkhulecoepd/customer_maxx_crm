@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:customer_maxx_crm/blocs/theme/theme_event.dart';
 import 'package:customer_maxx_crm/widgets/app_drawer.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +12,11 @@ import 'package:customer_maxx_crm/widgets/navigation_bar.dart';
 
 import 'package:customer_maxx_crm/widgets/standard_table_view.dart';
 import 'package:customer_maxx_crm/models/lead.dart';
+import 'package:customer_maxx_crm/models/dropdown_data.dart';
+import 'package:customer_maxx_crm/utils/api_service_locator.dart';
+import 'package:customer_maxx_crm/blocs/leads/leads_bloc.dart';
+import 'package:customer_maxx_crm/blocs/leads/leads_state.dart';
+import 'package:customer_maxx_crm/blocs/leads/leads_event.dart';
 
 class ModernLeadManagerDashboard extends StatefulWidget {
   final int initialIndex;
@@ -27,14 +34,55 @@ class _ModernLeadManagerDashboardState
   String _userName = '';
   String _userRole = '';
 
+  // Add Lead Form Controllers
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _contactController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _educationController = TextEditingController();
+  final _experienceController = TextEditingController();
+  final _locationController = TextEditingController();
+  String _selectedLeadManager = '-- Select Lead Manager --';
+  String _selectedBASpecialist = '-- Select Specialist --';
+  int? _selectedLeadManagerId;
+  int? _selectedBASpecialistId;
+
+  List<String> _leadManagers = [
+    '-- Select Lead Manager --',
+    'Loading...', // Show loading state initially
+  ];
+
+  List<String> _baSpecialists = [
+    '-- Select Specialist --',
+    'Loading...', // Show loading state initially
+  ];
+
+  // Add leads data list
+  List<Lead> _leadsData = [];
+
   final List<Widget>? actions = [];
   final bool showDrawer = true;
+  DropdownData? dropdownData;
+  bool _isLoadingDropdownData = false;
+  bool _isLoadingLeadsData = false;
 
   @override
   void initState() {
     super.initState();
     _currentNavIndex = widget.initialIndex;
     _loadUserData();
+    // We'll fetch dropdown data when needed in the Add Lead view
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _contactController.dispose();
+    _emailController.dispose();
+    _educationController.dispose();
+    _experienceController.dispose();
+    _locationController.dispose();
+    super.dispose();
   }
 
   void _loadUserData() {
@@ -44,6 +92,122 @@ class _ModernLeadManagerDashboardState
         _userName = authState.user!.name;
         _userRole = authState.user!.role;
       });
+    }
+  }
+
+  Future<void> _fetchDropdownData() async {
+    // For manual refresh (pull-to-refresh or button), always fetch fresh data
+    // For automatic loading, prevent duplicate fetches
+    final isManualRefresh = !_isLoadingDropdownData && dropdownData != null;
+    
+    // Don't fetch if already loading (unless it's a manual refresh)
+    if (_isLoadingDropdownData && !isManualRefresh) return;
+    
+    // Set loading flag
+    setState(() {
+      _isLoadingDropdownData = true;
+    });
+    
+    try {
+      // Check if service locator is initialized
+      if (!ServiceLocator.isInitialized) return;
+      
+      final leadService = ServiceLocator.leadService;
+      final data = await leadService.getDropdownData();
+      
+      // Log the fetched data
+      developer.log('Fetched dropdown data: ${data.leadManagers.length} lead managers, ${data.baSpecialists.length} BA specialists');
+      for (var manager in data.leadManagers) {
+        developer.log('Lead Manager: ${manager.id} - ${manager.name}');
+      }
+      for (var specialist in data.baSpecialists) {
+        developer.log('BA Specialist: ${specialist.id} - ${specialist.name}');
+      }
+      
+      // Update state with fetched data
+      setState(() {
+        dropdownData = data;
+        _leadManagers = [
+          '-- Select Lead Manager --',
+          ...data.leadManagers.map((manager) => manager.name),
+        ];
+        _baSpecialists = [
+          '-- Select Specialist --',
+          ...data.baSpecialists.map((specialist) => specialist.name),
+        ];
+        _isLoadingDropdownData = false;
+      });
+    } catch (e) {
+      // Log the error
+      developer.log('Error fetching dropdown data: $e');
+      
+      // Reset loading flag on error
+      setState(() {
+        _isLoadingDropdownData = false;
+      });
+      
+      // Show error message if context is still mounted
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load dropdown data: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  // New function to fetch all leads data
+  Future<void> _fetchAllLeadsData() async {
+    // For manual refresh (pull-to-refresh or button), always fetch fresh data
+    // For automatic loading, prevent duplicate fetches
+    final isManualRefresh = !_isLoadingLeadsData && _leadsData.isNotEmpty;
+    
+    // Don't fetch if already loading (unless it's a manual refresh)
+    if (_isLoadingLeadsData && !isManualRefresh) return;
+    
+    // Set loading flag
+    setState(() {
+      _isLoadingLeadsData = true;
+    });
+    
+    try {
+      // Check if service locator is initialized
+      if (!ServiceLocator.isInitialized) return;
+      
+      final leadService = ServiceLocator.leadService;
+      final leads = await leadService.getAllLeads();
+      
+      // Log the fetched leads data
+      developer.log('Fetched leads data: ${leads.length} leads');
+      for (var lead in leads) {
+        developer.log('Lead: ${lead.id} - ${lead.name} (${lead.status})');
+      }
+      
+      // Update state with fetched data
+      setState(() {
+        _leadsData = leads;
+        _isLoadingLeadsData = false;
+      });
+    } catch (e) {
+      // Log the error
+      developer.log('Error fetching leads data: $e');
+      
+      // Reset loading flag on error
+      setState(() {
+        _isLoadingLeadsData = false;
+      });
+      
+      // Show error message if context is still mounted
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load leads data: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -71,7 +235,8 @@ class _ModernLeadManagerDashboardState
                 });
               },
             ),
-            floatingActionButton: _buildFloatingActionButton(isDarkMode),
+            // Only show floating action button on the main dashboard (index 0)
+            floatingActionButton: _currentNavIndex == 0 ? _buildFloatingActionButton(isDarkMode) : null,
             body: _buildBody(isDarkMode),
           );
       },
@@ -777,127 +942,279 @@ class _ModernLeadManagerDashboardState
     final screenWidth = MediaQuery.of(context).size.width;
     final width = MediaQuery.of(context).size.width;
     final fontSize = width < 360 ? 20.0 : 24.0;
-    return Padding(
-      padding: EdgeInsets.all(screenWidth * 0.04),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                color: isDarkMode ? Colors.black : const Color(0xFFF8FAFC),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Add New Lead',
-                      style: TextStyle(
-                        fontSize: fontSize,
-                        fontWeight: FontWeight.w600,
-                        color: isDarkMode
-                            ? Colors.white
-                            : const Color(0xFF1A1A1A),
+    
+    // Fetch dropdown data when this view is accessed for the first time
+    // Use addPostFrameCallback to avoid calling setState during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Only fetch automatically if data hasn't been loaded yet
+      if (dropdownData == null && !_isLoadingDropdownData) {
+        _fetchDropdownData();
+      }
+    });
+    
+    return RefreshIndicator(
+      onRefresh: () async {
+        await _fetchDropdownData();
+      },
+      child: Padding(
+        padding: EdgeInsets.all(screenWidth * 0.04),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: isDarkMode ? Colors.black : const Color(0xFFF8FAFC),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Add New Lead',
+                        style: TextStyle(
+                          fontSize: fontSize,
+                          fontWeight: FontWeight.w600,
+                          color: isDarkMode
+                              ? Colors.white
+                              : const Color(0xFF1A1A1A),
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  _buildActionButton(
-                    context,
-                    Icons.add,
-                    'Add New Lead',
-                    () => (),
-                    isDarkMode,
-                  ),
-                ],
+                    _buildActionButton(
+                      context,
+                      Icons.refresh,
+                      'Refresh Data',
+                      () => _fetchDropdownData(),
+                      isDarkMode,
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
-            _buildAddLeadForm(isDarkMode),
-          ],
+              const SizedBox(height: 24),
+              _buildAddLeadForm(isDarkMode),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildAddLeadForm(bool isDarkMode) {
-    final spacing = MediaQuery.of(context).size.width * 0.04;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Text(
-        //   'Lead Information',
-        //   style: TextStyle(
-        //     fontSize: 18,
-        //     fontWeight: FontWeight.w600,
-        //     color: isDarkMode ? Colors.white : AppThemes.lightPrimaryText,
-        //   ),
-        // ),
-        // SizedBox(height: spacing + 4),
-        _buildFormField(
-          'Full Name',
-          'Enter lead\'s full name',
-          Icons.person_rounded,
-        ),
-        SizedBox(height: spacing),
-        _buildFormField(
-          'Email Address',
-          'Enter email address',
-          Icons.email_rounded,
-        ),
-        SizedBox(height: spacing),
-        _buildFormField(
-          'Phone Number',
-          'Enter phone number',
-          Icons.phone_rounded,
-        ),
-        SizedBox(height: spacing),
-        _buildFormField(
-          'Company',
-          'Enter company name',
-          Icons.business_rounded,
-        ),
-        SizedBox(height: spacing),
-        _buildDropdownField('Lead Source', [
-          'Website',
-          'Social Media',
-          'Referral',
-          'Cold Call',
-        ]),
-        SizedBox(height: spacing + 8),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Lead added successfully!')),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppThemes.primaryColor,
-              foregroundColor: Colors.white,
-              padding: EdgeInsets.symmetric(
-                vertical: MediaQuery.of(context).size.width < 360 ? 14 : 16,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+  Future<void> _submitLead() async {
+    if (_formKey.currentState!.validate()) {
+      if (!ServiceLocator.isInitialized) return;
+      
+      // Check if Lead Manager is selected
+      if (_selectedLeadManagerId == null || _selectedLeadManager == '-- Select Lead Manager --') {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please select a Lead Manager'),
+              backgroundColor: Colors.red,
             ),
-            child: Text(
-              'Add Lead',
-              style: TextStyle(
-                fontSize: MediaQuery.of(context).size.width < 360 ? 15 : 16,
-                fontWeight: FontWeight.w600,
+          );
+        }
+        return;
+      }
+      
+      try {
+        final leadService = ServiceLocator.leadService;
+        
+        // Create a lead object with the form data using IDs for creation
+        final lead = Lead(
+          id: 0, // Will be assigned by the server
+          name: _nameController.text,
+          email: _emailController.text,
+          phone: _contactController.text,
+          education: _educationController.text,
+          experience: _experienceController.text,
+          location: _locationController.text,
+          status: 'New', // Default status
+          feedback: '',
+          createdAt: DateTime.now().toIso8601String(),
+          ownerName: '', // Not used for creation
+          assignedName: '', // Not used for creation
+          ownerId: _selectedLeadManagerId,
+          assignedTo: _selectedBASpecialistId,
+          latestHistory: 'New lead created',
+        );
+        
+        // Log the lead data before submission
+        developer.log('Submitting lead: ${lead.toJson()}');
+        
+        final response = await leadService.createLead(lead);
+        
+        // Log the response
+        developer.log('Lead creation response: $response');
+        
+        if (context.mounted) {
+          if (response['status'] == 'success') {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Lead added successfully!'),
+                backgroundColor: Colors.green,
+              ),
+            );
+            
+            // Clear form
+            _formKey.currentState!.reset();
+            _nameController.clear();
+            _contactController.clear();
+            _emailController.clear();
+            _educationController.clear();
+            _experienceController.clear();
+            _locationController.clear();
+            setState(() {
+              _selectedLeadManager = '-- Select Lead Manager --';
+              _selectedBASpecialist = '-- Select Specialist --';
+              _selectedLeadManagerId = null;
+              _selectedBASpecialistId = null;
+            });
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Failed to add lead: ${response['message'] ?? 'Unknown error'}'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        // Log the error
+        developer.log('Error submitting lead: $e');
+        
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to add lead: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Widget _buildAddLeadForm(bool isDarkMode) {
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Text(
+          //   'Lead Information',
+          //   style: TextStyle(
+          //     fontSize: 18,
+          //     fontWeight: FontWeight.w600,
+          //     color: isDarkMode ? Colors.white : AppThemes.lightPrimaryText,
+          //   ),
+          // ),
+          // SizedBox(height: spacing + 4),
+          _buildFormField(
+            'Full Name',
+            'Enter lead\'s full name',
+            Icons.person_rounded,
+            _nameController,
+          ),
+          SizedBox(height: MediaQuery.of(context).size.width * 0.04),
+          _buildFormField(
+            'Email Address',
+            'Enter email address',
+            Icons.email_rounded,
+            _emailController,
+          ),
+          SizedBox(height: MediaQuery.of(context).size.width * 0.04),
+          _buildFormField(
+            'Phone Number',
+            'Enter phone number',
+            Icons.phone_rounded,
+            _contactController,
+          ),
+          SizedBox(height: MediaQuery.of(context).size.width * 0.04),
+          _buildFormField(
+            'Education',
+            'Enter education',
+            Icons.school_rounded,
+            _educationController,
+          ),
+          SizedBox(height: MediaQuery.of(context).size.width * 0.04),
+          _buildFormField(
+            'Experience',
+            'Enter experience',
+            Icons.work_rounded,
+            _experienceController,
+          ),
+          SizedBox(height: MediaQuery.of(context).size.width * 0.04),
+          _buildFormField(
+            'Location',
+            'Enter location',
+            Icons.location_on_rounded,
+            _locationController,
+          ),
+          SizedBox(height: MediaQuery.of(context).size.width * 0.04),
+          _buildDropdownField('Lead Owner (Lead Manager)', _leadManagers, (value) {
+            developer.log('Lead Manager selected: $value');
+            setState(() {
+              _selectedLeadManager = value ?? '-- Select Lead Manager --';
+              // Find and store the ID
+              if (dropdownData != null && value != null && value != '-- Select Lead Manager --') {
+                final manager = dropdownData!.leadManagers.firstWhere(
+                  (m) => m.name == value,
+                  orElse: () => dropdownData!.leadManagers.first,
+                );
+                _selectedLeadManagerId = int.tryParse(manager.id);
+              } else {
+                _selectedLeadManagerId = null;
+              }
+            });
+          }),
+          SizedBox(height: MediaQuery.of(context).size.width * 0.04),
+          _buildDropdownField('Assign To (BA Specialist)', _baSpecialists, (value) {
+            developer.log('BA Specialist selected: $value');
+            setState(() {
+              _selectedBASpecialist = value ?? '-- Select Specialist --';
+              // Find and store the ID
+              if (dropdownData != null && value != null && value != '-- Select Specialist --') {
+                final specialist = dropdownData!.baSpecialists.firstWhere(
+                  (s) => s.name == value,
+                  orElse: () => dropdownData!.baSpecialists.first,
+                );
+                _selectedBASpecialistId = int.tryParse(specialist.id);
+              } else {
+                _selectedBASpecialistId = null;
+              }
+            });
+          }),
+          SizedBox(height: MediaQuery.of(context).size.width * 0.04 + 8),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _submitLead,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppThemes.primaryColor,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(
+                  vertical: MediaQuery.of(context).size.width < 360 ? 14 : 16,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(
+                'Add Lead',
+                style: TextStyle(
+                  fontSize: MediaQuery.of(context).size.width < 360 ? 15 : 16,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _buildFormField(String label, String hint, IconData icon) {
+  Widget _buildFormField(String label, String hint, IconData icon, [TextEditingController? controller]) {
     final width = MediaQuery.of(context).size.width;
 
     return Column(
@@ -911,7 +1228,8 @@ class _ModernLeadManagerDashboardState
           ),
         ),
         const SizedBox(height: 8),
-        TextField(
+        TextFormField(
+          controller: controller,
           decoration: InputDecoration(
             hintText: hint,
             prefixIcon: Icon(icon, size: width < 360 ? 20 : 24),
@@ -923,13 +1241,28 @@ class _ModernLeadManagerDashboardState
               vertical: width < 360 ? 12 : 16,
             ),
           ),
+          // Add basic validation
+          validator: (value) {
+            if (label == 'Full Name' && (value == null || value.isEmpty)) {
+              return 'Please enter a name';
+            }
+            if (label == 'Email Address' && (value == null || value.isEmpty)) {
+              return 'Please enter an email';
+            }
+            if (label == 'Phone Number' && (value == null || value.isEmpty)) {
+              return 'Please enter a phone number';
+            }
+            return null;
+          },
         ),
       ],
     );
   }
 
-  Widget _buildDropdownField(String label, List<String> options) {
+  Widget _buildDropdownField(String label, List<String> options, Function(String?) onChanged) {
     final width = MediaQuery.of(context).size.width;
+    final isLeadManager = label.contains('Lead Manager');
+    final selectedValue = isLeadManager ? _selectedLeadManager : _selectedBASpecialist;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -943,6 +1276,8 @@ class _ModernLeadManagerDashboardState
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
+          initialValue: selectedValue == '-- Select Lead Manager --' || selectedValue == '-- Select Specialist --' 
+                 ? null : selectedValue,
           decoration: InputDecoration(
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(width < 360 ? 10 : 12),
@@ -959,84 +1294,139 @@ class _ModernLeadManagerDashboardState
                     DropdownMenuItem(value: option, child: Text(option)),
               )
               .toList(),
-          onChanged: (value) {},
+          onChanged: onChanged,
+          // Add validation
+          validator: (value) {
+            if (value == null || value.isEmpty || 
+                value == '-- Select Lead Manager --' || 
+                value == '-- Select Specialist --') {
+              return 'Please select a $label';
+            }
+            return null;
+          },
         ),
       ],
     );
   }
 
   Widget _buildViewLeadsView(bool isDarkMode) {
-    final leads = _getDummyLeads();
-
-    return ModernTableView<Lead>(
-      title: 'All Leads',
-      data: leads,
-      columns: [
-        TableColumn(
-          title: 'Name',
-          value: (lead) => lead.name,
-          builder: (lead) => Row(
-            children: [
-              CircleAvatar(
-                radius: 16,
-                backgroundColor: AppThemes.getStatusColor(
-                  lead.status,
-                ).withValues(alpha: 0.1),
-                child: Text(
-                  lead.name[0].toUpperCase(),
-                  style: TextStyle(
-                    color: AppThemes.getStatusColor(lead.status),
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+    // Fetch all leads data when accessing View Leads section
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_leadsData.isEmpty && !_isLoadingLeadsData) {
+        _fetchAllLeadsData();
+      }
+    });
+    
+    return BlocProvider(
+      create: (context) => LeadsBloc()..add(LoadAllLeads()),
+      child: BlocBuilder<LeadsBloc, LeadsState>(
+        builder: (context, state) {
+          // Log the leads response when state changes
+          if (!state.isLoading && state.error == null) {
+            developer.log('Leads response: ${state.leads.length} leads loaded');
+            for (var lead in state.leads) {
+              developer.log('Lead: ${lead.id} - ${lead.name} (${lead.status})');
+            }
+          }
+          
+          if (state.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          
+          if (state.error != null) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    lead.name,
-                    style: const TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                  Text(
-                    lead.email,
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  Text('Error: ${state.error}'),
+                  ElevatedButton(
+                    onPressed: () {
+                      context.read<LeadsBloc>().add(LoadAllLeads());
+                    },
+                    child: const Text('Retry'),
                   ),
                 ],
               ),
-            ],
-          ),
-        ),
-        TableColumn(title: 'Phone', value: (lead) => lead.phone),
-        TableColumn(
-          title: 'Status',
-          value: (lead) => lead.status,
-          builder: (lead) => Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppThemes.getStatusColor(
-                lead.status,
-              ).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              lead.status,
-              style: TextStyle(
-                color: AppThemes.getStatusColor(lead.status),
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
+            );
+          }
+          
+          final leads = state.leads;
+          
+          return ModernTableView<Lead>(
+            title: 'All Leads',
+            data: leads,
+            columns: [
+              TableColumn(
+                title: 'Name',
+                value: (lead) => lead.name,
+                builder: (lead) => Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 16,
+                      backgroundColor: AppThemes.getStatusColor(
+                        lead.status,
+                      ).withValues(alpha: 0.1),
+                      child: Text(
+                        // lead.name[0].toUpperCase(),
+                        lead.id.toString(),
+                        style: TextStyle(
+                          color: AppThemes.getStatusColor(lead.status),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          lead.name,
+                          style: const TextStyle(fontWeight: FontWeight.w500),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          lead.email,
+                          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ),
-        ),
-      ],
-      onRowTap: (lead) {
-        _showLeadDetails(lead);
-      },
-      onRowEdit: (lead) {
-        // Handle edit
-      },
+              TableColumn(title: 'Phone', value: (lead) => lead.phone),
+              TableColumn(
+                title: 'Status',
+                value: (lead) => lead.status,
+                builder: (lead) => Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppThemes.getStatusColor(
+                      lead.status,
+                    ).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    lead.status,
+                    style: TextStyle(
+                      color: AppThemes.getStatusColor(lead.status),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+            onRowTap: (lead) {
+              _showLeadDetails(lead);
+            },
+            onRowEdit: (lead) {
+              // Handle edit
+            },
+          );
+        },
+      ),
     );
   }
 
@@ -1344,89 +1734,79 @@ class _ModernLeadManagerDashboardState
   List<Lead> _getDummyLeads() {
     return [
       Lead(
-        id: '1',
-        date: DateTime.now(),
+        id: 1,
         name: 'Alice Johnson',
         email: 'alice@example.com',
         phone: '123-456-7890',
-        leadManager: 'achal',
-        status: 'New',
-        feedback: '',
         education: '',
         experience: '',
         location: '',
-        orderBy: '',
-        assignedBy: 'Nikita',
-        discount: '',
-        baSpecialist: 'Nikita',
+        status: 'New',
+        feedback: '',
+        createdAt: DateTime.now().toIso8601String(),
+        ownerName: 'achal',
+        assignedName: 'Nikita',
+        latestHistory: 'Just created',
       ),
       Lead(
-        id: '2',
-        date: DateTime.now(),
+        id: 2,
         name: 'Bob Smith',
         email: 'bob@example.com',
         phone: '098-765-4321',
-        leadManager: 'achal',
-        status: 'Contacted',
-        feedback: '',
         education: '',
         experience: '',
         location: '',
-        orderBy: '',
-        assignedBy: 'Nikita',
-        discount: '',
-        baSpecialist: 'Nikita',
+        status: 'Contacted',
+        feedback: '',
+        createdAt: DateTime.now().toIso8601String(),
+        ownerName: 'achal',
+        assignedName: 'Nikita',
+        latestHistory: 'Contacted',
       ),
       Lead(
-        id: '3',
-        date: DateTime.now(),
+        id: 3,
         name: 'Carol Davis',
         email: 'carol@example.com',
         phone: '555-123-4567',
-        leadManager: 'achal',
-        status: 'Qualified',
-        feedback: '',
         education: '',
         experience: '',
         location: '',
-        orderBy: '',
-        assignedBy: 'Nikita',
-        discount: '',
-        baSpecialist: 'Nikita',
+        status: 'Qualified',
+        feedback: '',
+        createdAt: DateTime.now().toIso8601String(),
+        ownerName: 'achal',
+        assignedName: 'Nikita',
+        latestHistory: 'Qualified',
       ),
       Lead(
-        id: '4',
-        date: DateTime.now(),
+        id: 4,
         name: 'David Wilson',
         email: 'david@example.com',
         phone: '444-555-6666',
-        leadManager: 'achal',
-        status: 'Proposal Sent',
-        feedback: '',
         education: '',
         experience: '',
         location: '',
-        orderBy: '',
-        assignedBy: 'Nikita',
-        discount: '',
-        baSpecialist: 'Nikita',
+        status: 'Proposal Sent',
+        feedback: '',
+        createdAt: DateTime.now().toIso8601String(),
+        ownerName: 'achal',
+        assignedName: 'Nikita',
+        latestHistory: 'Proposal sent',
       ),
       Lead(
-        id: '5',
-        date: DateTime.now(),
+        id: 5,
         name: 'Eva Brown',
         email: 'eva@example.com',
         phone: '777-888-9999',
-        leadManager: 'achal',
-        status: 'Closed Won',
-        feedback: '',
         education: '',
         experience: '',
         location: '',
-        orderBy: '',
-        assignedBy: 'Nikita',
-        discount: '',
-        baSpecialist: 'Nikita',
+        status: 'Closed Won',
+        feedback: '',
+        createdAt: DateTime.now().toIso8601String(),
+        ownerName: 'achal',
+        assignedName: 'Nikita',
+        latestHistory: 'Closed',
       ),
     ];
   }

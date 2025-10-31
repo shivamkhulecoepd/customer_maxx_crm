@@ -118,17 +118,45 @@ class ModernDrawer extends StatelessWidget {
                 'Dashboard',
                 () {
                   Navigator.pop(context);
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const AuthWrapper(),
-                    ),
-                  );
+                  // Navigate to the appropriate dashboard based on user role
+                  final authState = context.read<AuthBloc>().state;
+                  if (authState is Authenticated && authState.user != null) {
+                    final userRole = authState.user!.role;
+                    if (userRole.toLowerCase().contains('admin')) {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ModernAdminDashboard(),
+                        ),
+                      );
+                    } else if (userRole.toLowerCase().contains('lead')) {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ModernLeadManagerDashboard(),
+                        ),
+                      );
+                    } else if (userRole.toLowerCase().contains('ba') || userRole.toLowerCase().contains('specialist')) {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ModernBASpecialistDashboard(),
+                        ),
+                      );
+                    } else {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AuthWrapper(),
+                        ),
+                      );
+                    }
+                  }
                 },
                 isActive: true,
               ),
 
-              if (userRole == 'Admin') ...[
+              if (userRole.toLowerCase().contains('admin')) ...[
                 _buildModernDrawerItem(
                   context,
                   Icons.people_outlined,
@@ -157,7 +185,7 @@ class ModernDrawer extends StatelessWidget {
                     );
                   },
                 ),
-              ] else if (userRole == 'Lead Manager') ...[
+              ] else if (userRole.toLowerCase().contains('lead')) ...[
                 _buildModernDrawerItem(
                   context,
                   Icons.add_outlined,
@@ -186,7 +214,7 @@ class ModernDrawer extends StatelessWidget {
                     );
                   },
                 ),
-              ] else if (userRole == 'BA Specialist') ...[
+              ] else if (userRole.toLowerCase().contains('ba') || userRole.toLowerCase().contains('specialist')) ...[
                 _buildModernDrawerItem(
                   context,
                   Icons.app_registration_outlined,
