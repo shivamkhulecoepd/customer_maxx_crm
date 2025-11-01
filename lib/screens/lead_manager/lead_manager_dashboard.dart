@@ -9,8 +9,6 @@ import 'package:customer_maxx_crm/blocs/theme/theme_bloc.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_state.dart';
 import 'package:customer_maxx_crm/utils/theme_utils.dart';
 import 'package:customer_maxx_crm/widgets/navigation_bar.dart';
-
-import 'package:customer_maxx_crm/widgets/standard_table_view.dart';
 import 'package:customer_maxx_crm/widgets/generic_table_view.dart';
 import 'package:customer_maxx_crm/models/lead.dart';
 import 'package:customer_maxx_crm/models/dropdown_data.dart';
@@ -68,7 +66,6 @@ class _ModernLeadManagerDashboardState
   bool _isLoadingLeadsData = false;
   bool _hasLoadedInitialLeadsData = false;
 
-
   @override
   void initState() {
     super.initState();
@@ -102,31 +99,33 @@ class _ModernLeadManagerDashboardState
     // For manual refresh (pull-to-refresh or button), always fetch fresh data
     // For automatic loading, prevent duplicate fetches
     final isManualRefresh = !_isLoadingDropdownData && dropdownData != null;
-    
+
     // Don't fetch if already loading (unless it's a manual refresh)
     if (_isLoadingDropdownData && !isManualRefresh) return;
-    
+
     // Set loading flag
     setState(() {
       _isLoadingDropdownData = true;
     });
-    
+
     try {
       // Check if service locator is initialized
       if (!ServiceLocator.isInitialized) return;
-      
+
       final leadService = ServiceLocator.leadService;
       final data = await leadService.getDropdownData();
-      
+
       // Log the fetched data
-      developer.log('Fetched dropdown data: ${data.leadManagers.length} lead managers, ${data.baSpecialists.length} BA specialists');
+      developer.log(
+        'Fetched dropdown data: ${data.leadManagers.length} lead managers, ${data.baSpecialists.length} BA specialists',
+      );
       for (var manager in data.leadManagers) {
         developer.log('Lead Manager: ${manager.id} - ${manager.name}');
       }
       for (var specialist in data.baSpecialists) {
         developer.log('BA Specialist: ${specialist.id} - ${specialist.name}');
       }
-      
+
       // Update state with fetched data
       setState(() {
         dropdownData = data;
@@ -143,12 +142,12 @@ class _ModernLeadManagerDashboardState
     } catch (e) {
       // Log the error
       developer.log('Error fetching dropdown data: $e');
-      
+
       // Reset loading flag on error
       setState(() {
         _isLoadingDropdownData = false;
       });
-      
+
       // Show error message if context is still mounted
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -166,28 +165,28 @@ class _ModernLeadManagerDashboardState
     // For manual refresh (pull-to-refresh or button), always fetch fresh data
     // For automatic loading, prevent duplicate fetches
     final isManualRefresh = !_isLoadingLeadsData && _leadsData.isNotEmpty;
-    
+
     // Don't fetch if already loading (unless it's a manual refresh)
     if (_isLoadingLeadsData && !isManualRefresh) return;
-    
+
     // Set loading flag
     setState(() {
       _isLoadingLeadsData = true;
     });
-    
+
     try {
       // Check if service locator is initialized
       if (!ServiceLocator.isInitialized) return;
-      
+
       final leadService = ServiceLocator.leadService;
       final leads = await leadService.getAllLeadsNoPagination();
-      
+
       // Log the fetched leads data
       developer.log('Fetched leads data: ${leads.length} leads');
       for (var lead in leads) {
         developer.log('Lead: ${lead.id} - ${lead.name} (${lead.status})');
       }
-      
+
       // Update state with fetched data
       setState(() {
         _leadsData = leads;
@@ -196,12 +195,12 @@ class _ModernLeadManagerDashboardState
     } catch (e) {
       // Log the error
       developer.log('Error fetching leads data: $e');
-      
+
       // Reset loading flag on error
       setState(() {
         _isLoadingLeadsData = false;
       });
-      
+
       // Show error message if context is still mounted
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -221,27 +220,29 @@ class _ModernLeadManagerDashboardState
         final isDarkMode = themeState.isDarkMode;
 
         return Scaffold(
-            appBar: AppBar(
-              automaticallyImplyLeading: false,
-              title: _buildCustomAppBar(context, isDarkMode),
-              centerTitle: true,
-              backgroundColor: isDarkMode ? Colors.black : Colors.white,
-            ),
-            // drawer: _buildModernDrawer(context),
-            drawer: ModernDrawer(),
-            bottomNavigationBar: FloatingNavigationBar(
-              currentIndex: _currentNavIndex,
-              userRole: _userRole,
-              onTap: (index) {
-                setState(() {
-                  _currentNavIndex = index;
-                });
-              },
-            ),
-            // Only show floating action button on the main dashboard (index 0)
-            floatingActionButton: _currentNavIndex == 0 ? _buildFloatingActionButton(isDarkMode) : null,
-            body: _buildBody(isDarkMode),
-          );
+          appBar: AppBar(
+            automaticallyImplyLeading: false,
+            title: _buildCustomAppBar(context, isDarkMode),
+            centerTitle: true,
+            backgroundColor: isDarkMode ? Colors.black : Colors.white,
+          ),
+          // drawer: _buildModernDrawer(context),
+          drawer: ModernDrawer(),
+          bottomNavigationBar: FloatingNavigationBar(
+            currentIndex: _currentNavIndex,
+            userRole: _userRole,
+            onTap: (index) {
+              setState(() {
+                _currentNavIndex = index;
+              });
+            },
+          ),
+          // Only show floating action button on the main dashboard (index 0)
+          floatingActionButton: _currentNavIndex == 0
+              ? _buildFloatingActionButton(isDarkMode)
+              : null,
+          body: _buildBody(isDarkMode),
+        );
       },
     );
   }
@@ -281,7 +282,7 @@ class _ModernLeadManagerDashboardState
               },
             ),
           SizedBox(width: width < 360 ? 8 : 12),
-      
+
           // Title
           Expanded(
             child: Text(
@@ -294,10 +295,10 @@ class _ModernLeadManagerDashboardState
               overflow: TextOverflow.ellipsis,
             ),
           ),
-      
+
           // Actions
           if (actions != null) ...actions!,
-      
+
           // Theme Toggle
           _buildIconButton(
             context,
@@ -305,9 +306,9 @@ class _ModernLeadManagerDashboardState
             () => context.read<ThemeBloc>().add(ToggleTheme()),
             isDarkMode,
           ),
-      
+
           SizedBox(width: width < 360 ? 6 : 8),
-      
+
           // Profile Avatar
           _buildProfileAvatar(context, isDarkMode),
         ],
@@ -758,20 +759,6 @@ class _ModernLeadManagerDashboardState
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         children: [
-          // CircleAvatar(
-          //   radius: 20,
-          //   backgroundColor: AppThemes.getStatusColor(
-          //     lead.status,
-          //   ).withValues(alpha: 0.1),
-          //   child: Text(
-          //     lead.name[0].toUpperCase(),
-          //     style: TextStyle(
-          //       color: AppThemes.getStatusColor(lead.status),
-          //       fontWeight: FontWeight.w600,
-          //     ),
-          //   ),
-          // ),
-          // const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -945,7 +932,7 @@ class _ModernLeadManagerDashboardState
     final screenWidth = MediaQuery.of(context).size.width;
     final width = MediaQuery.of(context).size.width;
     final fontSize = width < 360 ? 20.0 : 24.0;
-    
+
     // Fetch dropdown data when this view is accessed for the first time
     // Use addPostFrameCallback to avoid calling setState during build
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -954,7 +941,7 @@ class _ModernLeadManagerDashboardState
         _fetchDropdownData();
       }
     });
-    
+
     return RefreshIndicator(
       onRefresh: () async {
         await _fetchDropdownData();
@@ -1006,9 +993,10 @@ class _ModernLeadManagerDashboardState
   Future<void> _submitLead() async {
     if (_formKey.currentState!.validate()) {
       if (!ServiceLocator.isInitialized) return;
-      
+
       // Check if Lead Manager is selected
-      if (_selectedLeadManagerId == null || _selectedLeadManager == '-- Select Lead Manager --') {
+      if (_selectedLeadManagerId == null ||
+          _selectedLeadManager == '-- Select Lead Manager --') {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -1019,10 +1007,10 @@ class _ModernLeadManagerDashboardState
         }
         return;
       }
-      
+
       try {
         final leadService = ServiceLocator.leadService;
-        
+
         // Create a lead object with the form data using IDs for creation
         final lead = Lead(
           id: 0, // Will be assigned by the server
@@ -1041,15 +1029,15 @@ class _ModernLeadManagerDashboardState
           assignedTo: _selectedBASpecialistId,
           latestHistory: 'New lead created',
         );
-        
+
         // Log the lead data before submission
         developer.log('Submitting lead: ${lead.toJson()}');
-        
+
         final response = await leadService.createLead(lead);
-        
+
         // Log the response
         developer.log('Lead creation response: $response');
-        
+
         if (context.mounted) {
           if (response['status'] == 'success') {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -1058,7 +1046,7 @@ class _ModernLeadManagerDashboardState
                 backgroundColor: Colors.green,
               ),
             );
-            
+
             // Clear form
             _formKey.currentState!.reset();
             _nameController.clear();
@@ -1076,7 +1064,9 @@ class _ModernLeadManagerDashboardState
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Failed to add lead: ${response['message'] ?? 'Unknown error'}'),
+                content: Text(
+                  'Failed to add lead: ${response['message'] ?? 'Unknown error'}',
+                ),
                 backgroundColor: Colors.red,
               ),
             );
@@ -1085,7 +1075,7 @@ class _ModernLeadManagerDashboardState
       } catch (e) {
         // Log the error
         developer.log('Error submitting lead: $e');
-        
+
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -1104,15 +1094,6 @@ class _ModernLeadManagerDashboardState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Text(
-          //   'Lead Information',
-          //   style: TextStyle(
-          //     fontSize: 18,
-          //     fontWeight: FontWeight.w600,
-          //     color: isDarkMode ? Colors.white : AppThemes.lightPrimaryText,
-          //   ),
-          // ),
-          // SizedBox(height: spacing + 4),
           _buildFormField(
             'Full Name',
             'Enter lead\'s full name',
@@ -1155,12 +1136,16 @@ class _ModernLeadManagerDashboardState
             _locationController,
           ),
           SizedBox(height: MediaQuery.of(context).size.width * 0.04),
-          _buildDropdownField('Lead Owner (Lead Manager)', _leadManagers, (value) {
+          _buildDropdownField('Lead Owner (Lead Manager)', _leadManagers, (
+            value,
+          ) {
             developer.log('Lead Manager selected: $value');
             setState(() {
               _selectedLeadManager = value ?? '-- Select Lead Manager --';
               // Find and store the ID
-              if (dropdownData != null && value != null && value != '-- Select Lead Manager --') {
+              if (dropdownData != null &&
+                  value != null &&
+                  value != '-- Select Lead Manager --') {
                 final manager = dropdownData!.leadManagers.firstWhere(
                   (m) => m.name == value,
                   orElse: () => dropdownData!.leadManagers.first,
@@ -1172,12 +1157,16 @@ class _ModernLeadManagerDashboardState
             });
           }),
           SizedBox(height: MediaQuery.of(context).size.width * 0.04),
-          _buildDropdownField('Assign To (BA Specialist)', _baSpecialists, (value) {
+          _buildDropdownField('Assign To (BA Specialist)', _baSpecialists, (
+            value,
+          ) {
             developer.log('BA Specialist selected: $value');
             setState(() {
               _selectedBASpecialist = value ?? '-- Select Specialist --';
               // Find and store the ID
-              if (dropdownData != null && value != null && value != '-- Select Specialist --') {
+              if (dropdownData != null &&
+                  value != null &&
+                  value != '-- Select Specialist --') {
                 final specialist = dropdownData!.baSpecialists.firstWhere(
                   (s) => s.name == value,
                   orElse: () => dropdownData!.baSpecialists.first,
@@ -1217,7 +1206,12 @@ class _ModernLeadManagerDashboardState
     );
   }
 
-  Widget _buildFormField(String label, String hint, IconData icon, [TextEditingController? controller]) {
+  Widget _buildFormField(
+    String label,
+    String hint,
+    IconData icon, [
+    TextEditingController? controller,
+  ]) {
     final width = MediaQuery.of(context).size.width;
 
     return Column(
@@ -1262,10 +1256,16 @@ class _ModernLeadManagerDashboardState
     );
   }
 
-  Widget _buildDropdownField(String label, List<String> options, Function(String?) onChanged) {
+  Widget _buildDropdownField(
+    String label,
+    List<String> options,
+    Function(String?) onChanged,
+  ) {
     final width = MediaQuery.of(context).size.width;
     final isLeadManager = label.contains('Lead Manager');
-    final selectedValue = isLeadManager ? _selectedLeadManager : _selectedBASpecialist;
+    final selectedValue = isLeadManager
+        ? _selectedLeadManager
+        : _selectedBASpecialist;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1279,8 +1279,11 @@ class _ModernLeadManagerDashboardState
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          initialValue: selectedValue == '-- Select Lead Manager --' || selectedValue == '-- Select Specialist --' 
-                 ? null : selectedValue,
+          initialValue:
+              selectedValue == '-- Select Lead Manager --' ||
+                  selectedValue == '-- Select Specialist --'
+              ? null
+              : selectedValue,
           decoration: InputDecoration(
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(width < 360 ? 10 : 12),
@@ -1300,8 +1303,9 @@ class _ModernLeadManagerDashboardState
           onChanged: onChanged,
           // Add validation
           validator: (value) {
-            if (value == null || value.isEmpty || 
-                value == '-- Select Lead Manager --' || 
+            if (value == null ||
+                value.isEmpty ||
+                value == '-- Select Lead Manager --' ||
                 value == '-- Select Specialist --') {
               return 'Please select a $label';
             }
@@ -1316,7 +1320,10 @@ class _ModernLeadManagerDashboardState
     return BlocBuilder<LeadsBloc, LeadsState>(
       builder: (context, state) {
         // Load leads data only when needed (first time)
-        if (!_hasLoadedInitialLeadsData && state.leads.isEmpty && !state.isLoading && state.error == null) {
+        if (!_hasLoadedInitialLeadsData &&
+            state.leads.isEmpty &&
+            !state.isLoading &&
+            state.error == null) {
           // Use addPostFrameCallback to avoid calling during build phase
           WidgetsBinding.instance.addPostFrameCallback((_) {
             context.read<LeadsBloc>().add(LoadAllLeads());
@@ -1325,7 +1332,7 @@ class _ModernLeadManagerDashboardState
             });
           });
         }
-        
+
         return RefreshIndicator(
           onRefresh: () async {
             // Reset the flag so we can load data again if needed
@@ -1340,7 +1347,7 @@ class _ModernLeadManagerDashboardState
               if (state.isLoading && state.leads.isEmpty) {
                 return const Center(child: CircularProgressIndicator());
               }
-              
+
               if (state.error != null && state.leads.isEmpty) {
                 return Center(
                   child: Column(
@@ -1357,23 +1364,33 @@ class _ModernLeadManagerDashboardState
                   ),
                 );
               }
-              
+
               final leads = state.leads;
-              
+
               // Log the leads response when we have data (only first time)
               if (leads.isNotEmpty) {
                 developer.log('Leads response: ${leads.length} leads loaded');
                 // Only log first 3 leads to avoid spam
                 for (var i = 0; i < leads.length && i < 3; i++) {
                   final lead = leads[i];
-                  developer.log('Lead: ${lead.id} - ${lead.name} (${lead.status})');
+                  developer.log(
+                    'Lead: ${lead.id} - ${lead.name} (${lead.status})',
+                  );
                 }
               }
-              
+
               return GenericTableView<Lead>(
                 title: 'All Leads',
                 data: leads,
-                filterOptions: const ['Not Connected', 'Follow-up Planned', 'Follow-up Completed', 'Demo Attended', 'Warm Lead', 'Hot Lead', 'Converted'],
+                filterOptions: const [
+                  'Not Connected',
+                  'Follow-up Planned',
+                  'Follow-up Completed',
+                  'Demo Attended',
+                  'Warm Lead',
+                  'Hot Lead',
+                  'Converted',
+                ],
                 onFilterChanged: (filter) {
                   // Handle filter change if needed
                   developer.log('Filter changed to: $filter');
@@ -1384,57 +1401,45 @@ class _ModernLeadManagerDashboardState
                     value: (lead) => lead.id,
                     width: 60,
                   ),
-                  // GenericTableColumn(
-                  //   title: 'Name',
-                  //   value: (lead) => lead.name,
-                  //   width: 150,
-                  //   builder: (lead) => Row(
-                  //     children: [
-                  //       // CircleAvatar(
-                  //       //   radius: 16,
-                  //       //   backgroundColor: AppThemes.getStatusColor(
-                  //       //     lead.status,
-                  //       //   ).withValues(alpha: 0.1),
-                  //       //   child: Text(
-                  //       //     lead.name[0].toUpperCase(),
-                  //       //     style: TextStyle(
-                  //       //       color: AppThemes.getStatusColor(lead.status),
-                  //       //       fontWeight: FontWeight.w600,
-                  //       //       fontSize: 12,
-                  //       //     ),
-                  //       //   ),
-                  //       // ),
-                  //       // const SizedBox(width: 12),
-                  //       Column(
-                  //         crossAxisAlignment: CrossAxisAlignment.start,
-                  //         children: [
-                  //           Text(
-                  //             lead.name,
-                  //             style: const TextStyle(fontWeight: FontWeight.w500),
-                  //             overflow: TextOverflow.ellipsis,
-                  //           ),
-                  //           Text(
-                  //             lead.email,
-                  //             style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                  //             overflow: TextOverflow.ellipsis,
-                  //           ),
-                  //         ],
-                  //       ),
-                  //     ],
-                  //   ),
-                  // ),
-                  GenericTableColumn(title: 'Name', value: (lead) => lead.name, width: 120),
-                  GenericTableColumn(title: 'Phone', value: (lead) => lead.phone, width: 130),
-                  GenericTableColumn(title: 'Email', value: (lead) => lead.email, width: 150),
-                  GenericTableColumn(title: 'Education', value: (lead) => lead.education, width: 120),
-                  GenericTableColumn(title: 'Experience', value: (lead) => lead.experience, width: 100),
-                  GenericTableColumn(title: 'Location', value: (lead) => lead.location, width: 120),
+                  GenericTableColumn(
+                    title: 'Name',
+                    value: (lead) => lead.name,
+                    width: 120,
+                  ),
+                  GenericTableColumn(
+                    title: 'Phone',
+                    value: (lead) => lead.phone,
+                    width: 130,
+                  ),
+                  GenericTableColumn(
+                    title: 'Email',
+                    value: (lead) => lead.email,
+                    width: 150,
+                  ),
+                  GenericTableColumn(
+                    title: 'Education',
+                    value: (lead) => lead.education,
+                    width: 120,
+                  ),
+                  GenericTableColumn(
+                    title: 'Experience',
+                    value: (lead) => lead.experience,
+                    width: 100,
+                  ),
+                  GenericTableColumn(
+                    title: 'Location',
+                    value: (lead) => lead.location,
+                    width: 120,
+                  ),
                   GenericTableColumn(
                     title: 'Status',
                     value: (lead) => lead.status,
                     width: 120,
                     builder: (lead) => Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: AppThemes.getStatusColor(
                           lead.status,
@@ -1444,24 +1449,46 @@ class _ModernLeadManagerDashboardState
                       child: Text(
                         lead.status.isEmpty ? 'N/A' : lead.status,
                         style: TextStyle(
-                          color: AppThemes.getStatusColor(lead.status.isEmpty ? 'New' : lead.status),
+                          color: AppThemes.getStatusColor(
+                            lead.status.isEmpty ? 'New' : lead.status,
+                          ),
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
                   ),
-                  GenericTableColumn(title: 'Feedback', value: (lead) => lead.feedback, width: 150),
-                  GenericTableColumn(title: 'Created At', value: (lead) => lead.createdAt, width: 150),
-                  GenericTableColumn(title: 'Owner', value: (lead) => lead.ownerName, width: 120),
-                  GenericTableColumn(title: 'Assigned To', value: (lead) => lead.assignedName, width: 120),
-                  GenericTableColumn(title: 'Latest History', value: (lead) => lead.latestHistory, width: 200),
+                  GenericTableColumn(
+                    title: 'Feedback',
+                    value: (lead) => lead.feedback,
+                    width: 150,
+                  ),
+                  GenericTableColumn(
+                    title: 'Created At',
+                    value: (lead) => lead.createdAt,
+                    width: 150,
+                  ),
+                  GenericTableColumn(
+                    title: 'Owner',
+                    value: (lead) => lead.ownerName,
+                    width: 120,
+                  ),
+                  GenericTableColumn(
+                    title: 'Assigned To',
+                    value: (lead) => lead.assignedName,
+                    width: 120,
+                  ),
+                  GenericTableColumn(
+                    title: 'Latest History',
+                    value: (lead) => lead.latestHistory,
+                    width: 200,
+                  ),
                 ],
                 onRowTap: (lead) {
                   _showLeadDetails(lead);
                 },
-                onRowEdit: (lead) {
-                  // Handle edit
+                onRowDelete: (lead) {
+                   // Handle delete
                 },
               );
             },
