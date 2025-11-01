@@ -66,6 +66,8 @@ class _ModernLeadManagerDashboardState
   DropdownData? dropdownData;
   bool _isLoadingDropdownData = false;
   bool _isLoadingLeadsData = false;
+  bool _hasLoadedInitialLeadsData = false;
+
 
   @override
   void initState() {
@@ -178,7 +180,7 @@ class _ModernLeadManagerDashboardState
       if (!ServiceLocator.isInitialized) return;
       
       final leadService = ServiceLocator.leadService;
-      final leads = await leadService.getAllLeads();
+      final leads = await leadService.getAllLeadsNoPagination();
       
       // Log the fetched leads data
       developer.log('Fetched leads data: ${leads.length} leads');
@@ -756,20 +758,20 @@ class _ModernLeadManagerDashboardState
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: AppThemes.getStatusColor(
-              lead.status,
-            ).withValues(alpha: 0.1),
-            child: Text(
-              lead.name[0].toUpperCase(),
-              style: TextStyle(
-                color: AppThemes.getStatusColor(lead.status),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
+          // CircleAvatar(
+          //   radius: 20,
+          //   backgroundColor: AppThemes.getStatusColor(
+          //     lead.status,
+          //   ).withValues(alpha: 0.1),
+          //   child: Text(
+          //     lead.name[0].toUpperCase(),
+          //     style: TextStyle(
+          //       color: AppThemes.getStatusColor(lead.status),
+          //       fontWeight: FontWeight.w600,
+          //     ),
+          //   ),
+          // ),
+          // const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1311,135 +1313,161 @@ class _ModernLeadManagerDashboardState
   }
 
   Widget _buildViewLeadsView(bool isDarkMode) {
-    // Fetch all leads data when accessing View Leads section
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_leadsData.isEmpty && !_isLoadingLeadsData) {
-        _fetchAllLeadsData();
-      }
-    });
-    
-    return BlocProvider(
-      create: (context) => LeadsBloc()..add(LoadAllLeads()),
-      child: BlocBuilder<LeadsBloc, LeadsState>(
-        builder: (context, state) {
-          // Log the leads response when state changes
-          if (!state.isLoading && state.error == null) {
-            developer.log('Leads response: ${state.leads.length} leads loaded');
-            for (var lead in state.leads) {
-              developer.log('Lead: ${lead.id} - ${lead.name} (${lead.status})');
-            }
-          }
-          
-          if (state.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          
-          if (state.error != null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('Error: ${state.error}'),
-                  ElevatedButton(
-                    onPressed: () {
-                      context.read<LeadsBloc>().add(LoadAllLeads());
-                    },
-                    child: const Text('Retry'),
+    return BlocBuilder<LeadsBloc, LeadsState>(
+      builder: (context, state) {
+        // Load leads data only when needed (first time)
+        if (!_hasLoadedInitialLeadsData && state.leads.isEmpty && !state.isLoading && state.error == null) {
+          // Use addPostFrameCallback to avoid calling during build phase
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            context.read<LeadsBloc>().add(LoadAllLeads());
+            setState(() {
+              _hasLoadedInitialLeadsData = true;
+            });
+          });
+        }
+        
+        return RefreshIndicator(
+          onRefresh: () async {
+            // Reset the flag so we can load data again if needed
+            setState(() {
+              _hasLoadedInitialLeadsData = false;
+            });
+            context.read<LeadsBloc>().add(LoadAllLeads());
+            // We don't need to wait here as the Bloc will handle the state changes
+          },
+          child: Builder(
+            builder: (context) {
+              if (state.isLoading && state.leads.isEmpty) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              
+              if (state.error != null && state.leads.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('Error: ${state.error}'),
+                      ElevatedButton(
+                        onPressed: () {
+                          context.read<LeadsBloc>().add(LoadAllLeads());
+                        },
+                        child: const Text('Retry'),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            );
-          }
-          
-          final leads = state.leads;
-          
-          return GenericTableView<Lead>(
-            title: 'All Leads',
-            data: leads,
-            columns: [
-              GenericTableColumn(
-                title: 'ID',
-                value: (lead) => lead.id,
-                width: 60,
-              ),
-              GenericTableColumn(
-                title: 'Name',
-                value: (lead) => lead.name,
-                builder: (lead) => Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 16,
-                      backgroundColor: AppThemes.getStatusColor(
-                        lead.status,
-                      ).withValues(alpha: 0.1),
+                );
+              }
+              
+              final leads = state.leads;
+              
+              // Log the leads response when we have data (only first time)
+              if (leads.isNotEmpty) {
+                developer.log('Leads response: ${leads.length} leads loaded');
+                // Only log first 3 leads to avoid spam
+                for (var i = 0; i < leads.length && i < 3; i++) {
+                  final lead = leads[i];
+                  developer.log('Lead: ${lead.id} - ${lead.name} (${lead.status})');
+                }
+              }
+              
+              return GenericTableView<Lead>(
+                title: 'All Leads',
+                data: leads,
+                filterOptions: const ['Not Connected', 'Follow-up Planned', 'Follow-up Completed', 'Demo Attended', 'Warm Lead', 'Hot Lead', 'Converted'],
+                onFilterChanged: (filter) {
+                  // Handle filter change if needed
+                  developer.log('Filter changed to: $filter');
+                },
+                columns: [
+                  GenericTableColumn(
+                    title: 'ID',
+                    value: (lead) => lead.id,
+                    width: 60,
+                  ),
+                  // GenericTableColumn(
+                  //   title: 'Name',
+                  //   value: (lead) => lead.name,
+                  //   width: 150,
+                  //   builder: (lead) => Row(
+                  //     children: [
+                  //       // CircleAvatar(
+                  //       //   radius: 16,
+                  //       //   backgroundColor: AppThemes.getStatusColor(
+                  //       //     lead.status,
+                  //       //   ).withValues(alpha: 0.1),
+                  //       //   child: Text(
+                  //       //     lead.name[0].toUpperCase(),
+                  //       //     style: TextStyle(
+                  //       //       color: AppThemes.getStatusColor(lead.status),
+                  //       //       fontWeight: FontWeight.w600,
+                  //       //       fontSize: 12,
+                  //       //     ),
+                  //       //   ),
+                  //       // ),
+                  //       // const SizedBox(width: 12),
+                  //       Column(
+                  //         crossAxisAlignment: CrossAxisAlignment.start,
+                  //         children: [
+                  //           Text(
+                  //             lead.name,
+                  //             style: const TextStyle(fontWeight: FontWeight.w500),
+                  //             overflow: TextOverflow.ellipsis,
+                  //           ),
+                  //           Text(
+                  //             lead.email,
+                  //             style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  //             overflow: TextOverflow.ellipsis,
+                  //           ),
+                  //         ],
+                  //       ),
+                  //     ],
+                  //   ),
+                  // ),
+                  GenericTableColumn(title: 'Name', value: (lead) => lead.name, width: 120),
+                  GenericTableColumn(title: 'Phone', value: (lead) => lead.phone, width: 130),
+                  GenericTableColumn(title: 'Email', value: (lead) => lead.email, width: 150),
+                  GenericTableColumn(title: 'Education', value: (lead) => lead.education, width: 120),
+                  GenericTableColumn(title: 'Experience', value: (lead) => lead.experience, width: 100),
+                  GenericTableColumn(title: 'Location', value: (lead) => lead.location, width: 120),
+                  GenericTableColumn(
+                    title: 'Status',
+                    value: (lead) => lead.status,
+                    width: 120,
+                    builder: (lead) => Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppThemes.getStatusColor(
+                          lead.status,
+                        ).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                       child: Text(
-                        lead.name[0].toUpperCase(),
+                        lead.status.isEmpty ? 'N/A' : lead.status,
                         style: TextStyle(
-                          color: AppThemes.getStatusColor(lead.status),
-                          fontWeight: FontWeight.w600,
+                          color: AppThemes.getStatusColor(lead.status.isEmpty ? 'New' : lead.status),
                           fontSize: 12,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          lead.name,
-                          style: const TextStyle(fontWeight: FontWeight.w500),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(
-                          lead.email,
-                          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              GenericTableColumn(title: 'Phone', value: (lead) => lead.phone),
-              GenericTableColumn(title: 'Education', value: (lead) => lead.education),
-              GenericTableColumn(title: 'Experience', value: (lead) => lead.experience),
-              GenericTableColumn(title: 'Location', value: (lead) => lead.location),
-              GenericTableColumn(
-                title: 'Status',
-                value: (lead) => lead.status,
-                builder: (lead) => Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppThemes.getStatusColor(
-                      lead.status,
-                    ).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(
-                    lead.status.isEmpty ? 'N/A' : lead.status,
-                    style: TextStyle(
-                      color: AppThemes.getStatusColor(lead.status.isEmpty ? 'New' : lead.status),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-              GenericTableColumn(title: 'Feedback', value: (lead) => lead.feedback),
-              GenericTableColumn(title: 'Created At', value: (lead) => lead.createdAt),
-              GenericTableColumn(title: 'Owner', value: (lead) => lead.ownerName),
-              GenericTableColumn(title: 'Assigned To', value: (lead) => lead.assignedName),
-              GenericTableColumn(title: 'Latest History', value: (lead) => lead.latestHistory),
-            ],
-            onRowTap: (lead) {
-              _showLeadDetails(lead);
+                  GenericTableColumn(title: 'Feedback', value: (lead) => lead.feedback, width: 150),
+                  GenericTableColumn(title: 'Created At', value: (lead) => lead.createdAt, width: 150),
+                  GenericTableColumn(title: 'Owner', value: (lead) => lead.ownerName, width: 120),
+                  GenericTableColumn(title: 'Assigned To', value: (lead) => lead.assignedName, width: 120),
+                  GenericTableColumn(title: 'Latest History', value: (lead) => lead.latestHistory, width: 200),
+                ],
+                onRowTap: (lead) {
+                  _showLeadDetails(lead);
+                },
+                onRowEdit: (lead) {
+                  // Handle edit
+                },
+              );
             },
-            onRowEdit: (lead) {
-              // Handle edit
-            },
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 

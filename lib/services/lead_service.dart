@@ -40,6 +40,56 @@ class LeadService {
     }
   }
   
+  // Get all leads without pagination (fetches all pages)
+  Future<List<Lead>> getAllLeadsNoPagination({String? status}) async {
+    try {
+      final List<Lead> allLeads = [];
+      int page = 1;
+      int limit = 10;
+      bool hasMorePages = true;
+      
+      while (hasMorePages) {
+        final queryParameters = {
+          if (status != null) 'status': status,
+          'page': page.toString(),
+          'limit': limit.toString(),
+        };
+        
+        final response = await apiClient.get(
+          ApiEndpoints.getLeads,
+          queryParameters: queryParameters,
+          authenticated: true,
+        );
+        
+        if (response['status'] == 'success') {
+          final leads = (response['leads'] as List)
+              .map((leadJson) => Lead.fromJson(leadJson))
+              .toList();
+          
+          allLeads.addAll(leads);
+          
+          // Check if there are more pages
+          final pagination = response['pagination'];
+          if (pagination != null && pagination is Map) {
+            final currentPage = pagination['page'] as int? ?? page;
+            final totalPages = pagination['pages'] as int? ?? 1;
+            hasMorePages = currentPage < totalPages;
+            page++;
+          } else {
+            // If no pagination info, assume we got all leads
+            hasMorePages = false;
+          }
+        } else {
+          throw Exception(response['message'] ?? 'Failed to fetch leads');
+        }
+      }
+      
+      return allLeads;
+    } catch (e) {
+      rethrow;
+    }
+  }
+  
   // Create a new lead
   Future<Map<String, dynamic>> createLead(Lead lead) async {
     try {

@@ -32,7 +32,7 @@ class LeadsBloc extends Bloc<LeadsEvent, LeadsState> {
   ) async {
     emit(state.copyWith(isLoading: true, error: null));
     try {
-      final leads = await _leadService.getAllLeads();
+      final leads = await _leadService.getAllLeadsNoPagination();
       emit(state.copyWith(isLoading: false, leads: leads));
     } catch (e) {
       emit(state.copyWith(
@@ -48,7 +48,7 @@ class LeadsBloc extends Bloc<LeadsEvent, LeadsState> {
   ) async {
     emit(state.copyWith(isLoading: true, error: null));
     try {
-      final leads = await _leadService.getAllLeads(status: event.status);
+      final leads = await _leadService.getAllLeadsNoPagination(status: event.status);
       emit(state.copyWith(isLoading: false, leads: leads));
     } catch (e) {
       emit(state.copyWith(
@@ -143,7 +143,7 @@ class LeadsBloc extends Bloc<LeadsEvent, LeadsState> {
     emit(state.copyWith(isLoading: true, error: null));
     try {
       // Use getAllLeads with filtering on client side for now
-      final leads = await _leadService.getAllLeads();
+      final leads = await _leadService.getAllLeadsNoPagination();
       emit(state.copyWith(isLoading: false, leads: leads));
     } catch (e) {
       emit(state.copyWith(
@@ -161,11 +161,11 @@ class LeadsBloc extends Bloc<LeadsEvent, LeadsState> {
     try {
       List<Lead> filteredLeads;
       if (event.query.isEmpty) {
-        filteredLeads = await _leadService.getAllLeads();
+        filteredLeads = await _leadService.getAllLeadsNoPagination();
       } else {
         // For now, we'll filter by name, phone, or email
         // In a real implementation, this would call a search API
-        List<Lead> allLeads = await _leadService.getAllLeads();
+        List<Lead> allLeads = await _leadService.getAllLeadsNoPagination();
         filteredLeads = allLeads.where((lead) {
           return lead.name.toLowerCase().contains(event.query.toLowerCase()) ||
               lead.phone.contains(event.query) ||
@@ -187,7 +187,7 @@ class LeadsBloc extends Bloc<LeadsEvent, LeadsState> {
   ) async {
     emit(state.copyWith(isLoading: true, error: null));
     try {
-      List<Lead> allLeads = await _leadService.getAllLeads();
+      List<Lead> allLeads = await _leadService.getAllLeadsNoPagination();
       final filteredLeads = allLeads.where((lead) {
         if (lead.date == null) return false;
         return lead.date!.year == event.date.year &&

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:customer_maxx_crm/models/lead.dart';
 
 /// A generic table view that can display any kind of data
 class GenericTableView<T> extends StatefulWidget {
@@ -14,6 +15,8 @@ class GenericTableView<T> extends StatefulWidget {
   final Widget? emptyWidget;
   final bool isLoading;
   final String? searchHint;
+  final List<String>? filterOptions; // New parameter for filter options
+  final Function(String)? onFilterChanged; // New parameter for filter callback
 
   const GenericTableView({
     super.key,
@@ -29,6 +32,8 @@ class GenericTableView<T> extends StatefulWidget {
     this.emptyWidget,
     this.isLoading = false,
     this.searchHint,
+    this.filterOptions, // New parameter
+    this.onFilterChanged, // New parameter
   });
 
   @override
@@ -37,6 +42,7 @@ class GenericTableView<T> extends StatefulWidget {
 
 class _GenericTableViewState<T> extends State<GenericTableView<T>> {
   String _searchQuery = '';
+  String _selectedFilter = 'All'; // New filter state
   List<T> _filteredData = [];
   final TextEditingController _searchController = TextEditingController();
 
@@ -57,16 +63,31 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
 
   void _filterData() {
     setState(() {
-      if (_searchQuery.isEmpty) {
+      if (_searchQuery.isEmpty && _selectedFilter == 'All') {
         _filteredData = List<T>.from(widget.data);
       } else {
         _filteredData = widget.data.where((item) {
-          return widget.columns.any((column) {
-            final value = column.value(item);
-            return value.toString().toLowerCase().contains(
-              _searchQuery.toLowerCase(),
-            );
-          });
+          bool matchesSearch = true;
+          bool matchesFilter = true;
+          
+          // Apply search filter
+          if (_searchQuery.isNotEmpty) {
+            matchesSearch = widget.columns.any((column) {
+              final value = column.value(item);
+              return value.toString().toLowerCase().contains(
+                _searchQuery.toLowerCase(),
+              );
+            });
+          }
+          
+          // Apply status filter
+          if (_selectedFilter != 'All' && T == Lead) {
+            // Special handling for Lead objects
+            final lead = item as Lead;
+            matchesFilter = lead.status == _selectedFilter;
+          }
+          
+          return matchesSearch && matchesFilter;
         }).toList();
       }
     });
@@ -77,21 +98,23 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
     final screen = MediaQuery.of(context).size;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-    return Container(
-      color: isDarkMode ? const Color(0xFF1A1A1A) : Colors.white,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildTableHeader(context, isDarkMode, screen),
-          if (widget.showSearch) _buildSearchBar(context, isDarkMode, screen),
-          Expanded(
-            child: widget.isLoading
+    // Wrap the entire table in a scrollable widget for refresh indicator support
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      child: Container(
+        color: isDarkMode ? const Color(0xFF1A1A1A) : Colors.white,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildTableHeader(context, isDarkMode, screen),
+            if (widget.showSearch) _buildSearchBar(context, isDarkMode, screen),
+            widget.isLoading
                 ? _buildLoadingWidget()
                 : _filteredData.isEmpty
                     ? _buildEmptyWidget()
                     : _buildHorizontalScrollTable(isDarkMode, screen),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -108,14 +131,14 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildTableHeaderRow(isDarkMode, totalWidth, screen),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: _filteredData.length,
-                  itemBuilder: (context, index) {
-                    return _buildTableRow(
-                        _filteredData[index], index, isDarkMode, totalWidth, screen);
-                  },
-                ),
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _filteredData.length,
+                itemBuilder: (context, index) {
+                  return _buildTableRow(
+                      _filteredData[index], index, isDarkMode, totalWidth, screen);
+                },
               ),
             ],
           ),
@@ -128,7 +151,7 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
     double totalWidth = widget.columns.fold(
         0.0, (sum, column) => sum + _getColumnWidth(column, screen));
     if (widget.onRowEdit != null || widget.onRowDelete != null) {
-      totalWidth += screen.width * 0.25; // action column width responsive
+      totalWidth += screen.width * 0.18; // increased action column width responsive
     }
     totalWidth += screen.width * 0.08; // left-right padding
     return totalWidth < screen.width ? screen.width : totalWidth;
@@ -172,7 +195,7 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
           ),
           if (widget.onRowEdit != null || widget.onRowDelete != null)
             SizedBox(
-              width: screen.width * 0.25,
+              width: screen.width * 0.18,
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: screen.width * 0.02),
                 child: Text(
@@ -182,6 +205,7 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
                     fontSize: screen.width * 0.035,
                     color: isDarkMode ? Colors.white : const Color(0xFF1A1A1A),
                   ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ),
@@ -234,10 +258,13 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
             ),
             if (widget.onRowEdit != null || widget.onRowDelete != null)
               SizedBox(
-                width: screen.width * 0.25,
+                width: screen.width * 0.18,
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: screen.width * 0.02),
-                  child: _buildRowActions(item, isDarkMode),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: _buildRowActions(item, isDarkMode),
+                  ),
                 ),
               ),
           ],
@@ -252,20 +279,20 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
       return column.width!;
     }
     
-    // Otherwise, use default width based on title
+    // Otherwise, use default width based on title (reduced to prevent overflow)
     switch (column.title.toLowerCase()) {
       case 'name':
-        return screen.width * 0.45;
+        return screen.width * 0.25;
       case 'email':
-        return screen.width * 0.55;
+        return screen.width * 0.25;
       case 'phone':
-        return screen.width * 0.35;
+        return screen.width * 0.15;
       case 'status':
-        return screen.width * 0.3;
+        return screen.width * 0.15;
       case 'date':
-        return screen.width * 0.4;
+        return screen.width * 0.2;
       default:
-        return screen.width * 0.35;
+        return screen.width * 0.2;
     }
   }
 
@@ -383,13 +410,19 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
       children: [
         if (widget.onRowEdit != null)
           IconButton(
-            icon: const Icon(Icons.edit_rounded, color: Color(0xFF00BCD4), size: 18),
+            icon: const Icon(Icons.edit_rounded, color: Color(0xFF00BCD4)),
             onPressed: () => widget.onRowEdit?.call(item),
+            iconSize: 18,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
           ),
         if (widget.onRowDelete != null)
           IconButton(
-            icon: Icon(Icons.delete_rounded, color: Colors.red[400], size: 18),
+            icon: Icon(Icons.delete_rounded, color: Colors.red[400]),
             onPressed: () => _showDeleteConfirmation(item),
+            iconSize: 18,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
           ),
       ],
     );
@@ -410,11 +443,75 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
       );
 
   void _showFilterDialog(BuildContext context) {
+    // If specific filter options are provided, use them
+    List<String> filterOptions = ['All'];
+    if (widget.filterOptions != null && widget.filterOptions!.isNotEmpty) {
+      filterOptions.addAll(widget.filterOptions!);
+    } else if (T == Lead) {
+      // Default lead status options
+      filterOptions.addAll(['Not Connected', 'Follow-up Planned', 'Follow-up Completed', 'Demo Attended', 'Warm Lead', 'Hot Lead', 'Converted']);
+
+    } else {
+      // Generic options
+      filterOptions.addAll(['Option 1', 'Option 2', 'Option 3']);
+    }
+    
     showDialog(
       context: context,
-      builder: (context) => const AlertDialog(
-        title: Text('Filter Options'),
-        content: Text('Filter functionality coming soon...'),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('Filter by Status'),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: ListView(
+                shrinkWrap: true,
+                children: filterOptions.map((option) {
+                  return RadioListTile<String>(
+                    title: Text(option),
+                    value: option,
+                    groupValue: _selectedFilter,
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedFilter = value!;
+                      });
+                    },
+                  );
+                }).toList(),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  // Reset filter
+                  setState(() {
+                    _selectedFilter = 'All';
+                  });
+                  _filterData();
+                },
+                child: const Text('Reset'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _filterData();
+                  // Call the external filter callback if provided
+                  if (widget.onFilterChanged != null) {
+                    widget.onFilterChanged!(_selectedFilter);
+                  }
+                },
+                child: const Text('Apply'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
