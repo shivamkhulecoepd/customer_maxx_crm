@@ -16,6 +16,7 @@ import 'package:customer_maxx_crm/utils/api_service_locator.dart';
 import 'package:customer_maxx_crm/blocs/leads/leads_bloc.dart';
 import 'package:customer_maxx_crm/blocs/leads/leads_state.dart';
 import 'package:customer_maxx_crm/blocs/leads/leads_event.dart';
+import 'package:customer_maxx_crm/services/lead_service.dart';
 
 class ModernLeadManagerDashboard extends StatefulWidget {
   final int initialIndex;
@@ -66,6 +67,8 @@ class _ModernLeadManagerDashboardState
   bool _isLoadingLeadsData = false;
   bool _hasLoadedInitialLeadsData = false;
 
+  final leadService = ServiceLocator.leadService;
+
   @override
   void initState() {
     super.initState();
@@ -83,6 +86,40 @@ class _ModernLeadManagerDashboardState
     _experienceController.dispose();
     _locationController.dispose();
     super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<ThemeBloc, ThemeState>(
+      builder: (context, themeState) {
+        final isDarkMode = themeState.isDarkMode;
+
+        return Scaffold(
+          appBar: AppBar(
+            automaticallyImplyLeading: false,
+            title: _buildCustomAppBar(context, isDarkMode),
+            centerTitle: true,
+            backgroundColor: isDarkMode ? Colors.black : Colors.white,
+          ),
+          // drawer: _buildModernDrawer(context),
+          drawer: ModernDrawer(),
+          bottomNavigationBar: FloatingNavigationBar(
+            currentIndex: _currentNavIndex,
+            userRole: _userRole,
+            onTap: (index) {
+              setState(() {
+                _currentNavIndex = index;
+              });
+            },
+          ),
+          // Only show floating action button on the main dashboard (index 0)
+          floatingActionButton: _currentNavIndex == 0
+              ? _buildFloatingActionButton(isDarkMode)
+              : null,
+          body: _buildBody(isDarkMode),
+        );
+      },
+    );
   }
 
   void _loadUserData() {
@@ -211,40 +248,6 @@ class _ModernLeadManagerDashboardState
         );
       }
     }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<ThemeBloc, ThemeState>(
-      builder: (context, themeState) {
-        final isDarkMode = themeState.isDarkMode;
-
-        return Scaffold(
-          appBar: AppBar(
-            automaticallyImplyLeading: false,
-            title: _buildCustomAppBar(context, isDarkMode),
-            centerTitle: true,
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          ),
-          // drawer: _buildModernDrawer(context),
-          drawer: ModernDrawer(),
-          bottomNavigationBar: FloatingNavigationBar(
-            currentIndex: _currentNavIndex,
-            userRole: _userRole,
-            onTap: (index) {
-              setState(() {
-                _currentNavIndex = index;
-              });
-            },
-          ),
-          // Only show floating action button on the main dashboard (index 0)
-          floatingActionButton: _currentNavIndex == 0
-              ? _buildFloatingActionButton(isDarkMode)
-              : null,
-          body: _buildBody(isDarkMode),
-        );
-      },
-    );
   }
 
   Widget _buildBody(bool isDarkMode) {
@@ -1487,8 +1490,13 @@ class _ModernLeadManagerDashboardState
                 onRowTap: (lead) {
                   _showLeadDetails(lead);
                 },
-                onRowDelete: (lead) {
-                   // Handle delete
+                onRowDelete: (lead) async {
+                  // Handle delete
+                  await leadService.deleteLead(lead.id);
+                  context.read<LeadsBloc>().add(LoadAllLeads());
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Lead deleted successfully')),
+                  );
                 },
               );
             },
@@ -1734,48 +1742,13 @@ class _ModernLeadManagerDashboardState
   }
 
   void _showLeadDetails(Lead lead) {
+    // Create a stateful widget for the bottom sheet to manage history data
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.7,
-        margin: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Theme.of(context).scaffoldBackgroundColor,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Column(
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(top: 12),
-              decoration: BoxDecoration(
-                color: Colors.grey.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Lead Details',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 20),
-                  _buildDetailRow('Name', lead.name),
-                  _buildDetailRow('Email', lead.email),
-                  _buildDetailRow('Phone', lead.phone),
-                  _buildDetailRow('Status', lead.status),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+      builder: (context) =>
+          _LeadDetailsBottomSheet(lead: lead, leadService: leadService),
     );
   }
 
@@ -1800,6 +1773,61 @@ class _ModernLeadManagerDashboardState
               value,
               style: const TextStyle(fontWeight: FontWeight.w500),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHistoryItem(LeadHistory history) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              if (history.status != null && history.status!.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppThemes.getStatusColor(
+                      history.status!,
+                    ).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    history.status!,
+                    style: TextStyle(
+                      color: AppThemes.getStatusColor(history.status!),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              Text(
+                history.updatedAt,
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+            ],
+          ),
+          if (history.feedback != null && history.feedback!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(history.feedback!, style: const TextStyle(fontSize: 14)),
+          ],
+          const SizedBox(height: 4),
+          Text(
+            'Updated by: ${history.updatedBy}',
+            style: const TextStyle(fontSize: 12, color: Colors.grey),
           ),
         ],
       ),
@@ -1884,5 +1912,227 @@ class _ModernLeadManagerDashboardState
         latestHistory: 'Closed',
       ),
     ];
+  }
+}
+
+class _LeadDetailsBottomSheet extends StatefulWidget {
+  final Lead lead;
+  final LeadService leadService;
+
+  const _LeadDetailsBottomSheet({
+    required this.lead,
+    required this.leadService,
+  });
+
+  @override
+  State<_LeadDetailsBottomSheet> createState() =>
+      _LeadDetailsBottomSheetState();
+}
+
+class _LeadDetailsBottomSheetState extends State<_LeadDetailsBottomSheet> {
+  List<LeadHistory> _leadHistory = [];
+  bool _isLoadingHistory = true;
+  String _errorMessage = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchLeadHistory();
+  }
+
+  Future<void> _fetchLeadHistory() async {
+    try {
+      final history = await widget.leadService.getLeadHistory(widget.lead.id);
+      // Always update state, regardless of mounted status
+      setState(() {
+        _leadHistory = history;
+        _isLoadingHistory = false;
+      });
+    } catch (e) {
+      developer.log('Error fetching lead history: $e');
+      // Always update state, regardless of mounted status
+      setState(() {
+        _isLoadingHistory = false;
+        _errorMessage = 'Failed to load lead history: $e';
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load lead history: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.7,
+      // margin: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(30),
+          topRight: Radius.circular(30),
+        ),
+        border: Border(
+          top: BorderSide(color: Colors.grey.withOpacity(0.5), width: 2),
+        ),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 60,
+            height: 5,
+            margin: const EdgeInsets.only(top: 12),
+            decoration: BoxDecoration(
+              color: Colors.grey.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Lead Details',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    _buildDetailRow('Name', widget.lead.name),
+                    _buildDetailRow('Current Status', widget.lead.status),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'History',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    if (_isLoadingHistory)
+                      const Center(child: CircularProgressIndicator())
+                    else if (_errorMessage.isNotEmpty)
+                      Center(
+                        child: Text(
+                          _errorMessage,
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      )
+                    else if (_leadHistory.isEmpty)
+                      const Center(
+                        child: Text(
+                          'No history available',
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                      )
+                    else
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const ClampingScrollPhysics(),
+                        itemCount: _leadHistory.length,
+                        itemBuilder: (context, index) {
+                          return _buildHistoryItem(_leadHistory[index]);
+                        },
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(
+              '$label:',
+              style: const TextStyle(
+                fontWeight: FontWeight.w500,
+                color: Colors.grey,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHistoryItem(LeadHistory history) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              if (history.status != null && history.status!.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppThemes.getStatusColor(
+                      history.status!,
+                    ).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    history.status!,
+                    style: TextStyle(
+                      color: AppThemes.getStatusColor(history.status!),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              Text(
+                history.updatedAt,
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+            ],
+          ),
+          if (history.feedback != null && history.feedback!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(history.feedback!, style: const TextStyle(fontSize: 14)),
+          ],
+          const SizedBox(height: 4),
+          Text(
+            'Updated by: ${history.updatedBy}',
+            style: const TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+        ],
+      ),
+    );
   }
 }

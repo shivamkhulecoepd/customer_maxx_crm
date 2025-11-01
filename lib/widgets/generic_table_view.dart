@@ -69,7 +69,7 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
         _filteredData = widget.data.where((item) {
           bool matchesSearch = true;
           bool matchesFilter = true;
-          
+
           // Apply search filter
           if (_searchQuery.isNotEmpty) {
             matchesSearch = widget.columns.any((column) {
@@ -79,14 +79,14 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
               );
             });
           }
-          
+
           // Apply status filter
           if (_selectedFilter != 'All' && T == Lead) {
             // Special handling for Lead objects
             final lead = item as Lead;
             matchesFilter = lead.status == _selectedFilter;
           }
-          
+
           return matchesSearch && matchesFilter;
         }).toList();
       }
@@ -111,8 +111,8 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
             widget.isLoading
                 ? _buildLoadingWidget()
                 : _filteredData.isEmpty
-                    ? _buildEmptyWidget()
-                    : _buildHorizontalScrollTable(isDarkMode, screen),
+                ? _buildEmptyWidget()
+                : _buildHorizontalScrollTable(isDarkMode, screen),
           ],
         ),
       ),
@@ -137,7 +137,12 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
                 itemCount: _filteredData.length,
                 itemBuilder: (context, index) {
                   return _buildTableRow(
-                      _filteredData[index], index, isDarkMode, totalWidth, screen);
+                    _filteredData[index],
+                    index,
+                    isDarkMode,
+                    totalWidth,
+                    screen,
+                  );
                 },
               ),
             ],
@@ -149,9 +154,12 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
 
   double _calculateTotalTableWidth(Size screen) {
     double totalWidth = widget.columns.fold(
-        0.0, (sum, column) => sum + _getColumnWidth(column, screen));
+      0.0,
+      (sum, column) => sum + _getColumnWidth(column, screen),
+    );
     if (widget.onRowEdit != null || widget.onRowDelete != null) {
-      totalWidth += screen.width * 0.18; // increased action column width responsive
+      totalWidth +=
+          screen.width * 0.18; // increased action column width responsive
     }
     totalWidth += screen.width * 0.08; // left-right padding
     return totalWidth < screen.width ? screen.width : totalWidth;
@@ -215,7 +223,12 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
   }
 
   Widget _buildTableRow(
-      T item, int index, bool isDarkMode, double totalWidth, Size screen) {
+    T item,
+    int index,
+    bool isDarkMode,
+    double totalWidth,
+    Size screen,
+  ) {
     return GestureDetector(
       onTap: () => widget.onRowTap?.call(item),
       child: Container(
@@ -227,7 +240,9 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
         decoration: BoxDecoration(
           color: index.isEven
               ? (isDarkMode ? const Color(0xFF1A1A1A) : Colors.white)
-              : (isDarkMode ? const Color(0xFF242424) : const Color(0xFFFAFAFA)),
+              : (isDarkMode
+                    ? const Color(0xFF242424)
+                    : const Color(0xFFFAFAFA)),
           border: Border(
             bottom: BorderSide(
               color: isDarkMode
@@ -242,8 +257,11 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
               (col) => SizedBox(
                 width: _getColumnWidth(col, screen),
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: screen.width * 0.02),
-                  child: col.builder?.call(item) ??
+                  padding: EdgeInsets.symmetric(
+                    horizontal: screen.width * 0.02,
+                  ),
+                  child:
+                      col.builder?.call(item) ??
                       Text(
                         col.value(item).toString(),
                         style: TextStyle(
@@ -260,7 +278,9 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
               SizedBox(
                 width: screen.width * 0.18,
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: screen.width * 0.02),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: screen.width * 0.02,
+                  ),
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: _buildRowActions(item, isDarkMode),
@@ -278,7 +298,7 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
     if (column.width != null) {
       return column.width!;
     }
-    
+
     // Otherwise, use default width based on title (reduced to prevent overflow)
     switch (column.title.toLowerCase()) {
       case 'name':
@@ -368,7 +388,8 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
       child: TextField(
         controller: _searchController,
         decoration: InputDecoration(
-          hintText: widget.searchHint ?? 'Search ${widget.title.toLowerCase()}...',
+          hintText:
+              widget.searchHint ?? 'Search ${widget.title.toLowerCase()}...',
           prefixIcon: Icon(
             Icons.search_rounded,
             color: isDarkMode ? Colors.white54 : Colors.grey[600],
@@ -389,7 +410,9 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
                 )
               : null,
           filled: true,
-          fillColor: isDarkMode ? const Color(0xFF2D2D2D) : const Color(0xFFF8FAFC),
+          fillColor: isDarkMode
+              ? const Color(0xFF2D2D2D)
+              : const Color(0xFFF8FAFC),
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(
             horizontal: screen.width * 0.04,
@@ -428,16 +451,25 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
     );
   }
 
-  Widget _buildLoadingWidget() => const Center(child: CircularProgressIndicator());
+  Widget _buildLoadingWidget() =>
+      const Center(child: CircularProgressIndicator());
 
-  Widget _buildEmptyWidget() => widget.emptyWidget ??
+  Widget _buildEmptyWidget() =>
+      widget.emptyWidget ??
       const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.inbox_rounded, size: 64, color: Colors.grey),
             SizedBox(height: 16),
-            Text('No data available', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500, color: Colors.grey)),
+            Text(
+              'No data available',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey,
+              ),
+            ),
           ],
         ),
       );
@@ -449,13 +481,20 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
       filterOptions.addAll(widget.filterOptions!);
     } else if (T == Lead) {
       // Default lead status options
-      filterOptions.addAll(['Not Connected', 'Follow-up Planned', 'Follow-up Completed', 'Demo Attended', 'Warm Lead', 'Hot Lead', 'Converted']);
-
+      filterOptions.addAll([
+        'Not Connected',
+        'Follow-up Planned',
+        'Follow-up Completed',
+        'Demo Attended',
+        'Warm Lead',
+        'Hot Lead',
+        'Converted',
+      ]);
     } else {
       // Generic options
       filterOptions.addAll(['Option 1', 'Option 2', 'Option 3']);
     }
-    
+
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -481,22 +520,27 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
               ),
             ),
             actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  // Reset filter
-                  setState(() {
-                    _selectedFilter = 'All';
-                  });
-                  _filterData();
-                },
-                child: const Text('Reset'),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: const Text('Cancel'),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      // Reset filter
+                      setState(() {
+                        _selectedFilter = 'All';
+                      });
+                      _filterData();
+                    },
+                    child: const Text('Reset'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Cancel'),
+                  ),
+                ],
               ),
               ElevatedButton(
                 onPressed: () {
@@ -529,7 +573,10 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
         title: const Text('Confirm Delete'),
         content: const Text('Are you sure you want to delete this item?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);

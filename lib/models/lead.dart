@@ -132,15 +132,15 @@ class Lead {
 }
 
 class LeadHistory {
-  final String status;
-  final String feedback;
+  final String? status;
+  final String? feedback;
   final String updatedAt;
   final String updatedBy;
   final String role;
 
   LeadHistory({
-    required this.status,
-    required this.feedback,
+    this.status,
+    this.feedback,
     required this.updatedAt,
     required this.updatedBy,
     required this.role,
@@ -148,8 +148,8 @@ class LeadHistory {
 
   factory LeadHistory.fromJson(Map<String, dynamic> json) {
     return LeadHistory(
-      status: json['status'] as String,
-      feedback: json['feedback'] as String,
+      status: json['status'] as String?,
+      feedback: json['feedback'] as String?,
       updatedAt: json['updated_at'] as String,
       updatedBy: json['updated_by'] as String,
       role: json['role'] as String,
