@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import '../api/api_client.dart';
 import '../api/api_endpoints.dart';
 import '../models/lead.dart';
@@ -34,6 +32,65 @@ class LeadService {
         return leads;
       } else {
         throw Exception(response['message'] ?? 'Failed to fetch leads');
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+    // Get BA dashboard data with optional filtering
+  Future<List<Lead>> getBADashboard({
+    String? name,
+    String? contact,
+    String? date,
+    String? status,
+    String? feedback,
+  }) async {
+    try {
+      final queryParameters = <String, dynamic>{};
+      
+      if (name != null) queryParameters['name'] = name;
+      if (contact != null) queryParameters['contact'] = contact;
+      if (date != null) queryParameters['date'] = date;
+      if (status != null) queryParameters['status'] = status;
+      if (feedback != null) queryParameters['feedback'] = feedback;
+      
+      final response = await apiClient.get(
+        ApiEndpoints.getBADashboard,
+        queryParameters: queryParameters,
+        authenticated: true,
+      );
+      
+      if (response['status'] == 'success') {
+        final leads = (response['leads'] as List)
+            .map((leadJson) => Lead.fromJson(leadJson))
+            .toList();
+        
+        return leads;
+      } else {
+        throw Exception(response['message'] ?? 'Failed to fetch BA dashboard data');
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+  
+  // Get registered leads with fee information
+  Future<List<Lead>> getRegisteredLeads() async {
+    try {
+      final response = await apiClient.get(
+        ApiEndpoints.getRegisteredLeads,
+        authenticated: true,
+      );
+      
+      if (response['status'] == 'success') {
+        final leads = (response['leads'] as List)
+            .map((leadJson) => Lead.fromJson(leadJson))
+            .toList();
+        
+        return leads;
+      } else {
+        throw Exception(response['message'] ?? 'Failed to fetch registered leads');
       }
     } catch (e) {
       rethrow;
