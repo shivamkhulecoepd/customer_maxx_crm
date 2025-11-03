@@ -45,9 +45,6 @@ jobs:
       - name: Build Android APK
         run: flutter build apk --release
 
-      # Optional: Step 8: Build Web
-      - name: Build Web App
-        run: flutter build web
 
       # Optional: Step 9: Upload build artifacts
       - name: Upload Build Artifacts
