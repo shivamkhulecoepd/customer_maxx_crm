@@ -1,0 +1,58 @@
+name: Flutter CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build and Test Flutter App
+    runs-on: windows-latest
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # Step 2: Setup Flutter SDK
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.7'   # <-- specify your Flutter version
+          channel: 'stable'
+
+      # Step 3: Verify Flutter Installation
+      - name: Flutter Doctor
+        run: flutter doctor -v
+
+      # Step 4: Install Dependencies
+      - name: Install Dependencies
+        run: flutter pub get
+
+      # Step 5: Analyze Dart Code
+      - name: Analyze Code
+        run: flutter analyze
+
+      # Step 6: Run Tests
+      - name: Run Tests
+        run: flutter test
+
+      # Step 7: Build APK (Android)
+      - name: Build Android APK
+        run: flutter build apk --release
+
+      # Optional: Step 8: Build Web
+      - name: Build Web App
+        run: flutter build web
+
+      # Optional: Step 9: Upload build artifacts
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-builds
+          path: |
+            build/app/outputs/flutter-apk/app-release.apk
