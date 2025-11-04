@@ -341,7 +341,7 @@ class FloatingNavigationBar extends StatelessWidget {
       return [
         NavigationItem(icon: Icons.dashboard_rounded, label: 'Dashboard'),
         NavigationItem(icon: Icons.app_registration_rounded, label: 'Leads'),
-        NavigationItem(icon: Icons.task_rounded, label: 'Tasks'),
+        NavigationItem(icon: Icons.task_rounded, label: 'Registered Leads'),
         NavigationItem(icon: Icons.person_rounded, label: 'Profile'),
       ];
     } else {
