@@ -44,7 +44,7 @@ class Lead {
 
   factory Lead.fromJson(Map<String, dynamic> json) {
     // Helper function to safely convert dynamic values to double
-    double? _toDouble(dynamic value) {
+    double? convertToDouble(dynamic value) {
       if (value == null) return null;
       if (value is double) return value;
       if (value is int) return value.toDouble();
@@ -59,7 +59,7 @@ class Lead {
     }
     
     // Helper function to safely convert dynamic values to int
-    int? _toInt(dynamic value) {
+    int? convertToInt(dynamic value) {
       if (value == null) return null;
       if (value is int) return value;
       if (value is double) return value.toInt();
@@ -87,9 +87,9 @@ class Lead {
       ownerName: json['owner_name'] as String,
       assignedName: json['assigned_name'] as String,
       latestHistory: json['latest_history'] as String,
-      discount: _toInt(json['discount']),
-      installment1: _toDouble(json['installment1']),
-      installment2: _toDouble(json['installment2']),
+      discount: convertToInt(json['discount']),
+      installment1: convertToDouble(json['installment1']),
+      installment2: convertToDouble(json['installment2']),
       date: json['created_at'] != null ? DateTime.tryParse(json['created_at']) : null,
       ownerId: null, // Not returned by API
       assignedTo: null, // Not returned by API

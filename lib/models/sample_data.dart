@@ -1,5 +1,3 @@
-/// Sample data models to demonstrate the generic table functionality
-
 class Product {
   final int id;
   final String name;

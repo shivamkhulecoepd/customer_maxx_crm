@@ -503,20 +503,24 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
             title: const Text('Filter by Status'),
             content: SizedBox(
               width: double.maxFinite,
-              child: ListView(
-                shrinkWrap: true,
-                children: filterOptions.map((option) {
-                  return RadioListTile<String>(
-                    title: Text(option),
-                    value: option,
-                    groupValue: _selectedFilter,
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedFilter = value!;
-                      });
-                    },
-                  );
-                }).toList(),
+              child: RadioGroup<String>(
+                groupValue: _selectedFilter,
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() {
+                      _selectedFilter = value;
+                    });
+                  }
+                },
+                child: ListView(
+                  shrinkWrap: true,
+                  children: filterOptions.map((option) {
+                    return RadioListTile<String>.adaptive(
+                      title: Text(option),
+                      value: option,
+                    );
+                  }).toList(),
+                ),
               ),
             ),
             actions: [

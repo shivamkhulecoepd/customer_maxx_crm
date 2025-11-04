@@ -567,6 +567,7 @@ class _ModernSettingsScreenState extends State<ModernSettingsScreen> {
           if (shouldLogout == true) {
             // Store context in a local variable before async operation
             final currentContext = context;
+            // ignore: use_build_context_synchronously
             currentContext.read<AuthBloc>().add(LogoutRequested());
 
             // Clear all navigation and go to root
@@ -576,7 +577,7 @@ class _ModernSettingsScreenState extends State<ModernSettingsScreen> {
                 rootNavigator: true,
               ).pushAndRemoveUntil(
                 MaterialPageRoute(
-                  builder: (context) =>
+                  builder: (_) =>
                       const ModernAuthScreen(authMode: AuthMode.login),
                 ),
                 (route) => false,

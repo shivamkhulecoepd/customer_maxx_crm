@@ -8,6 +8,7 @@ import '../services/dashboard_service.dart';
 import '../services/lead_service.dart';
 import '../services/user_service.dart';
 import '../utils/api_constants.dart';
+import 'dart:developer' as developer;
 
 class ApiOperations {
   late ApiClient apiClient;
@@ -34,7 +35,7 @@ class ApiOperations {
   
   // Example: User login
   Future<void> login() async {
-    print('Logging in...');
+    developer.log('Logging in...');
     
     try {
       final response = await authService.login(
@@ -43,32 +44,32 @@ class ApiOperations {
         'admin',
       );
       
-      print('Login successful: ${response['message']}');
+      developer.log('Login successful: ${response['message']}');
     } catch (e) {
-      print('Login failed: $e');
+      developer.log('Login failed: $e');
     }
   }
   
   // Example: Fetch all leads
   Future<void> fetchLeads() async {
-    print('Fetching leads...');
+    developer.log('Fetching leads...');
     
     try {
       final leads = await leadService.getAllLeads();
-      print('Fetched ${leads.length} leads');
+      developer.log('Fetched ${leads.length} leads');
       
       // Print first few leads
       for (var i = 0; i < leads.length && i < 3; i++) {
-        print('Lead ${leads[i].id}: ${leads[i].name} - ${leads[i].status}');
+        developer.log('Lead ${leads[i].id}: ${leads[i].name} - ${leads[i].status}');
       }
     } catch (e) {
-      print('Failed to fetch leads: $e');
+      developer.log('Failed to fetch leads: $e');
     }
   }
   
   // Example: Create a new lead
   Future<void> createLead() async {
-    print('Creating lead...');
+    developer.log('Creating lead...');
     
     try {
       final newLead = Lead(
@@ -88,138 +89,138 @@ class ApiOperations {
       );
       
       final response = await leadService.createLead(newLead);
-      print('Lead created: ${response['message']}');
+      developer.log('Lead created: ${response['message']}');
     } catch (e) {
-      print('Failed to create lead: $e');
+      developer.log('Failed to create lead: $e');
     }
   }
   
   // Example: Update lead status
   Future<void> updateLeadStatus() async {
-    print('Updating lead status...');
+    developer.log('Updating lead status...');
     
     try {
       final response = await leadService.updateStatus(1, 'Connected');
-      print('Lead status updated: ${response['message']}');
+      developer.log('Lead status updated: ${response['message']}');
     } catch (e) {
-      print('Failed to update lead status: $e');
+      developer.log('Failed to update lead status: $e');
     }
   }
   
   // Example: Update lead feedback
   Future<void> updateLeadFeedback() async {
-    print('Updating lead feedback...');
+    developer.log('Updating lead feedback...');
     
     try {
       final response = await leadService.updateFeedback(1, 'Customer is interested');
-      print('Lead feedback updated: ${response['message']}');
+      developer.log('Lead feedback updated: ${response['message']}');
     } catch (e) {
-      print('Failed to update lead feedback: $e');
+      developer.log('Failed to update lead feedback: $e');
     }
   }
   
   // Example: Update lead fee information
   Future<void> updateLeadFee() async {
-    print('Updating lead fee information...');
+    developer.log('Updating lead fee information...');
     
     try {
       final response = await leadService.updateFee(1, 10, 500.00, 500.00);
-      print('Lead fee information updated: ${response['message']}');
+      developer.log('Lead fee information updated: ${response['message']}');
     } catch (e) {
-      print('Failed to update lead fee information: $e');
+      developer.log('Failed to update lead fee information: $e');
     }
   }
   
   // Example: Fetch dropdown data
   Future<void> fetchDropdownData() async {
-    print('Fetching dropdown data...');
+    developer.log('Fetching dropdown data...');
     
     try {
       final dropdownData = await leadService.getDropdownData();
-      print('Fetched ${dropdownData.leadManagers.length} lead managers and '
+      developer.log('Fetched ${dropdownData.leadManagers.length} lead managers and '
           '${dropdownData.baSpecialists.length} BA specialists');
       
       // Print lead managers
-      print('Lead Managers:');
+      developer.log('Lead Managers:');
       for (var manager in dropdownData.leadManagers) {
-        print('  ${manager.name} (ID: ${manager.id})');
+        developer.log('  ${manager.name} (ID: ${manager.id})');
       }
       
       // Print BA specialists
-      print('BA Specialists:');
+      developer.log('BA Specialists:');
       for (var specialist in dropdownData.baSpecialists) {
-        print('  ${specialist.name} (ID: ${specialist.id})');
+        developer.log('  ${specialist.name} (ID: ${specialist.id})');
       }
     } catch (e) {
-      print('Failed to fetch dropdown data: $e');
+      developer.log('Failed to fetch dropdown data: $e');
     }
   }
   
   // Example: Fetch user roles
   Future<void> fetchUserRoles() async {
-    print('Fetching user roles...');
+    developer.log('Fetching user roles...');
     
     try {
       final roles = await userService.getUserRoles();
-      print('Fetched ${roles.length} user roles');
+      developer.log('Fetched ${roles.length} user roles');
       
       // Print roles
       for (var role in roles) {
-        print('  ${role.name} (ID: ${role.id})');
+        developer.log('  ${role.name} (ID: ${role.id})');
       }
     } catch (e) {
-      print('Failed to fetch user roles: $e');
+      developer.log('Failed to fetch user roles: $e');
     }
   }
   
   // Example: Fetch admin stats
   Future<void> fetchAdminStats() async {
-    print('Fetching admin stats...');
+    developer.log('Fetching admin stats...');
     
     try {
       final stats = await dashboardService.getAdminStats();
-      print('Admin Stats:');
-      print('  Total Users: ${stats.users.total}');
-      print('  Total Leads: ${stats.leads.total}');
-      print('  Total Registrations: ${stats.registrations.total}');
-      print('  Total Demos: ${stats.demos.total}');
+      developer.log('Admin Stats:');
+      developer.log('  Total Users: ${stats.users.total}');
+      developer.log('  Total Leads: ${stats.leads.total}');
+      developer.log('  Total Registrations: ${stats.registrations.total}');
+      developer.log('  Total Demos: ${stats.demos.total}');
     } catch (e) {
-      print('Failed to fetch admin stats: $e');
+      developer.log('Failed to fetch admin stats: $e');
     }
   }
   
   // Example: Fetch lead manager stats
   Future<void> fetchLeadManagerStats() async {
-    print('Fetching lead manager stats...');
+    developer.log('Fetching lead manager stats...');
     
     try {
       final stats = await dashboardService.getLeadManagerStats(managerId: 1);
-      print('Lead Manager Stats:');
-      print('  Status Counts: ${stats.statusCounts}');
-      print('  Recent Leads: ${stats.recentLeads.length}');
+      developer.log('Lead Manager Stats:');
+      developer.log('  Status Counts: ${stats.statusCounts}');
+      developer.log('  Recent Leads: ${stats.recentLeads.length}');
     } catch (e) {
-      print('Failed to fetch lead manager stats: $e');
+      developer.log('Failed to fetch lead manager stats: $e');
     }
   }
   
   // Example: Fetch BA stats
   Future<void> fetchBAStats() async {
-    print('Fetching BA stats...');
+    developer.log('Fetching BA stats...');
     
     try {
       final stats = await dashboardService.getBAStats();
-      print('BA Stats:');
-      print('  Total Leads: ${stats.totalLeads}');
-      print('  Registered Leads: ${stats.registeredLeads}');
-      print('  Conversion Rate: ${stats.conversionRate}%');
+      developer.log('BA Stats:');
+      developer.log('  Total Leads: ${stats.totalLeads}');
+      developer.log('  Registered Leads: ${stats.registeredLeads}');
+      developer.log('  Conversion Rate: ${stats.conversionRate}%');
     } catch (e) {
-      print('Failed to fetch BA stats: $e');
+      developer.log('Failed to fetch BA stats: $e');
     }
   }
   
   // Example: Import leads
   Future<void> importLeads() async {
-    print('Importing leads...');
+    developer.log('Importing leads...');
     
     try {
       // This is a simplified example - in a real app, you would read actual file data
@@ -228,21 +229,21 @@ class ApiOperations {
       };
       
       final response = await leadService.importLeads(formData);
-      print('Leads imported: ${response['message']}');
+      developer.log('Leads imported: ${response['message']}');
     } catch (e) {
-      print('Failed to import leads: $e');
+      developer.log('Failed to import leads: $e');
     }
   }
   
   // Example: Export leads
   Future<void> exportLeads() async {
-    print('Exporting leads...');
+    developer.log('Exporting leads...');
     
     try {
       final response = await leadService.exportLeads();
-      print('Leads exported: ${response['message']}');
+      developer.log('Leads exported: ${response['message']}');
     } catch (e) {
-      print('Failed to export leads: $e');
+      developer.log('Failed to export leads: $e');
     }
   }
 }

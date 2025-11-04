@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:developer' as developer;
 import 'package:customer_maxx_crm/widgets/generic_table_view.dart';
 import 'package:customer_maxx_crm/models/sample_data.dart';
 
@@ -123,15 +124,15 @@ class SampleGenericTableScreen extends StatelessWidget {
       ],
       onRowTap: (product) {
         // Handle product tap
-        print('Tapped on product: ${product.name}');
+        developer.log('Tapped on product: ${product.name}');
       },
       onRowEdit: (product) {
         // Handle product edit
-        print('Edit product: ${product.name}');
+        developer.log('Edit product: ${product.name}');
       },
       onRowDelete: (product) {
         // Handle product delete
-        print('Delete product: ${product.name}');
+        developer.log('Delete product: ${product.name}');
       },
     );
   }
@@ -223,15 +224,15 @@ class SampleGenericTableScreen extends StatelessWidget {
       ],
       onRowTap: (user) {
         // Handle user tap
-        print('Tapped on user: ${user.name}');
+        developer.log('Tapped on user: ${user.name}');
       },
       onRowEdit: (user) {
         // Handle user edit
-        print('Edit user: ${user.name}');
+        developer.log('Edit user: ${user.name}');
       },
       onRowDelete: (user) {
         // Handle user delete
-        print('Delete user: ${user.name}');
+        developer.log('Delete user: ${user.name}');
       },
     );
   }
@@ -325,15 +326,15 @@ class SampleGenericTableScreen extends StatelessWidget {
       ],
       onRowTap: (order) {
         // Handle order tap
-        print('Tapped on order: ${order.id}');
+        developer.log('Tapped on order: ${order.id}');
       },
       onRowEdit: (order) {
         // Handle order edit
-        print('Edit order: ${order.id}');
+        developer.log('Edit order: ${order.id}');
       },
       onRowDelete: (order) {
         // Handle order delete
-        print('Delete order: ${order.id}');
+        developer.log('Delete order: ${order.id}');
       },
     );
   }

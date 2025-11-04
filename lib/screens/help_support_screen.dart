@@ -1,3 +1,5 @@
+// ignore_for_file: unused_field
+
 import 'package:customer_maxx_crm/blocs/theme/theme_event.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

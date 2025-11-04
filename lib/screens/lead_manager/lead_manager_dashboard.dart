@@ -57,14 +57,10 @@ class _ModernLeadManagerDashboardState
     'Loading...', // Show loading state initially
   ];
 
-  // Add leads data list
-  List<Lead> _leadsData = [];
-
   final List<Widget>? actions = [];
   final bool showDrawer = true;
   DropdownData? dropdownData;
   bool _isLoadingDropdownData = false;
-  bool _isLoadingLeadsData = false;
   bool _hasLoadedInitialLeadsData = false;
 
   final leadService = ServiceLocator.leadService;
@@ -186,63 +182,11 @@ class _ModernLeadManagerDashboardState
       });
 
       // Show error message if context is still mounted
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+      final currentContext = context;
+      if (currentContext.mounted) {
+        ScaffoldMessenger.of(currentContext).showSnackBar(
           SnackBar(
             content: Text('Failed to load dropdown data: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-  // New function to fetch all leads data
-  Future<void> _fetchAllLeadsData() async {
-    // For manual refresh (pull-to-refresh or button), always fetch fresh data
-    // For automatic loading, prevent duplicate fetches
-    final isManualRefresh = !_isLoadingLeadsData && _leadsData.isNotEmpty;
-
-    // Don't fetch if already loading (unless it's a manual refresh)
-    if (_isLoadingLeadsData && !isManualRefresh) return;
-
-    // Set loading flag
-    setState(() {
-      _isLoadingLeadsData = true;
-    });
-
-    try {
-      // Check if service locator is initialized
-      if (!ServiceLocator.isInitialized) return;
-
-      final leadService = ServiceLocator.leadService;
-      final leads = await leadService.getAllLeadsNoPagination();
-
-      // Log the fetched leads data
-      developer.log('Fetched leads data: ${leads.length} leads');
-      for (var lead in leads) {
-        developer.log('Lead: ${lead.id} - ${lead.name} (${lead.status})');
-      }
-
-      // Update state with fetched data
-      setState(() {
-        _leadsData = leads;
-        _isLoadingLeadsData = false;
-      });
-    } catch (e) {
-      // Log the error
-      developer.log('Error fetching leads data: $e');
-
-      // Reset loading flag on error
-      setState(() {
-        _isLoadingLeadsData = false;
-      });
-
-      // Show error message if context is still mounted
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to load leads data: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -436,7 +380,10 @@ class _ModernLeadManagerDashboardState
               title: const Text('Logout'),
               onTap: () {
                 Navigator.pop(context);
-                context.read<AuthBloc>().add(LogoutRequested());
+                final currentContext = context;
+                if (currentContext.mounted) {
+                  currentContext.read<AuthBloc>().add(LogoutRequested());
+                }
               },
             ),
             const SizedBox(height: 20),
@@ -1041,9 +988,10 @@ class _ModernLeadManagerDashboardState
         // Log the response
         developer.log('Lead creation response: $response');
 
-        if (context.mounted) {
+        final currentContext = context;
+        if (currentContext.mounted) {
           if (response['status'] == 'success') {
-            ScaffoldMessenger.of(context).showSnackBar(
+            ScaffoldMessenger.of(currentContext).showSnackBar(
               const SnackBar(
                 content: Text('Lead added successfully!'),
                 backgroundColor: Colors.green,
@@ -1065,7 +1013,7 @@ class _ModernLeadManagerDashboardState
               _selectedBASpecialistId = null;
             });
           } else {
-            ScaffoldMessenger.of(context).showSnackBar(
+            ScaffoldMessenger.of(currentContext).showSnackBar(
               SnackBar(
                 content: Text(
                   'Failed to add lead: ${response['message'] ?? 'Unknown error'}',
@@ -1079,8 +1027,9 @@ class _ModernLeadManagerDashboardState
         // Log the error
         developer.log('Error submitting lead: $e');
 
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+        final currentContext = context;
+        if (currentContext.mounted) {
+          ScaffoldMessenger.of(currentContext).showSnackBar(
             SnackBar(
               content: Text('Failed to add lead: $e'),
               backgroundColor: Colors.red,
@@ -1493,10 +1442,13 @@ class _ModernLeadManagerDashboardState
                 onRowDelete: (lead) async {
                   // Handle delete
                   await leadService.deleteLead(lead.id);
-                  context.read<LeadsBloc>().add(LoadAllLeads());
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Lead deleted successfully')),
-                  );
+                  final currentContext = context;
+                  if (currentContext.mounted) {
+                    currentContext.read<LeadsBloc>().add(LoadAllLeads());
+                    ScaffoldMessenger.of(currentContext).showSnackBar(
+                      const SnackBar(content: Text('Lead deleted successfully')),
+                    );
+                  }
                 },
               );
             },
@@ -1546,7 +1498,12 @@ class _ModernLeadManagerDashboardState
                     context,
                     Icons.table_chart,
                     'Table Examples',
-                    () => Navigator.pushNamed(context, '/table-examples'),
+                    () {
+                      final currentContext = context;
+                      if (currentContext.mounted) {
+                        Navigator.pushNamed(currentContext, '/table-examples');
+                      }
+                    },
                     isDarkMode,
                   ),
                 ],
@@ -1604,9 +1561,12 @@ class _ModernLeadManagerDashboardState
 
   void _uploadData() {
     // Export functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Data upload functionality coming soon...')),
-    );
+    final currentContext = context;
+    if (currentContext.mounted) {
+      ScaffoldMessenger.of(currentContext).showSnackBar(
+        const SnackBar(content: Text('Data upload functionality coming soon...')),
+      );
+    }
   }
 
   Widget _buildActionButton(
@@ -1897,7 +1857,7 @@ class _LeadDetailsBottomSheetState extends State<_LeadDetailsBottomSheet> {
           topRight: Radius.circular(30),
         ),
         border: Border(
-          top: BorderSide(color: Colors.grey.withOpacity(0.5), width: 2),
+          top: BorderSide(color: Colors.grey.withValues(alpha: 0.5), width: 2),
         ),
       ),
       child: Column(
@@ -1950,13 +1910,13 @@ class _LeadDetailsBottomSheetState extends State<_LeadDetailsBottomSheet> {
                       const Center(
                         child: Text(
                           'No history available',
-                          style: const TextStyle(color: Colors.grey),
+                          style: TextStyle(color: Colors.grey),
                         ),
                       )
                     else
                       ListView.builder(
                         shrinkWrap: true,
-                        physics: const ClampingScrollPhysics(),
+                        physics: ClampingScrollPhysics(),
                         itemCount: _leadHistory.length,
                         itemBuilder: (context, index) {
                           return _buildHistoryItem(_leadHistory[index]);
@@ -1991,7 +1951,7 @@ class _LeadDetailsBottomSheetState extends State<_LeadDetailsBottomSheet> {
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(fontWeight: FontWeight.w500),
+              style: TextStyle(fontWeight: FontWeight.w500),
             ),
           ),
         ],

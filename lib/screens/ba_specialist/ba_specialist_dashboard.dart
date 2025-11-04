@@ -10,6 +10,7 @@ import 'package:customer_maxx_crm/widgets/navigation_bar.dart';
 
 import 'package:customer_maxx_crm/widgets/standard_table_view.dart';
 import 'package:customer_maxx_crm/models/lead.dart';
+import 'package:customer_maxx_crm/services/lead_service.dart';
 
 class ModernBASpecialistDashboard extends StatefulWidget {
   final int initialIndex;
@@ -26,14 +27,22 @@ class _ModernBASpecialistDashboardState
   late int _currentNavIndex;
   String _userName = '';
   String _userRole = '';
+  
+  List<Lead> _assignedLeads = [];
+  List<Lead> _registeredLeads = [];
+  bool _isLoadingAssigned = false;
+  bool _isLoadingRegistered = false;
+  String? _errorMessage;
 
   final List<Widget>? actions = [];
   final bool showDrawer = true;
+  late LeadService _leadService;
 
   @override
   void initState() {
     super.initState();
     _currentNavIndex = widget.initialIndex;
+    // _leadService = GetIt.instance<LeadService>();
     _loadUserData();
   }
 
@@ -43,6 +52,57 @@ class _ModernBASpecialistDashboardState
       setState(() {
         _userName = authState.user!.name;
         _userRole = authState.user!.role;
+      });
+    }
+  }
+
+  void _handleNavigation(int index) {
+    switch (index) {
+      case 1:
+        _loadAssignedLeads();
+        break;
+      case 2:
+        _loadRegisteredLeads();
+        break;
+    }
+  }
+
+  Future<void> _loadAssignedLeads() async {
+    setState(() {
+      _isLoadingAssigned = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final leads = await _leadService.getBADashboard();
+      setState(() {
+        _assignedLeads = leads;
+        _isLoadingAssigned = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+        _isLoadingAssigned = false;
+      });
+    }
+  }
+
+  Future<void> _loadRegisteredLeads() async {
+    setState(() {
+      _isLoadingRegistered = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final leads = await _leadService.getRegisteredLeads();
+      setState(() {
+        _registeredLeads = leads;
+        _isLoadingRegistered = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+        _isLoadingRegistered = false;
       });
     }
   }
@@ -69,6 +129,7 @@ class _ModernBASpecialistDashboardState
               setState(() {
                 _currentNavIndex = index;
               });
+              _handleNavigation(index);
             },
           ),
           floatingActionButton: _buildFloatingActionButton(isDarkMode),
@@ -83,9 +144,9 @@ class _ModernBASpecialistDashboardState
       case 0:
         return _buildDashboardView(isDarkMode);
       case 1:
-        return _buildRegisteredLeadsView(isDarkMode);
+        return _buildAssignedLeadsView(isDarkMode);
       case 2:
-        return _buildTasksView(isDarkMode);
+        return _buildRegisteredLeadsView(isDarkMode);
       case 3:
         return _buildProfileView(isDarkMode);
       default:
@@ -540,6 +601,7 @@ class _ModernBASpecialistDashboardState
                 setState(() {
                   _currentNavIndex = 2;
                 });
+                _loadRegisteredLeads();
               },
               child: const Text('View All'),
             ),
@@ -823,12 +885,29 @@ class _ModernBASpecialistDashboardState
     );
   }
 
-  Widget _buildRegisteredLeadsView(bool isDarkMode) {
-    final leads = _getAssignedLeads();
+  Widget _buildAssignedLeadsView(bool isDarkMode) {
+    if (_isLoadingAssigned) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Error: $_errorMessage'),
+            ElevatedButton(
+              onPressed: _loadAssignedLeads,
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
 
     return ModernTableView<Lead>(
       title: 'Assigned Leads',
-      data: leads,
+      data: _assignedLeads,
       columns: [
         TableColumn(
           title: 'Lead',
@@ -918,205 +997,119 @@ class _ModernBASpecialistDashboardState
     );
   }
 
-  Widget _buildTasksView(bool isDarkMode) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    return Padding(
-      padding: EdgeInsets.all(screenWidth * 0.04),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              color: isDarkMode ? Colors.black : const Color(0xFFF8FAFC),
+  Widget _buildRegisteredLeadsView(bool isDarkMode) {
+    if (_isLoadingRegistered) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Error: $_errorMessage'),
+            ElevatedButton(
+              onPressed: _loadRegisteredLeads,
+              child: const Text('Retry'),
             ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'All Tasks',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: isDarkMode
-                          ? Colors.white
-                          : const Color(0xFF1A1A1A),
+          ],
+        ),
+      );
+    }
+
+    return ModernTableView<Lead>(
+      title: 'Registered Leads',
+      data: _registeredLeads,
+      columns: [
+        TableColumn(
+          title: 'Lead',
+          value: (lead) => lead.name,
+          builder: (lead) => Row(
+            children: [
+              CircleAvatar(
+                radius: 16,
+                backgroundColor: AppThemes.getStatusColor(
+                  lead.status,
+                ).withValues(alpha: 0.1),
+                child: Text(
+                  lead.name[0].toUpperCase(),
+                  style: TextStyle(
+                    color: AppThemes.getStatusColor(lead.status),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      lead.name,
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                    Text(
+                      lead.email,
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
-                _buildActionButton(
-                  context,
-                  Icons.add_task_rounded,
-                  'Add Task',
-                  () => _showAddTaskDialog(),
-                  isDarkMode,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          Expanded(
-            child: Column(
-              children: [
-                _buildTaskFilter(isDarkMode),
-                const Divider(),
-                Expanded(
-                  child: ListView(
-                    padding: EdgeInsets.zero,
-                    children: [
-                      _buildTaskItem(
-                        'Follow up with Alice Johnson',
-                        'Call regarding proposal discussion',
-                        'High',
-                        '10:00 AM',
-                        false,
-                        isDarkMode,
-                      ),
-                      _buildTaskItem(
-                        'Demo preparation for Bob Smith',
-                        'Prepare product demo materials',
-                        'Medium',
-                        '2:00 PM',
-                        false,
-                        isDarkMode,
-                      ),
-                      _buildTaskItem(
-                        'Send proposal to Carol Davis',
-                        'Email customized proposal document',
-                        'High',
-                        '4:00 PM',
-                        true,
-                        isDarkMode,
-                      ),
-                      _buildTaskItem(
-                        'Client meeting with David Wilson',
-                        'Discuss project timeline and requirements',
-                        'Medium',
-                        'Tomorrow 9:00 AM',
-                        false,
-                        isDarkMode,
-                      ),
-                      _buildTaskItem(
-                        'Follow up with Alice Johnson',
-                        'Call regarding proposal discussion',
-                        'High',
-                        '10:00 AM',
-                        false,
-                        isDarkMode,
-                      ),
-                      _buildTaskItem(
-                        'Demo preparation for Bob Smith',
-                        'Prepare product demo materials',
-                        'Medium',
-                        '2:00 PM',
-                        false,
-                        isDarkMode,
-                      ),
-                      _buildTaskItem(
-                        'Send proposal to Carol Davis',
-                        'Email customized proposal document',
-                        'High',
-                        '4:00 PM',
-                        true,
-                        isDarkMode,
-                      ),
-                      _buildTaskItem(
-                        'Client meeting with David Wilson',
-                        'Discuss project timeline and requirements',
-                        'Medium',
-                        'Tomorrow 9:00 AM',
-                        false,
-                        isDarkMode,
-                      ),
-                      _buildTaskItem(
-                        'Follow up with Alice Johnson',
-                        'Call regarding proposal discussion',
-                        'High',
-                        '10:00 AM',
-                        false,
-                        isDarkMode,
-                      ),
-                      _buildTaskItem(
-                        'Demo preparation for Bob Smith',
-                        'Prepare product demo materials',
-                        'Medium',
-                        '2:00 PM',
-                        false,
-                        isDarkMode,
-                      ),
-                      _buildTaskItem(
-                        'Send proposal to Carol Davis',
-                        'Email customized proposal document',
-                        'High',
-                        '4:00 PM',
-                        true,
-                        isDarkMode,
-                      ),
-                      _buildTaskItem(
-                        'Client meeting with David Wilson',
-                        'Discuss project timeline and requirements',
-                        'Medium',
-                        'Tomorrow 9:00 AM',
-                        false,
-                        isDarkMode,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTaskFilter(bool isDarkMode) {
-    final width = MediaQuery.of(context).size.width;
-
-    return Row(
-      children: [
-        Expanded(
-          child: TextField(
-            decoration: InputDecoration(
-              hintText: 'Search tasks...',
-              prefixIcon: Icon(
-                Icons.search_rounded,
-                size: width < 360 ? 20 : 24,
               ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(width < 360 ? 10 : 12),
-                borderSide: BorderSide.none,
-              ),
-              filled: true,
-              fillColor: isDarkMode
-                  ? AppThemes.darkSurfaceBackground
-                  : AppThemes.lightSurfaceBackground,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: width < 360 ? 12 : 16,
-                vertical: width < 360 ? 12 : 16,
+            ],
+          ),
+        ),
+        TableColumn(title: 'Phone', value: (lead) => lead.phone),
+        TableColumn(
+          title: 'Status',
+          value: (lead) => lead.status,
+          builder: (lead) => Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppThemes.getStatusColor(
+                lead.status,
+              ).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              lead.status,
+              style: TextStyle(
+                color: AppThemes.getStatusColor(lead.status),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
         ),
-        SizedBox(width: width < 360 ? 8 : 12),
-        Container(
-          decoration: BoxDecoration(
-            color: AppThemes.primaryColor.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(width < 360 ? 10 : 12),
-          ),
-          child: IconButton(
-            icon: Icon(
-              Icons.filter_list_rounded,
-              color: AppThemes.primaryColor,
-              size: width < 360 ? 20 : 24,
+        TableColumn(
+          title: 'Fee Info',
+          value: (lead) => 'View Details',
+          builder: (lead) => Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppThemes.blueAccent.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
             ),
-            onPressed: () {},
+            child: const Text(
+              'View Details',
+              style: TextStyle(
+                color: AppThemes.blueAccent,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ),
       ],
+      onRowTap: (lead) {
+        _showLeadActions(lead);
+      },
     );
   }
+
+
 
   Widget _buildProfileView(bool isDarkMode) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -1477,68 +1470,5 @@ class _ModernBASpecialistDashboardState
     );
   }
 
-  List<Lead> _getAssignedLeads() {
-    return [
-      Lead(
-        id: 1,
-        name: 'Alice Johnson',
-        email: 'alice@example.com',
-        phone: '123-456-7890',
-        education: '',
-        experience: '',
-        location: '',
-        status: 'New',
-        feedback: '',
-        createdAt: DateTime.now().toIso8601String(),
-        ownerName: 'achal',
-        assignedName: 'Nikita',
-        latestHistory: 'Just created',
-      ),
-      Lead(
-        id: 2,
-        name: 'Bob Smith',
-        email: 'bob@example.com',
-        phone: '098-765-4321',
-        education: '',
-        experience: '',
-        location: '',
-        status: 'Contacted',
-        feedback: '',
-        createdAt: DateTime.now().toIso8601String(),
-        ownerName: 'achal',
-        assignedName: 'Nikita',
-        latestHistory: 'Contacted',
-      ),
-      Lead(
-        id: 3,
-        name: 'Carol Davis',
-        email: 'carol@example.com',
-        phone: '555-123-4567',
-        education: '',
-        experience: '',
-        location: '',
-        status: 'Qualified',
-        feedback: '',
-        createdAt: DateTime.now().toIso8601String(),
-        ownerName: 'achal',
-        assignedName: 'Nikita',
-        latestHistory: 'Qualified',
-      ),
-      Lead(
-        id: 4,
-        name: 'David Wilson',
-        email: 'david@example.com',
-        phone: '444-555-6666',
-        education: '',
-        experience: '',
-        location: '',
-        status: 'Proposal Sent',
-        feedback: '',
-        createdAt: DateTime.now().toIso8601String(),
-        ownerName: 'achal',
-        assignedName: 'Nikita',
-        latestHistory: 'Proposal sent',
-      ),
-    ];
-  }
+
 }

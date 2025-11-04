@@ -42,7 +42,7 @@ class DummyLead {
   /// Factory method to create a DummyLead from JSON data
   factory DummyLead.fromJson(Map<String, dynamic> json) {
     // Helper function to safely convert dynamic values to int
-    int? _toInt(dynamic value) {
+    int? convertToInt(dynamic value) {
       if (value == null) return null;
       if (value is int) return value;
       if (value is double) return value.toInt();
@@ -57,7 +57,7 @@ class DummyLead {
     }
     
     // Helper function to safely convert dynamic values to String for installments
-    String? _toString(dynamic value) {
+    String? convertToString(dynamic value) {
       if (value == null) return null;
       if (value is String) return value;
       return value.toString();
@@ -74,9 +74,9 @@ class DummyLead {
       status: json['status'] as String,
       feedback: json['feedback'] as String? ?? '',
       createdAt: json['created_at'] as String,
-      discount: _toInt(json['discount']) ?? 0,
-      installment1: _toString(json['installment1']) ?? '0.00',
-      installment2: _toString(json['installment2']) ?? '0.00',
+      discount: convertToInt(json['discount']) ?? 0,
+      installment1: convertToString(json['installment1']) ?? '0.00',
+      installment2: convertToString(json['installment2']) ?? '0.00',
       ownerName: json['owner_name'] as String,
       assignedName: json['assigned_name'] as String,
       latestHistory: json['latest_history'] as String,

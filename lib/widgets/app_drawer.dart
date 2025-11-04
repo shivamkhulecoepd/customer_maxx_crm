@@ -307,6 +307,7 @@ class ModernDrawer extends StatelessWidget {
                     Navigator.pop(currentContext);
                   }
 
+                  // ignore: use_build_context_synchronously
                   currentContext.read<AuthBloc>().add(LogoutRequested());
 
                   if (currentContext.mounted) {
@@ -315,7 +316,7 @@ class ModernDrawer extends StatelessWidget {
                       rootNavigator: true,
                     ).pushAndRemoveUntil(
                       MaterialPageRoute(
-                        builder: (context) => const AuthWrapper(),
+                        builder: (_) => const AuthWrapper(),
                       ),
                       (route) => false,
                     );
