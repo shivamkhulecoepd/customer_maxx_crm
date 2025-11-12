@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:customer_maxx_crm/models/lead.dart';
 
@@ -111,7 +113,7 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
             widget.isLoading
                 ? _buildLoadingWidget()
                 : _filteredData.isEmpty
-                ? _buildEmptyWidget()
+                ? _buildEmptyWidget(context)
                 : _buildHorizontalScrollTable(isDarkMode, screen),
           ],
         ),
@@ -122,11 +124,12 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
   Widget _buildHorizontalScrollTable(bool isDarkMode, Size screen) {
     final totalWidth = _calculateTotalTableWidth(screen);
 
+    // Always allow horizontal scrolling to prevent overflow
     return Scrollbar(
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: SizedBox(
-          width: totalWidth,
+          width: totalWidth < screen.width ? screen.width : totalWidth,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -157,10 +160,18 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
       0.0,
       (sum, column) => sum + _getColumnWidth(column, screen),
     );
-    if (widget.onRowEdit != null || widget.onRowDelete != null) {
-      totalWidth +=
-          screen.width * 0.18; // increased action column width responsive
+    
+    // Calculate action column width based on number of actions
+    int actionCount = 0;
+    if (widget.onRowEdit != null) actionCount++;
+    if (widget.onRowDelete != null) actionCount++;
+    
+    if (actionCount > 0) {
+      // Each action needs ~50px + some padding
+      double actionColumnWidth = actionCount * 50.0 + 20.0;
+      totalWidth += actionColumnWidth;
     }
+    
     totalWidth += screen.width * 0.08; // left-right padding
     return totalWidth < screen.width ? screen.width : totalWidth;
   }
@@ -202,20 +213,30 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
             ),
           ),
           if (widget.onRowEdit != null || widget.onRowDelete != null)
-            SizedBox(
-              width: screen.width * 0.18,
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: screen.width * 0.02),
-                child: Text(
-                  'Actions',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: screen.width * 0.035,
-                    color: isDarkMode ? Colors.white : const Color(0xFF1A1A1A),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                int actionCount = 0;
+                if (widget.onRowEdit != null) actionCount++;
+                if (widget.onRowDelete != null) actionCount++;
+                
+                double actionColumnWidth = actionCount * 50.0 + 20.0;
+                
+                return SizedBox(
+                  width: actionColumnWidth,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: Text(
+                      'Actions',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: screen.width * 0.035,
+                        color: isDarkMode ? Colors.white : const Color(0xFF1A1A1A),
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
+                );
+              },
             ),
         ],
       ),
@@ -275,17 +296,25 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
               ),
             ),
             if (widget.onRowEdit != null || widget.onRowDelete != null)
-              SizedBox(
-                width: screen.width * 0.18,
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: screen.width * 0.02,
-                  ),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: _buildRowActions(item, isDarkMode),
-                  ),
-                ),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  int actionCount = 0;
+                  if (widget.onRowEdit != null) actionCount++;
+                  if (widget.onRowDelete != null) actionCount++;
+                  
+                  double actionColumnWidth = actionCount * 50.0 + 20.0;
+                  
+                  return SizedBox(
+                    width: actionColumnWidth,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 5),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: _buildRowActions(item, isDarkMode),
+                      ),
+                    ),
+                  );
+                },
               ),
           ],
         ),
@@ -436,16 +465,16 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
             icon: const Icon(Icons.edit_rounded, color: Color(0xFF00BCD4)),
             onPressed: () => widget.onRowEdit?.call(item),
             iconSize: 18,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
+            padding: const EdgeInsets.all(4),
+            constraints: const BoxConstraints.tightFor(width: 40, height: 40),
           ),
         if (widget.onRowDelete != null)
           IconButton(
             icon: Icon(Icons.delete_rounded, color: Colors.red[400]),
             onPressed: () => _showDeleteConfirmation(item),
             iconSize: 18,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
+            padding: const EdgeInsets.all(4),
+            constraints: const BoxConstraints.tightFor(width: 40, height: 40),
           ),
       ],
     );
@@ -454,25 +483,50 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
   Widget _buildLoadingWidget() =>
       const Center(child: CircularProgressIndicator());
 
-  Widget _buildEmptyWidget() =>
-      widget.emptyWidget ??
-      const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.inbox_rounded, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text(
-              'No data available',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey,
+  // Widget _buildEmptyWidget() =>
+  //     widget.emptyWidget ??
+  //     Center(
+  //       child: Container(
+  //         child: Column(
+  //           mainAxisAlignment: MainAxisAlignment.center,
+  //           children: [
+  //             Icon(Icons.inbox_rounded, size: 64, color: Colors.grey),
+  //             SizedBox(height: 16),
+  //             Text(
+  //               'No data available',
+  //               style: TextStyle(
+  //                 fontSize: 18,
+  //                 fontWeight: FontWeight.w500,
+  //                 color: Colors.grey,
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //     );
+  Widget _buildEmptyWidget(BuildContext context) {
+    return widget.emptyWidget ??
+        SizedBox(
+          height:
+              MediaQuery.of(context).size.height * 0.62,
+          width: double.infinity,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              Icon(Icons.inbox_rounded, size: 64, color: Colors.grey),
+              SizedBox(height: 16),
+              Text(
+                'No data available',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey,
+                ),
               ),
-            ),
-          ],
-        ),
-      );
+            ],
+          ),
+        );
+  }
 
   void _showFilterDialog(BuildContext context) {
     // If specific filter options are provided, use them

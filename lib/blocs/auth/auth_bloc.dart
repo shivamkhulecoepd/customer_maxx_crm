@@ -140,7 +140,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         event.name,
         event.email,
         event.password,
-        event.role ?? 'lead_manager',
+        event.role ?? 'admin',
       );
       
       if (result['success']) {

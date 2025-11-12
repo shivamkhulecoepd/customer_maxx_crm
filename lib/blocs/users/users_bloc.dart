@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:bloc/bloc.dart';
 import 'package:customer_maxx_crm/models/user.dart';
 import 'package:customer_maxx_crm/services/user_service.dart';
@@ -21,9 +23,10 @@ class UsersBloc extends Bloc<UsersEvent, UsersState> {
   ) async {
     emit(state.copyWith(isLoading: true, error: null));
     try {
-      final users = await _userService.getAllUsers();
+      final users = await _userService.getAllUsersNoPagination();
       emit(state.copyWith(isLoading: false, users: users));
     } catch (e) {
+      log('Error fetching users: $e');
       emit(state.copyWith(
         isLoading: false,
         error: 'Error fetching users: $e',
@@ -34,19 +37,39 @@ class UsersBloc extends Bloc<UsersEvent, UsersState> {
   Future<void> _onAddUser(AddUser event, Emitter<UsersState> emit) async {
     emit(state.copyWith(isLoading: true, error: null));
     try {
-      // For now, we'll need to provide a default password
-      final response = await _userService.createUser(event.user, 'defaultPassword123');
+      // Use the password from the user object if available, otherwise use a default
+      final password = event.user.password ?? 'defaultPassword123';
+      log('Password: $password');
+      final response = await _userService.createUser(event.user, password);
+      log('Response from createUser: $response');
       final success = response['status'] == 'success';
       if (success) {
-        final updatedUsers = List<User>.from(state.users)..add(event.user);
-        emit(state.copyWith(isLoading: false, users: updatedUsers));
+        // Instead of manually adding the user to the list, reload all users from the server
+        // This ensures consistency and that we have the most up-to-date data
+        try {
+          final users = await _userService.getAllUsersNoPagination();
+          emit(state.copyWith(isLoading: false, users: users));
+        } catch (e) {
+          // If reloading fails, fall back to adding the user manually
+          final userId = response['user_id']?.toString() ?? '0';
+          final createdUser = User(
+            id: userId,
+            name: event.user.name,
+            email: event.user.email,
+            role: event.user.role,
+            password: event.user.password,
+          );
+          final updatedUsers = List<User>.from(state.users)..add(createdUser);
+          emit(state.copyWith(isLoading: false, users: updatedUsers));
+        }
       } else {
         emit(state.copyWith(
           isLoading: false,
-          error: 'Failed to add user',
+          error: 'Failed to add user: ${response['message'] ?? 'Unknown error'}',
         ));
       }
     } catch (e) {
+      log('Error adding user: $e');
       emit(state.copyWith(
         isLoading: false,
         error: 'Error adding user: $e',
@@ -63,19 +86,28 @@ class UsersBloc extends Bloc<UsersEvent, UsersState> {
       final response = await _userService.updateUser(event.user);
       final success = response['status'] == 'success';
       if (success) {
-        final updatedUsers = List<User>.from(state.users);
-        final index = updatedUsers.indexWhere((u) => u.id == event.user.id);
-        if (index != -1) {
-          updatedUsers[index] = event.user;
+        // Instead of manually updating the user in the list, reload all users from the server
+        // This ensures consistency and that we have the most up-to-date data
+        try {
+          final users = await _userService.getAllUsersNoPagination();
+          emit(state.copyWith(isLoading: false, users: users));
+        } catch (e) {
+          // If reloading fails, fall back to updating the user manually
+          final updatedUsers = List<User>.from(state.users);
+          final index = updatedUsers.indexWhere((u) => u.id == event.user.id);
+          if (index != -1) {
+            updatedUsers[index] = event.user;
+          }
+          emit(state.copyWith(isLoading: false, users: updatedUsers));
         }
-        emit(state.copyWith(isLoading: false, users: updatedUsers));
       } else {
         emit(state.copyWith(
           isLoading: false,
-          error: 'Failed to update user',
+          error: 'Failed to update user: ${response['message'] ?? 'Unknown error'}',
         ));
       }
     } catch (e) {
+      log('Error updating user: $e');
       emit(state.copyWith(
         isLoading: false,
         error: 'Error updating user: $e',
@@ -92,9 +124,17 @@ class UsersBloc extends Bloc<UsersEvent, UsersState> {
       final response = await _userService.deleteUser(int.parse(event.id));
       final success = response['status'] == 'success';
       if (success) {
-        final updatedUsers =
-            state.users.where((user) => user.id != event.id).toList();
-        emit(state.copyWith(isLoading: false, users: updatedUsers));
+        // Instead of manually removing the user from the list, reload all users from the server
+        // This ensures consistency and that we have the most up-to-date data
+        try {
+          final users = await _userService.getAllUsersNoPagination();
+          emit(state.copyWith(isLoading: false, users: users));
+        } catch (e) {
+          // If reloading fails, fall back to removing the user manually
+          final updatedUsers =
+              state.users.where((user) => user.id != event.id).toList();
+          emit(state.copyWith(isLoading: false, users: updatedUsers));
+        }
       } else {
         emit(state.copyWith(
           isLoading: false,

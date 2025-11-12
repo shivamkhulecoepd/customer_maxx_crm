@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import '../api/api_client.dart';
 import '../api/api_endpoints.dart';
 import '../models/user.dart';
@@ -36,6 +38,55 @@ class UserService {
     }
   }
   
+  // Get all users without pagination (fetches all pages)
+  Future<List<User>> getAllUsersNoPagination() async {
+    try {
+      final List<User> allUsers = [];
+      int page = 1;
+      int limit = 10;
+      bool hasMorePages = true;
+      
+      while (hasMorePages) {
+        final queryParameters = {
+          'page': page.toString(),
+          'limit': limit.toString(),
+        };
+        
+        final response = await apiClient.get(
+          ApiEndpoints.getUsers,
+          queryParameters: queryParameters,
+          authenticated: true,
+        );
+        
+        if (response['status'] == 'success') {
+          final users = (response['users'] as List)
+              .map((userJson) => User.fromJson(userJson))
+              .toList();
+          
+          allUsers.addAll(users);
+          
+          // Check if there are more pages
+          final pagination = response['pagination'];
+          if (pagination != null && pagination is Map) {
+            final currentPage = pagination['page'] as int? ?? page;
+            final totalPages = pagination['pages'] as int? ?? 1;
+            hasMorePages = currentPage < totalPages;
+            page++;
+          } else {
+            // If no pagination info, assume we got all users
+            hasMorePages = false;
+          }
+        } else {
+          throw Exception(response['message'] ?? 'Failed to fetch users');
+        }
+      }
+      
+      return allUsers;
+    } catch (e) {
+      rethrow;
+    }
+  }
+  
   // Get a specific user by ID
   Future<User> getUserById(int userId) async {
     try {
@@ -58,7 +109,16 @@ class UserService {
   // Create a new user
   Future<Map<String, dynamic>> createUser(User user, String password) async {
     try {
+      log('Creating user from bottomsheet: $user');
+      log('Creating user after toJson: ${user.toJson()}');
       final userData = user.toJson();
+      log('Creating user main userdata: $userData');
+      userData['id'] = user.id;
+      userData['email'] = user.email;
+      userData['name'] = user.name;
+      userData['password'] = user.password;
+      userData['role'] = user.role;
+      
       userData['password'] = password;
       
       final response = await apiClient.post(

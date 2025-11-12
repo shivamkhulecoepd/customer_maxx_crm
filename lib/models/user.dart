@@ -26,7 +26,7 @@ class User {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'name': name,
+      'fullname': name,
       'email': email,
       'role': role,
       'password': password,
@@ -46,7 +46,8 @@ class UserRole {
   factory UserRole.fromJson(Map<String, dynamic> json) {
     return UserRole(
       id: json['id'].toString(),
-      name: json['name'] as String,
+      // name: json['fullname'] as String,
+      name: json['name'] as String? ?? json['fullname'] as String? ?? '',
     );
   }
 

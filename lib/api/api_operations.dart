@@ -55,7 +55,7 @@ class ApiOperations {
     developer.log('Fetching leads...');
     
     try {
-      final leads = await leadService.getAllLeads();
+      final leads = await leadService.getAllLeadsNoPagination();
       developer.log('Fetched ${leads.length} leads');
       
       // Print first few leads

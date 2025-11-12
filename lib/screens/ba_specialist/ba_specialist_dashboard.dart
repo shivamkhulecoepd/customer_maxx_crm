@@ -11,6 +11,7 @@ import 'package:customer_maxx_crm/widgets/navigation_bar.dart';
 import 'package:customer_maxx_crm/widgets/standard_table_view.dart';
 import 'package:customer_maxx_crm/models/lead.dart';
 import 'package:customer_maxx_crm/services/lead_service.dart';
+import 'package:customer_maxx_crm/utils/api_service_locator.dart';
 
 class ModernBASpecialistDashboard extends StatefulWidget {
   final int initialIndex;
@@ -42,7 +43,7 @@ class _ModernBASpecialistDashboardState
   void initState() {
     super.initState();
     _currentNavIndex = widget.initialIndex;
-    // _leadService = GetIt.instance<LeadService>();
+    _leadService = ServiceLocator.leadService;
     _loadUserData();
   }
 

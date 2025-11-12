@@ -1,6 +1,7 @@
 import 'package:customer_maxx_crm/blocs/theme/theme_event.dart';
 import 'package:customer_maxx_crm/widgets/app_drawer.dart';
 import 'package:flutter/material.dart';
+import 'package:customer_maxx_crm/utils/api_service_locator.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:customer_maxx_crm/blocs/auth/auth_bloc.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_bloc.dart';
@@ -14,7 +15,7 @@ import 'package:customer_maxx_crm/blocs/users/users_state.dart';
 import 'package:customer_maxx_crm/utils/theme_utils.dart';
 import 'package:customer_maxx_crm/widgets/navigation_bar.dart';
 
-import 'package:customer_maxx_crm/widgets/standard_table_view.dart';
+import 'package:customer_maxx_crm/widgets/generic_table_view.dart';
 import 'package:customer_maxx_crm/models/user.dart';
 import 'package:customer_maxx_crm/models/lead.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
@@ -35,19 +36,33 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
 
   final List<Widget>? actions = [];
   final bool showDrawer = true;
+  bool _hasLoadedInitialUsersData = false;
+  bool _hasLoadedInitialLeadsData = false;
+
+  // Add User Form Controllers
+  final _addUserFormKey = GlobalKey<FormState>();
+  final _addUserNameController = TextEditingController();
+  final _addUserEmailController = TextEditingController();
+  final _addUserPasswordController = TextEditingController();
+  String _selectedRole = '';
+  bool _isEditingUser = false;
+  User? _userToEdit;
 
   @override
   void initState() {
     super.initState();
+    context.read<LeadsBloc>().add(LoadAllLeads());
+    context.read<UsersBloc>().add(LoadAllUsers());
     _currentNavIndex = widget.initialIndex;
     _loadUserData();
-    // Initialize data loading
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        context.read<LeadsBloc>().add(LoadAllLeads());
-        context.read<UsersBloc>().add(LoadAllUsers());
-      }
-    });
+  }
+
+  @override
+  void dispose() {
+    _addUserNameController.dispose();
+    _addUserEmailController.dispose();
+    _addUserPasswordController.dispose();
+    super.dispose();
   }
 
   void _loadUserData() {
@@ -58,6 +73,343 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
         _userRole = authState.user!.role;
       });
     }
+  }
+
+  // Hardcoded roles as per requirements
+  List<String> _getUserRoles() {
+    return ['Admin', 'Lead Manager', 'BA Specialist'];
+  }
+
+  String _convertRoleToDatabaseFormat(String role) {
+    // Handle empty or null roles
+    if (role.isEmpty) {
+      return 'admin'; // Default to admin
+    }
+
+    switch (role) {
+      case 'Admin':
+        return 'admin';
+      case 'Lead Manager':
+        return 'lead_manager';
+      case 'BA Specialist':
+        return 'ba_specialist';
+      default:
+        // Handle any other format by converting to lowercase with underscores
+        return role.toLowerCase().replaceAll(' ', '_');
+    }
+  }
+
+  String _convertRoleFromDatabaseFormat(String dbRole) {
+    switch (dbRole) {
+      case 'admin':
+        return 'Admin';
+      case 'lead_manager':
+        return 'Lead Manager';
+      case 'ba_specialist':
+        return 'BA Specialist';
+      default:
+        // Handle other possible formats
+        if (dbRole == 'LeadManager') return 'Lead Manager';
+        if (dbRole == 'BASpecialist') return 'BA Specialist';
+        return dbRole
+            .split('_')
+            .map(
+              (word) => word.isEmpty
+                  ? ''
+                  : word[0].toUpperCase() + word.substring(1).toLowerCase(),
+            )
+            .join(' ');
+    }
+  }
+
+  void _showAddUserForm() {
+    // Clear form
+    _addUserNameController.clear();
+    _addUserEmailController.clear();
+    _addUserPasswordController.clear();
+    _selectedRole = 'Admin'; // Set default role
+    _isEditingUser = false;
+    _userToEdit = null;
+
+    _showUserFormBottomSheet();
+  }
+
+  void _showEditUserForm(User user) {
+    // Fill form with user data
+    _addUserNameController.text = user.name;
+    _addUserEmailController.text = user.email;
+    _addUserPasswordController.clear(); // Don't prefill password
+    _selectedRole = _convertRoleFromDatabaseFormat(user.role);
+    _isEditingUser = true;
+    _userToEdit = user;
+
+    _showUserFormBottomSheet();
+  }
+
+  void _showUserFormBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _AddUserBottomSheet(),
+    );
+  }
+
+  Future<void> _submitUserForm() async {
+    if (_addUserFormKey.currentState!.validate()) {
+      if (!ServiceLocator.isInitialized) return;
+
+      try {
+        final userService = ServiceLocator.userService;
+
+        // Validate that we have a role selected
+        final databaseRole = _convertRoleToDatabaseFormat(_selectedRole);
+        if (databaseRole.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please select a valid role'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return;
+        }
+
+        // Create a user object with the form data
+        final user = User(
+          id: _isEditingUser && _userToEdit != null
+              ? _userToEdit!.id
+              : '0', // Will be assigned by the server
+          name: _addUserNameController.text,
+          email: _addUserEmailController.text,
+          role: databaseRole,
+          password: _addUserPasswordController.text.isNotEmpty
+              ? _addUserPasswordController.text
+              : null,
+        );
+
+        if (_isEditingUser && _userToEdit != null) {
+          // Update existing user
+          context.read<UsersBloc>().add(UpdateUser(user));
+          if (context.mounted) {
+            Navigator.pop(context);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('User updated successfully!'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        } else {
+          // Add new user
+          context.read<UsersBloc>().add(AddUser(user));
+          if (context.mounted) {
+            Navigator.pop(context);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('User added successfully!'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Failed to ${_isEditingUser ? 'update' : 'add'} user: $e',
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Widget _AddUserBottomSheet() {
+    return Container(
+      // height: MediaQuery.of(context).size.height * 0.7,
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      child: Form(
+        key: _addUserFormKey,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(top: 12),
+                decoration: BoxDecoration(
+                  color: Colors.grey.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                _isEditingUser ? 'Edit User' : 'Add New User',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 20),
+              _buildUserFormField(
+                'Full Name',
+                'Enter full name',
+                Icons.person_rounded,
+                _addUserNameController,
+              ),
+              const SizedBox(height: 16),
+              _buildUserFormField(
+                'Email',
+                'Enter email address',
+                Icons.email_rounded,
+                _addUserEmailController,
+              ),
+              const SizedBox(height: 16),
+              _buildUserFormField(
+                'Password',
+                _isEditingUser
+                    ? 'Enter new password (optional)'
+                    : 'Enter password',
+                Icons.lock_rounded,
+                _addUserPasswordController,
+                isPassword: true,
+              ),
+              const SizedBox(height: 16),
+              _buildRoleDropdown(),
+              const SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _submitUserForm,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppThemes.primaryColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(_isEditingUser ? 'Update User' : 'Add User'),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUserFormField(
+    String label,
+    String hint,
+    IconData icon,
+    TextEditingController controller, {
+    bool isPassword = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(height: 8),
+          TextFormField(
+            controller: controller,
+            obscureText: isPassword,
+            decoration: InputDecoration(
+              hintText: hint,
+              prefixIcon: Icon(icon, size: 20),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+            ),
+            validator: (value) {
+              if (label == 'Full Name' && (value == null || value.isEmpty)) {
+                return 'Please enter a name';
+              }
+              if (label == 'Email' && (value == null || value.isEmpty)) {
+                return 'Please enter an email';
+              }
+              if (label == 'Password' &&
+                  !_isEditingUser &&
+                  (value == null || value.isEmpty)) {
+                return 'Please enter a password';
+              }
+              return null;
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRoleDropdown() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Role',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<String>(
+            initialValue: _selectedRole.isEmpty ? 'Admin' : _selectedRole,
+            decoration: InputDecoration(
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+            ),
+            hint: const Text('Select Role'),
+            items: _getUserRoles().map((role) {
+              return DropdownMenuItem(value: role, child: Text(role));
+            }).toList(),
+            onChanged: (value) {
+              if (value != null) {
+                setState(() {
+                  _selectedRole = value;
+                });
+              }
+            },
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please select a role';
+              }
+              return null;
+            },
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -118,7 +470,7 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
       ),
     );
   }
-  
+
   Widget _buildCustomAppBar(BuildContext context, bool isDarkMode) {
     final width = MediaQuery.of(context).size.width;
 
@@ -139,7 +491,7 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
               },
             ),
           SizedBox(width: width < 360 ? 8 : 12),
-      
+
           // Title
           Expanded(
             child: Text(
@@ -152,10 +504,10 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-      
+
           // Actions
           if (actions != null) ...actions!,
-      
+
           // Theme Toggle
           _buildIconButton(
             context,
@@ -163,9 +515,9 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
             () => context.read<ThemeBloc>().add(ToggleTheme()),
             isDarkMode,
           ),
-      
+
           SizedBox(width: width < 360 ? 6 : 8),
-      
+
           // Profile Avatar
           _buildProfileAvatar(context, isDarkMode),
         ],
@@ -831,82 +1183,118 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
   Widget _buildUsersView(bool isDarkMode) {
     return BlocBuilder<UsersBloc, UsersState>(
       builder: (context, usersState) {
-        return ModernTableView<User>(
-          title: 'User Management',
-          data: usersState.users,
-          isLoading: usersState.isLoading,
-          columns: [
-            TableColumn(
-              title: 'Name',
-              value: (user) => user.name,
-              builder: (user) => Row(
-                children: [
-                  CircleAvatar(
-                    radius: 16,
-                    backgroundColor: AppThemes.primaryColor.withValues(
-                      alpha: 0.1,
-                    ),
-                    child: Text(
-                      user.name[0].toUpperCase(),
-                      style: const TextStyle(
-                        color: AppThemes.primaryColor,
-                        fontWeight: FontWeight.w600,
+        // Load users data only when needed (first time)
+        if (!_hasLoadedInitialUsersData &&
+            usersState.users.isEmpty &&
+            !usersState.isLoading &&
+            usersState.error == null) {
+          // Use addPostFrameCallback to avoid calling during build phase
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            context.read<UsersBloc>().add(LoadAllUsers());
+            setState(() {
+              _hasLoadedInitialUsersData = true;
+            });
+          });
+        }
+
+        return RefreshIndicator(
+          onRefresh: () async {
+            // Reset the flag so we can load data again if needed
+            setState(() {
+              _hasLoadedInitialUsersData = false;
+            });
+            context.read<UsersBloc>().add(LoadAllUsers());
+            // We don't need to wait here as the Bloc will handle the state changes
+          },
+          child: Builder(
+            builder: (context) {
+              if (usersState.isLoading && usersState.users.isEmpty) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (usersState.error != null && usersState.users.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('Error: ${usersState.error}'),
+                      ElevatedButton(
+                        onPressed: () {
+                          context.read<UsersBloc>().add(LoadAllUsers());
+                        },
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              final users = usersState.users;
+
+              return GenericTableView<User>(
+                title: 'User Management',
+                data: users,
+                columns: [
+                  GenericTableColumn(
+                    title: 'ID',
+                    value: (user) => user.id,
+                    width: 60,
+                    builder: (user) =>
+                        Text(user.id, overflow: TextOverflow.ellipsis),
+                  ),
+                  GenericTableColumn(
+                    title: 'Name',
+                    value: (user) => user.name,
+                    width: 200,
+                    builder: (user) =>
+                        Text(user.name, overflow: TextOverflow.ellipsis),
+                  ),
+                  GenericTableColumn(
+                    title: 'Email',
+                    value: (user) => user.email,
+                    width: 200, // Fixed width for email column
+                  ),
+                  GenericTableColumn(
+                    title: 'Role',
+                    value: (user) => _convertRoleFromDatabaseFormat(user.role),
+                    width: 150, // Fixed width for role column
+                    builder: (user) => Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppThemes.getStatusColor(
+                          _convertRoleFromDatabaseFormat(user.role),
+                        ).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        _convertRoleFromDatabaseFormat(user.role),
+                        style: TextStyle(
+                          color: AppThemes.getStatusColor(
+                            _convertRoleFromDatabaseFormat(user.role),
+                          ),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Text(user.name),
                 ],
-              ),
-            ),
-            TableColumn(title: 'Email', value: (user) => user.email),
-            TableColumn(
-              title: 'Role',
-              value: (user) => user.role,
-              builder: (user) => Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppThemes.getStatusColor(
-                    user.role,
-                  ).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  user.role,
-                  style: TextStyle(
-                    color: AppThemes.getStatusColor(user.role),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-            TableColumn(
-              title: 'Status',
-              value: (user) => 'Active',
-              builder: (user) => Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppThemes.greenAccent.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Text(
-                  'Active',
-                  style: TextStyle(
-                    color: AppThemes.greenAccent,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          ],
-          onRowEdit: (user) {
-            // Handle edit
-          },
-          onRowDelete: (user) {
-            context.read<UsersBloc>().add(DeleteUser(user.id));
-          },
+                onRowTap: (user) {
+                  _showEditUserForm(user);
+                },
+                onRowEdit: (user) {
+                  _showEditUserForm(user);
+                },
+                onRowDelete: (user) {
+                  context.read<UsersBloc>().add(DeleteUser(user.id));
+                },
+              );
+            },
+          ),
         );
       },
     );
@@ -915,42 +1303,109 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
   Widget _buildLeadsView(bool isDarkMode) {
     return BlocBuilder<LeadsBloc, LeadsState>(
       builder: (context, leadsState) {
-        return ModernTableView<Lead>(
-          title: 'Leads Management',
-          data: leadsState.leads,
-          isLoading: leadsState.isLoading,
-          columns: [
-            TableColumn(title: 'Lead ID', value: (lead) => lead.id),
-            TableColumn(title: 'Name', value: (lead) => lead.name),
-            TableColumn(title: 'Email', value: (lead) => lead.email),
-            TableColumn(
-              title: 'Status',
-              value: (lead) => lead.status,
-              builder: (lead) => Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppThemes.getStatusColor(
-                    lead.status,
-                  ).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  lead.status,
-                  style: TextStyle(
-                    color: AppThemes.getStatusColor(lead.status),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+        // Load leads data only when needed (first time)
+        if (!_hasLoadedInitialLeadsData &&
+            leadsState.leads.isEmpty &&
+            !leadsState.isLoading &&
+            leadsState.error == null) {
+          // Use addPostFrameCallback to avoid calling during build phase
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            context.read<LeadsBloc>().add(LoadAllLeads());
+            setState(() {
+              _hasLoadedInitialLeadsData = true;
+            });
+          });
+        }
+
+        return RefreshIndicator(
+          onRefresh: () async {
+            // Reset the flag so we can load data again if needed
+            setState(() {
+              _hasLoadedInitialLeadsData = false;
+            });
+            context.read<LeadsBloc>().add(LoadAllLeads());
+            // We don't need to wait here as the Bloc will handle the state changes
+          },
+          child: Builder(
+            builder: (context) {
+              if (leadsState.isLoading && leadsState.leads.isEmpty) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (leadsState.error != null && leadsState.leads.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('Error: ${leadsState.error}'),
+                      ElevatedButton(
+                        onPressed: () {
+                          context.read<LeadsBloc>().add(LoadAllLeads());
+                        },
+                        child: const Text('Retry'),
+                      ),
+                    ],
                   ),
-                ),
-              ),
-            ),
-          ],
-          onRowTap: (lead) {
-            // Handle row tap
-          },
-          onRowDelete: (lead) {
-            context.read<LeadsBloc>().add(DeleteLead(lead.id));
-          },
+                );
+              }
+
+              final leads = leadsState.leads;
+
+              return GenericTableView<Lead>(
+                title: 'Leads Management',
+                data: leads,
+                columns: [
+                  GenericTableColumn(
+                    title: 'Lead ID',
+                    value: (lead) => lead.id.toString(),
+                    width: 100, // Fixed width for ID column
+                  ),
+                  GenericTableColumn(
+                    title: 'Name',
+                    value: (lead) => lead.name,
+                    width: 200,
+                  ),
+                  GenericTableColumn(
+                    title: 'Email',
+                    value: (lead) => lead.email,
+                    width: 250, // Fixed width for email column
+                  ),
+                  GenericTableColumn(
+                    title: 'Status',
+                    value: (lead) => lead.status,
+                    width: 150, // Fixed width for status column
+                    builder: (lead) => Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppThemes.getStatusColor(
+                          lead.status,
+                        ).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        lead.status,
+                        style: TextStyle(
+                          color: AppThemes.getStatusColor(lead.status),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                ],
+                onRowTap: (lead) {
+                  // Handle row tap
+                },
+                onRowDelete: (lead) {
+                  context.read<LeadsBloc>().add(DeleteLead(lead.id));
+                },
+              );
+            },
+          ),
         );
       },
     );
@@ -1119,12 +1574,12 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
   Widget _buildFloatingActionButton(bool isDarkMode) {
     return FloatingActionButton.extended(
       onPressed: () {
-        _showQuickActionsBottomSheet();
+        _showAddUserForm();
       },
       backgroundColor: AppThemes.primaryColor,
       foregroundColor: Colors.white,
       icon: const Icon(Icons.add_rounded),
-      label: const Text('Quick Add'),
+      label: const Text('Add User'),
     );
   }
 
