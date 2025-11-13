@@ -19,18 +19,29 @@ class ServiceLocator {
   
   // Initialize all services
   static Future<void> init() async {
-    if (_isInitialized) return;
+    if (_isInitialized) {
+      print('ServiceLocator already initialized');
+      return;
+    }
     
-    _apiClient = ApiClient(baseUrl: ApiConstants.baseUrl);
-    _authService = AuthService(_apiClient);
-    _leadService = LeadService(_apiClient);
-    _userService = UserService(_apiClient);
-    _dashboardService = DashboardService(_apiClient);
+    print('Initializing ServiceLocator...');
     
-    // Initialize auth service
-    await _authService.init();
-    
-    _isInitialized = true;
+    try {
+      _apiClient = ApiClient(baseUrl: ApiConstants.baseUrl);
+      _authService = AuthService(_apiClient);
+      _leadService = LeadService(_apiClient);
+      _userService = UserService(_apiClient);
+      _dashboardService = DashboardService(_apiClient);
+      
+      // Initialize auth service
+      await _authService.init();
+      
+      _isInitialized = true;
+      print('ServiceLocator initialized successfully');
+    } catch (e) {
+      print('Error initializing ServiceLocator: $e');
+      rethrow;
+    }
   }
   
   // Accessor methods for services

@@ -104,6 +104,7 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       child: Container(
+        padding: EdgeInsets.only(bottom: screen.height * 0.08),
         color: isDarkMode ? const Color(0xFF1A1A1A) : Colors.white,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -160,18 +161,18 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
       0.0,
       (sum, column) => sum + _getColumnWidth(column, screen),
     );
-    
+
     // Calculate action column width based on number of actions
     int actionCount = 0;
     if (widget.onRowEdit != null) actionCount++;
     if (widget.onRowDelete != null) actionCount++;
-    
+
     if (actionCount > 0) {
       // Each action needs ~50px + some padding
       double actionColumnWidth = actionCount * 50.0 + 20.0;
       totalWidth += actionColumnWidth;
     }
-    
+
     totalWidth += screen.width * 0.08; // left-right padding
     return totalWidth < screen.width ? screen.width : totalWidth;
   }
@@ -218,9 +219,9 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
                 int actionCount = 0;
                 if (widget.onRowEdit != null) actionCount++;
                 if (widget.onRowDelete != null) actionCount++;
-                
+
                 double actionColumnWidth = actionCount * 50.0 + 20.0;
-                
+
                 return SizedBox(
                   width: actionColumnWidth,
                   child: Padding(
@@ -230,7 +231,9 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: screen.width * 0.035,
-                        color: isDarkMode ? Colors.white : const Color(0xFF1A1A1A),
+                        color: isDarkMode
+                            ? Colors.white
+                            : const Color(0xFF1A1A1A),
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -301,9 +304,9 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
                   int actionCount = 0;
                   if (widget.onRowEdit != null) actionCount++;
                   if (widget.onRowDelete != null) actionCount++;
-                  
+
                   double actionColumnWidth = actionCount * 50.0 + 20.0;
-                  
+
                   return SizedBox(
                     width: actionColumnWidth,
                     child: Padding(
@@ -483,32 +486,10 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
   Widget _buildLoadingWidget() =>
       const Center(child: CircularProgressIndicator());
 
-  // Widget _buildEmptyWidget() =>
-  //     widget.emptyWidget ??
-  //     Center(
-  //       child: Container(
-  //         child: Column(
-  //           mainAxisAlignment: MainAxisAlignment.center,
-  //           children: [
-  //             Icon(Icons.inbox_rounded, size: 64, color: Colors.grey),
-  //             SizedBox(height: 16),
-  //             Text(
-  //               'No data available',
-  //               style: TextStyle(
-  //                 fontSize: 18,
-  //                 fontWeight: FontWeight.w500,
-  //                 color: Colors.grey,
-  //               ),
-  //             ),
-  //           ],
-  //         ),
-  //       ),
-  //     );
   Widget _buildEmptyWidget(BuildContext context) {
     return widget.emptyWidget ??
         SizedBox(
-          height:
-              MediaQuery.of(context).size.height * 0.62,
+          height: MediaQuery.of(context).size.height * 0.62,
           width: double.infinity,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -536,13 +517,16 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
     } else if (T == Lead) {
       // Default lead status options
       filterOptions.addAll([
+        'Pending',
+        'Connected',
         'Not Connected',
-        'Follow-up Planned',
-        'Follow-up Completed',
+        'Demo Interested',
         'Demo Attended',
-        'Warm Lead',
-        'Hot Lead',
-        'Converted',
+        'Follow Up Planned',
+        'Follow Up Completed',
+        'Converted Warm Lead',
+        'Converted Hot Lead',
+        'Registered',
       ]);
     } else {
       // Generic options

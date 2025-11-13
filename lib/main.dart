@@ -5,6 +5,8 @@ import 'package:customer_maxx_crm/blocs/auth/auth_bloc.dart';
 import 'package:customer_maxx_crm/blocs/leads/leads_bloc.dart';
 import 'package:customer_maxx_crm/blocs/users/users_bloc.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_bloc.dart';
+import 'package:customer_maxx_crm/blocs/dashboard/dashboard_bloc.dart';
+import 'package:customer_maxx_crm/blocs/lead_manager_dashboard/lead_manager_dashboard_bloc.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_event.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_state.dart';
 import 'package:customer_maxx_crm/screens/splash_screen.dart';
@@ -37,6 +39,12 @@ void main() async {
         ),
         BlocProvider<ThemeBloc>(
           create: (context) => ThemeBloc()..add(LoadTheme()),
+        ),
+        BlocProvider<DashboardBloc>(
+          create: (context) => DashboardBloc(),
+        ),
+        BlocProvider<LeadManagerDashboardBloc>(
+          create: (context) => LeadManagerDashboardBloc(),
         ),
       ],
       child: const MainApp(),

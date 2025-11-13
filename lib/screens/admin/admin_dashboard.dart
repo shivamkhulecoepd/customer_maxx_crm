@@ -1,6 +1,7 @@
 import 'package:customer_maxx_crm/blocs/theme/theme_event.dart';
 import 'package:customer_maxx_crm/widgets/app_drawer.dart';
 import 'package:flutter/material.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:customer_maxx_crm/utils/api_service_locator.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:customer_maxx_crm/blocs/auth/auth_bloc.dart';
@@ -12,12 +13,16 @@ import 'package:customer_maxx_crm/blocs/leads/leads_state.dart';
 import 'package:customer_maxx_crm/blocs/users/users_bloc.dart';
 import 'package:customer_maxx_crm/blocs/users/users_event.dart';
 import 'package:customer_maxx_crm/blocs/users/users_state.dart';
+import 'package:customer_maxx_crm/blocs/dashboard/dashboard_bloc.dart';
+import 'package:customer_maxx_crm/blocs/dashboard/dashboard_event.dart';
+import 'package:customer_maxx_crm/blocs/dashboard/dashboard_state.dart';
 import 'package:customer_maxx_crm/utils/theme_utils.dart';
 import 'package:customer_maxx_crm/widgets/navigation_bar.dart';
 
 import 'package:customer_maxx_crm/widgets/generic_table_view.dart';
 import 'package:customer_maxx_crm/models/user.dart';
 import 'package:customer_maxx_crm/models/lead.dart';
+import 'package:customer_maxx_crm/models/dashboard_stats.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
 class ModernAdminDashboard extends StatefulWidget {
@@ -38,6 +43,7 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
   final bool showDrawer = true;
   bool _hasLoadedInitialUsersData = false;
   bool _hasLoadedInitialLeadsData = false;
+  bool _hasLoadedInitialDashboardData = false;
 
   // Add User Form Controllers
   final _addUserFormKey = GlobalKey<FormState>();
@@ -51,10 +57,17 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
   @override
   void initState() {
     super.initState();
-    context.read<LeadsBloc>().add(LoadAllLeads());
-    context.read<UsersBloc>().add(LoadAllUsers());
     _currentNavIndex = widget.initialIndex;
     _loadUserData();
+    // Load initial data
+    _loadInitialData();
+  }
+
+  void _loadInitialData() {
+    // Load all data on initialization
+    context.read<LeadsBloc>().add(LoadAllLeads());
+    context.read<UsersBloc>().add(LoadAllUsers());
+    context.read<DashboardBloc>().add(LoadAdminStats());
   }
 
   @override
@@ -670,9 +683,20 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
   Widget _buildDashboardView(bool isDarkMode) {
     return RefreshIndicator(
       onRefresh: () async {
+        // Reset loading flags to ensure fresh data
+        setState(() {
+          _hasLoadedInitialUsersData = false;
+          _hasLoadedInitialLeadsData = false;
+          _hasLoadedInitialDashboardData = false;
+        });
+        
+        // Load fresh data
         context.read<LeadsBloc>().add(LoadAllLeads());
         context.read<UsersBloc>().add(LoadAllUsers());
-        await Future.delayed(const Duration(seconds: 1));
+        context.read<DashboardBloc>().add(LoadAdminStats());
+        
+        // Wait for data to load
+        await Future.delayed(const Duration(milliseconds: 500));
       },
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -685,9 +709,11 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
               const SizedBox(height: 24),
               _buildStatsGrid(isDarkMode),
               const SizedBox(height: 24),
+              _buildPerformanceStats(isDarkMode),
+              const SizedBox(height: 24),
               _buildQuickActions(isDarkMode),
               const SizedBox(height: 24),
-              _buildRecentActivity(isDarkMode),
+              _buildMonthlyTrendsChart(isDarkMode),
               const SizedBox(height: 100), // Space for floating nav
             ],
           ),
@@ -778,6 +804,15 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
       builder: (context, usersState) {
         return BlocBuilder<LeadsBloc, LeadsState>(
           builder: (context, leadsState) {
+            final screenWidth = MediaQuery.of(context).size.width;
+            final crossAxisCount = screenWidth < 600 ? 2 : 4;
+
+            // Show shimmer if either users or leads are loading
+            if ((usersState.isLoading && usersState.users.isEmpty) ||
+                (leadsState.isLoading && leadsState.leads.isEmpty)) {
+              return _buildStatsGridShimmer(isDarkMode, crossAxisCount, screenWidth);
+            }
+
             final totalUsers = usersState.users.length;
             final totalLeads = leadsState.leads.length;
             final activeLeads = leadsState.leads
@@ -794,16 +829,11 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
                 ? ((completedLeads / totalLeads) * 100).toStringAsFixed(1)
                 : '0.0';
 
-            final screenWidth = MediaQuery.of(context).size.width;
-            final crossAxisCount = screenWidth < 600 ? 2 : 4;
-
             return GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: crossAxisCount,
-                // crossAxisSpacing: spacing,
-                // mainAxisSpacing: spacing,
                 mainAxisSpacing: screenWidth * 0.03,
                 crossAxisSpacing: screenWidth * 0.03,
                 childAspectRatio: screenWidth < 400 ? 1.1 : 1.2,
@@ -854,6 +884,110 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
           },
         );
       },
+    );
+  }
+
+  Widget _buildStatsGridShimmer(bool isDarkMode, int crossAxisCount, double screenWidth) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
+        mainAxisSpacing: screenWidth * 0.03,
+        crossAxisSpacing: screenWidth * 0.03,
+        childAspectRatio: screenWidth < 400 ? 1.1 : 1.2,
+      ),
+      itemCount: 4,
+      itemBuilder: (context, index) {
+        return _buildStatCardShimmer(isDarkMode, screenWidth);
+      },
+    );
+  }
+
+  Widget _buildStatCardShimmer(bool isDarkMode, double screenWidth) {
+    return Container(
+      padding: EdgeInsets.all(screenWidth * 0.04),
+      constraints: BoxConstraints(
+        minHeight: screenWidth * 0.3,
+      ),
+      decoration: BoxDecoration(
+        color: isDarkMode ? const Color(0xFF1A1A1A) : Colors.white,
+        borderRadius: BorderRadius.circular(screenWidth * 0.03),
+        boxShadow: [
+          BoxShadow(
+            color: isDarkMode
+                ? Colors.black.withValues(alpha: 0.15)
+                : Colors.grey.withValues(alpha: 0.06),
+            blurRadius: screenWidth * 0.01,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Shimmer.fromColors(
+                baseColor: isDarkMode ? Colors.grey[800]! : Colors.grey[300]!,
+                highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+                child: Container(
+                  width: screenWidth * 0.12,
+                  height: screenWidth * 0.12,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(screenWidth * 0.03),
+                  ),
+                ),
+              ),
+              Shimmer.fromColors(
+                baseColor: isDarkMode ? Colors.grey[800]! : Colors.grey[300]!,
+                highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+                child: Container(
+                  width: screenWidth * 0.08,
+                  height: screenWidth * 0.04,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(screenWidth * 0.02),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Shimmer.fromColors(
+                baseColor: isDarkMode ? Colors.grey[800]! : Colors.grey[300]!,
+                highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+                child: Container(
+                  width: screenWidth * 0.15,
+                  height: screenWidth * 0.07,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+              SizedBox(height: screenWidth * 0.01),
+              Shimmer.fromColors(
+                baseColor: isDarkMode ? Colors.grey[800]! : Colors.grey[300]!,
+                highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+                child: Container(
+                  width: screenWidth * 0.2,
+                  height: screenWidth * 0.035,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -1199,12 +1333,12 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
 
         return RefreshIndicator(
           onRefresh: () async {
-            // Reset the flag so we can load data again if needed
+            // Reset the flag and load fresh data
             setState(() {
               _hasLoadedInitialUsersData = false;
             });
             context.read<UsersBloc>().add(LoadAllUsers());
-            // We don't need to wait here as the Bloc will handle the state changes
+            await Future.delayed(const Duration(milliseconds: 300));
           },
           child: Builder(
             builder: (context) {
@@ -1319,12 +1453,12 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
 
         return RefreshIndicator(
           onRefresh: () async {
-            // Reset the flag so we can load data again if needed
+            // Reset the flag and load fresh data
             setState(() {
               _hasLoadedInitialLeadsData = false;
             });
             context.read<LeadsBloc>().add(LoadAllLeads());
-            // We don't need to wait here as the Bloc will handle the state changes
+            await Future.delayed(const Duration(milliseconds: 300));
           },
           child: Builder(
             builder: (context) {
@@ -1366,9 +1500,24 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
                     width: 200,
                   ),
                   GenericTableColumn(
+                    title: 'Phone',
+                    value: (lead) => lead.phone,
+                    width: 150,
+                  ),
+                  GenericTableColumn(
                     title: 'Email',
                     value: (lead) => lead.email,
-                    width: 250, // Fixed width for email column
+                    width: 200, // Fixed width for email column
+                  ),
+                  GenericTableColumn(
+                    title: 'Lead Manager',
+                    value: (lead) => lead.ownerName,
+                    width: 150, // Fixed width for email column
+                  ),
+                  GenericTableColumn(
+                    title: 'BA Specialist',
+                    value: (lead) => lead.assignedName,
+                    width: 150, // Fixed width for email column
                   ),
                   GenericTableColumn(
                     title: 'Status',
@@ -1396,6 +1545,11 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
                       ),
                     ),
                   ),
+                  GenericTableColumn(
+                    title: 'Feedback',
+                    value: (lead) => lead.feedback,
+                    width: 200, // Fixed width for email column
+                  ),
                 ],
                 onRowTap: (lead) {
                   // Handle row tap
@@ -1413,52 +1567,57 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
 
   Widget _buildAnalyticsView(bool isDarkMode) {
     final screenWidth = MediaQuery.of(context).size.width;
-    return Padding(
-      padding: EdgeInsets.all(screenWidth * 0.04),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              // padding: EdgeInsets.all(screenWidth * 0.04),
-              decoration: BoxDecoration(
-                color: isDarkMode ? Colors.black : const Color(0xFFF8FAFC),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      "Analytics & Reports",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        color: isDarkMode
-                            ? Colors.white
-                            : const Color(0xFF1A1A1A),
+    return RefreshIndicator(
+      onRefresh: () async {
+        // Reset dashboard loading flag and load fresh data
+        setState(() {
+          _hasLoadedInitialDashboardData = false;
+        });
+        context.read<DashboardBloc>().add(LoadAdminStats());
+        await Future.delayed(const Duration(milliseconds: 500));
+      },
+      child: Padding(
+        padding: EdgeInsets.all(screenWidth * 0.04),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: isDarkMode ? Colors.black : const Color(0xFFF8FAFC),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        "Analytics & Reports",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: isDarkMode
+                              ? Colors.white
+                              : const Color(0xFF1A1A1A),
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  _buildActionButton(
-                    context,
-                    Icons.download_rounded,
-                    'Export',
-                    () => (),
-                    isDarkMode,
-                  ),
-                ],
+                    _buildActionButton(
+                      context,
+                      Icons.download_rounded,
+                      'Export',
+                      () => (),
+                      isDarkMode,
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
-            _buildChartCard('Monthly Leads', _buildBarChart(), isDarkMode),
-            SizedBox(height: screenWidth * 0.04),
-            _buildChartCard(
-              'Lead Status Distribution',
-              _buildPieChart(),
-              isDarkMode,
-            ),
-            const SizedBox(height: 100),
-          ],
+              const SizedBox(height: 24),
+              _buildAnalyticsStatsCards(isDarkMode),
+              SizedBox(height: screenWidth * 0.04),
+              _buildDetailedCharts(isDarkMode),
+              const SizedBox(height: 100),
+            ],
+          ),
         ),
       ),
     );
@@ -1636,6 +1795,813 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildPerformanceStats(bool isDarkMode) {
+    return BlocBuilder<DashboardBloc, DashboardState>(
+      builder: (context, state) {
+        // Load dashboard data only when needed (first time)
+        if (!_hasLoadedInitialDashboardData && state is DashboardInitial) {
+          // Use addPostFrameCallback to avoid calling during build phase
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              context.read<DashboardBloc>().add(LoadAdminStats());
+              setState(() {
+                _hasLoadedInitialDashboardData = true;
+              });
+            }
+          });
+        }
+
+        if (state is DashboardLoading) {
+          return _buildPerformanceStatsShimmer(isDarkMode);
+        }
+
+        if (state is DashboardError) {
+          return _buildPerformanceStatsError(state.message, isDarkMode);
+        }
+
+        if (state is DashboardLoaded) {
+          final stats = state.stats;
+          return _buildPerformanceStatsContent(stats, isDarkMode);
+        }
+
+        return _buildPerformanceStatsShimmer(isDarkMode);
+      },
+    );
+  }
+
+  Widget _buildPerformanceStatsShimmer(bool isDarkMode) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Performance Overview',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: isDarkMode ? Colors.white : AppThemes.lightPrimaryText,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          width: double.infinity,
+          margin: EdgeInsets.symmetric(
+            horizontal: screenWidth * 0.01,
+            vertical: 8,
+          ),
+          padding: EdgeInsets.all(screenWidth * 0.04),
+          decoration: BoxDecoration(
+            color: isDarkMode ? const Color(0xFF1A1A1A) : Colors.white,
+            borderRadius: BorderRadius.circular(screenWidth * 0.04),
+            boxShadow: [
+              BoxShadow(
+                color: isDarkMode
+                    ? Colors.black.withValues(alpha: 0.15)
+                    : Colors.grey.withValues(alpha: 0.06),
+                blurRadius: screenWidth * 0.01,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+          child: Column(
+            children: List.generate(6, (index) => Column(
+              children: [
+                _buildShimmerRow(isDarkMode),
+                if (index < 5) const Divider(height: 1),
+              ],
+            )),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildShimmerRow(bool isDarkMode) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        children: [
+          Shimmer.fromColors(
+            baseColor: isDarkMode ? Colors.grey[800]! : Colors.grey[300]!,
+            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Shimmer.fromColors(
+              baseColor: isDarkMode ? Colors.grey[800]! : Colors.grey[300]!,
+              highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+              child: Container(
+                height: 16,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Shimmer.fromColors(
+            baseColor: isDarkMode ? Colors.grey[800]! : Colors.grey[300]!,
+            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+            child: Container(
+              width: 50,
+              height: 20,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPerformanceStatsError(String message, bool isDarkMode) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Performance Overview',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: isDarkMode ? Colors.white : AppThemes.lightPrimaryText,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          width: double.infinity,
+          margin: EdgeInsets.symmetric(
+            horizontal: screenWidth * 0.01,
+            vertical: 8,
+          ),
+          padding: EdgeInsets.all(screenWidth * 0.04),
+          decoration: BoxDecoration(
+            color: isDarkMode ? const Color(0xFF1A1A1A) : Colors.white,
+            borderRadius: BorderRadius.circular(screenWidth * 0.04),
+            boxShadow: [
+              BoxShadow(
+                color: isDarkMode
+                    ? Colors.black.withValues(alpha: 0.15)
+                    : Colors.grey.withValues(alpha: 0.06),
+                blurRadius: screenWidth * 0.01,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Column(
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  color: AppThemes.redAccent,
+                  size: 48,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Error loading dashboard data',
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.white : AppThemes.lightPrimaryText,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  message,
+                  style: TextStyle(
+                    color: isDarkMode ? AppThemes.darkSecondaryText : AppThemes.lightSecondaryText,
+                    fontSize: 12,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    context.read<DashboardBloc>().add(LoadAdminStats());
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppThemes.primaryColor,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPerformanceStatsContent(AdminStats stats, bool isDarkMode) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final crossAxisCount = screenWidth < 600 ? 1 : 2;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Performance Overview',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: isDarkMode ? Colors.white : AppThemes.lightPrimaryText,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          width: double.infinity,
+          margin: EdgeInsets.symmetric(
+            horizontal: screenWidth * 0.01,
+            vertical: 8,
+          ),
+          padding: EdgeInsets.all(screenWidth * 0.04),
+          decoration: BoxDecoration(
+            color: isDarkMode ? const Color(0xFF1A1A1A) : Colors.white,
+            borderRadius: BorderRadius.circular(screenWidth * 0.04),
+            boxShadow: [
+              BoxShadow(
+                color: isDarkMode
+                    ? Colors.black.withValues(alpha: 0.15)
+                    : Colors.grey.withValues(alpha: 0.06),
+                blurRadius: screenWidth * 0.01,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              _buildPerformanceRow(
+                'Total Users (except Admins)',
+                stats.users.total.toString(),
+                Icons.people_rounded,
+                AppThemes.blueAccent,
+                isDarkMode,
+              ),
+              const Divider(height: 1),
+              _buildPerformanceRow(
+                'Lead Managers',
+                stats.users.leadManagers.toString(),
+                Icons.supervisor_account_rounded,
+                AppThemes.greenAccent,
+                isDarkMode,
+              ),
+              const Divider(height: 1),
+              _buildPerformanceRow(
+                'BA Specialists',
+                stats.users.baSpecialists.toString(),
+                Icons.support_agent_rounded,
+                AppThemes.purpleAccent,
+                isDarkMode,
+              ),
+              const Divider(height: 1),
+              _buildPerformanceRow(
+                'Total Leads',
+                stats.leads.total.toString(),
+                Icons.leaderboard_rounded,
+                AppThemes.orangeAccent,
+                isDarkMode,
+              ),
+              const Divider(height: 1),
+              _buildPerformanceRow(
+                'Registrations',
+                stats.registrations.total.toString(),
+                Icons.app_registration_rounded,
+                AppThemes.redAccent,
+                isDarkMode,
+              ),
+              const Divider(height: 1),
+              _buildPerformanceRow(
+                'Demos Conducted',
+                stats.demos.total.toString(),
+                Icons.video_call_rounded,
+                AppThemes.primaryColor,
+                isDarkMode,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPerformanceRow(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+    bool isDarkMode,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.02),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(
+                MediaQuery.of(context).size.width * 0.02,
+              ),
+            ),
+            child: Icon(
+              icon,
+              color: color,
+              size: MediaQuery.of(context).size.width * 0.05,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: isDarkMode ? Colors.white : AppThemes.lightPrimaryText,
+              ),
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMonthlyTrendsChart(bool isDarkMode) {
+    return BlocBuilder<DashboardBloc, DashboardState>(
+      builder: (context, state) {
+        if (state is DashboardLoaded) {
+          final stats = state.stats;
+          return _buildMonthlyTrendsContent(stats, isDarkMode);
+        }
+        return const SizedBox.shrink();
+      },
+    );
+  }
+
+  Widget _buildMonthlyTrendsContent(AdminStats stats, bool isDarkMode) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    // Prepare data for the chart
+    final List<ChartData> sharedData = [];
+    final List<ChartData> registeredData = [];
+
+    for (int i = 0; i < stats.monthlyData.labels.length; i++) {
+      sharedData.add(
+        ChartData(
+          stats.monthlyData.labels[i],
+          stats.monthlyData.shared[i].toDouble(),
+        ),
+      );
+      registeredData.add(
+        ChartData(
+          stats.monthlyData.labels[i],
+          stats.monthlyData.registered[i].toDouble(),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Monthly Trends',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: isDarkMode ? Colors.white : AppThemes.lightPrimaryText,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          width: double.infinity,
+          margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.01),
+          padding: EdgeInsets.all(screenWidth * 0.04),
+          decoration: BoxDecoration(
+            color: isDarkMode ? const Color(0xFF1A1A1A) : Colors.white,
+            borderRadius: BorderRadius.circular(screenWidth * 0.04),
+            boxShadow: [
+              BoxShadow(
+                color: isDarkMode
+                    ? Colors.black.withValues(alpha: 0.15)
+                    : Colors.grey.withValues(alpha: 0.06),
+                blurRadius: screenWidth * 0.01,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+          child: SfCartesianChart(
+            primaryXAxis: CategoryAxis(
+              labelRotation: -45,
+              labelStyle: TextStyle(
+                color: isDarkMode ? Colors.white70 : Colors.black87,
+              ),
+            ),
+            primaryYAxis: NumericAxis(
+              labelFormat: '{value}',
+              labelStyle: TextStyle(
+                color: isDarkMode ? Colors.white70 : Colors.black87,
+              ),
+            ),
+            legend: Legend(
+              isVisible: true,
+              position: LegendPosition.bottom,
+              textStyle: TextStyle(
+                color: isDarkMode ? Colors.white : Colors.black,
+              ),
+            ),
+            tooltipBehavior: TooltipBehavior(enable: true),
+            series: <CartesianSeries<ChartData, String>>[
+              LineSeries<ChartData, String>(
+                dataSource: sharedData,
+                xValueMapper: (ChartData data, _) => data.x,
+                yValueMapper: (ChartData data, _) => data.y,
+                name: 'Shared',
+                color: AppThemes.primaryColor,
+                markerSettings: const MarkerSettings(isVisible: true),
+              ),
+              LineSeries<ChartData, String>(
+                dataSource: registeredData,
+                xValueMapper: (ChartData data, _) => data.x,
+                yValueMapper: (ChartData data, _) => data.y,
+                name: 'Registered',
+                color: AppThemes.greenAccent,
+                markerSettings: const MarkerSettings(isVisible: true),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAnalyticsStatsCards(bool isDarkMode) {
+    return BlocBuilder<DashboardBloc, DashboardState>(
+      builder: (context, state) {
+        if (state is DashboardLoaded) {
+          final stats = state.stats;
+          return _buildAnalyticsStatsContent(stats, isDarkMode);
+        }
+        return _buildAnalyticsStatsShimmer(isDarkMode);
+      },
+    );
+  }
+
+  Widget _buildAnalyticsStatsShimmer(bool isDarkMode) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final crossAxisCount = screenWidth < 600 ? 2 : 4;
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
+        mainAxisSpacing: screenWidth * 0.03,
+        crossAxisSpacing: screenWidth * 0.03,
+        childAspectRatio: screenWidth < 400 ? 1.1 : 1.2,
+      ),
+      itemCount: 6,
+      itemBuilder: (context, index) {
+        return _buildStatCardShimmer(isDarkMode, screenWidth);
+      },
+    );
+  }
+
+  Widget _buildDetailedChartsShimmer(bool isDarkMode) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Detailed Analytics',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: isDarkMode ? Colors.white : AppThemes.lightPrimaryText,
+          ),
+        ),
+        const SizedBox(height: 16),
+        _buildChartCardShimmer('Leads Trend', isDarkMode, screenWidth),
+        SizedBox(height: screenWidth * 0.04),
+        _buildChartCardShimmer('User Distribution', isDarkMode, screenWidth),
+        SizedBox(height: screenWidth * 0.04),
+        _buildChartCardShimmer('Monthly Trends', isDarkMode, screenWidth),
+      ],
+    );
+  }
+
+  Widget _buildChartCardShimmer(String title, bool isDarkMode, double screenWidth) {
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.01, vertical: 8),
+      padding: EdgeInsets.all(screenWidth * 0.04),
+      decoration: BoxDecoration(
+        color: isDarkMode ? const Color(0xFF1A1A1A) : Colors.white,
+        borderRadius: BorderRadius.circular(screenWidth * 0.04),
+        boxShadow: [
+          BoxShadow(
+            color: isDarkMode
+                ? Colors.black.withValues(alpha: 0.15)
+                : Colors.grey.withValues(alpha: 0.06),
+            blurRadius: screenWidth * 0.01,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: screenWidth * 0.045,
+              fontWeight: FontWeight.w600,
+              color: isDarkMode ? Colors.white : AppThemes.lightPrimaryText,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Shimmer.fromColors(
+            baseColor: isDarkMode ? Colors.grey[800]! : Colors.grey[300]!,
+            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+            child: Container(
+              height: MediaQuery.of(context).size.height * 0.3,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnalyticsStatsContent(AdminStats stats, bool isDarkMode) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final crossAxisCount = screenWidth < 600 ? 2 : 4;
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
+        mainAxisSpacing: screenWidth * 0.03,
+        crossAxisSpacing: screenWidth * 0.03,
+        childAspectRatio: screenWidth < 400 ? 1.1 : 1.2,
+      ),
+      itemCount: 6,
+      itemBuilder: (context, index) {
+        final analyticsData = [
+          {
+            'title': 'Total Users',
+            'value': stats.users.total.toString(),
+            'icon': Icons.people_rounded,
+            'color': AppThemes.blueAccent,
+            'change':
+                '+${stats.users.leadManagers + stats.users.baSpecialists > 0 ? ((stats.users.leadManagers + stats.users.baSpecialists) / stats.users.total * 100).toStringAsFixed(1) : "0"}%',
+          },
+          {
+            'title': 'Total Leads',
+            'value': stats.leads.total.toString(),
+            'icon': Icons.leaderboard_rounded,
+            'color': AppThemes.greenAccent,
+            'change':
+                '+${stats.leads.monthly > 0 ? ((stats.leads.monthly / (stats.leads.total > 0 ? stats.leads.total : 1)) * 100).toStringAsFixed(1) : "0"}%',
+          },
+          {
+            'title': 'Registrations',
+            'value': stats.registrations.total.toString(),
+            'icon': Icons.app_registration_rounded,
+            'color': AppThemes.purpleAccent,
+            'change':
+                '+${stats.registrations.monthly > 0 ? ((stats.registrations.monthly / (stats.registrations.total > 0 ? stats.registrations.total : 1)) * 100).toStringAsFixed(1) : "0"}%',
+          },
+          {
+            'title': 'Demos',
+            'value': stats.demos.total.toString(),
+            'icon': Icons.video_call_rounded,
+            'color': AppThemes.orangeAccent,
+            'change':
+                '+${stats.demos.monthly > 0 ? ((stats.demos.monthly / (stats.demos.total > 0 ? stats.demos.total : 1)) * 100).toStringAsFixed(1) : "0"}%',
+          },
+          {
+            'title': 'Daily Leads',
+            'value': stats.leads.daily.toString(),
+            'icon': Icons.today_rounded,
+            'color': AppThemes.primaryColor,
+            'change': '+${stats.leads.daily > 0 ? "5.2" : "0"}%',
+          },
+          {
+            'title': 'Monthly Growth',
+            'value':
+                '${stats.leads.monthly > 0 ? ((stats.leads.monthly / (stats.leads.total > 0 ? stats.leads.total : 1)) * 100).toStringAsFixed(1) : "0"}%',
+            'icon': Icons.trending_up_rounded,
+            'color': AppThemes.redAccent,
+            'change': '+2.3%',
+          },
+        ];
+        final data = analyticsData[index];
+        return _buildStatCard(
+          data['title'] as String,
+          data['value'] as String,
+          data['icon'] as IconData,
+          data['color'] as Color,
+          data['change'] as String,
+          isDarkMode,
+        );
+      },
+    );
+  }
+
+  Widget _buildDetailedCharts(bool isDarkMode) {
+    return BlocBuilder<DashboardBloc, DashboardState>(
+      builder: (context, state) {
+        if (state is DashboardLoaded) {
+          final stats = state.stats;
+          return _buildDetailedChartsContent(stats, isDarkMode);
+        }
+        return _buildDetailedChartsShimmer(isDarkMode);
+      },
+    );
+  }
+
+  Widget _buildDetailedChartsContent(AdminStats stats, bool isDarkMode) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    // Prepare data for charts
+    final List<ChartData> leadsData = [
+      ChartData('Daily', stats.leads.daily.toDouble()),
+      ChartData('Weekly', stats.leads.weekly.toDouble()),
+      ChartData('Monthly', stats.leads.monthly.toDouble()),
+    ];
+
+    final List<ChartData> userData = [
+      ChartData('Lead Managers', stats.users.leadManagers.toDouble()),
+      ChartData('BA Specialists', stats.users.baSpecialists.toDouble()),
+    ];
+
+    // Prepare monthly data
+    final List<ChartData> sharedData = [];
+    final List<ChartData> registeredData = [];
+
+    for (int i = 0; i < stats.monthlyData.labels.length; i++) {
+      sharedData.add(
+        ChartData(
+          stats.monthlyData.labels[i],
+          stats.monthlyData.shared[i].toDouble(),
+        ),
+      );
+      registeredData.add(
+        ChartData(
+          stats.monthlyData.labels[i],
+          stats.monthlyData.registered[i].toDouble(),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Detailed Analytics',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: isDarkMode ? Colors.white : AppThemes.lightPrimaryText,
+          ),
+        ),
+        const SizedBox(height: 16),
+        // Leads trend chart
+        _buildChartCard(
+          'Leads Trend',
+          SfCartesianChart(
+            primaryXAxis: CategoryAxis(
+              labelStyle: TextStyle(
+                color: isDarkMode ? Colors.white70 : Colors.black87,
+              ),
+            ),
+            primaryYAxis: NumericAxis(
+              labelFormat: '{value}',
+              labelStyle: TextStyle(
+                color: isDarkMode ? Colors.white70 : Colors.black87,
+              ),
+            ),
+            legend: Legend(
+              isVisible: true,
+              position: LegendPosition.bottom,
+              textStyle: TextStyle(
+                color: isDarkMode ? Colors.white : Colors.black,
+              ),
+            ),
+            tooltipBehavior: TooltipBehavior(enable: true),
+            series: <CartesianSeries<ChartData, String>>[
+              ColumnSeries<ChartData, String>(
+                dataSource: leadsData,
+                xValueMapper: (ChartData data, _) => data.x,
+                yValueMapper: (ChartData data, _) => data.y,
+                name: 'Leads',
+                color: AppThemes.primaryColor,
+              ),
+            ],
+          ),
+          isDarkMode,
+        ),
+        SizedBox(height: screenWidth * 0.04),
+        // User distribution pie chart
+        _buildChartCard(
+          'User Distribution',
+          SfCircularChart(
+            legend: Legend(
+              isVisible: true,
+              position: LegendPosition.bottom,
+              textStyle: TextStyle(
+                color: isDarkMode ? Colors.white : Colors.black,
+              ),
+            ),
+            tooltipBehavior: TooltipBehavior(enable: true),
+            series: <CircularSeries>[
+              PieSeries<ChartData, String>(
+                dataSource: userData,
+                xValueMapper: (ChartData data, _) => data.x,
+                yValueMapper: (ChartData data, _) => data.y,
+                dataLabelSettings: const DataLabelSettings(isVisible: true),
+                explode: true,
+                explodeIndex: 0,
+              ),
+            ],
+          ),
+          isDarkMode,
+        ),
+        SizedBox(height: screenWidth * 0.04),
+        // Monthly trends line chart
+        _buildChartCard(
+          'Monthly Trends',
+          SfCartesianChart(
+            primaryXAxis: CategoryAxis(
+              labelRotation: -45,
+              labelStyle: TextStyle(
+                color: isDarkMode ? Colors.white70 : Colors.black87,
+              ),
+            ),
+            primaryYAxis: NumericAxis(
+              labelFormat: '{value}',
+              labelStyle: TextStyle(
+                color: isDarkMode ? Colors.white70 : Colors.black87,
+              ),
+            ),
+            legend: Legend(
+              isVisible: true,
+              position: LegendPosition.bottom,
+              textStyle: TextStyle(
+                color: isDarkMode ? Colors.white : Colors.black,
+              ),
+            ),
+            tooltipBehavior: TooltipBehavior(enable: true),
+            series: <CartesianSeries<ChartData, String>>[
+              LineSeries<ChartData, String>(
+                dataSource: sharedData,
+                xValueMapper: (ChartData data, _) => data.x,
+                yValueMapper: (ChartData data, _) => data.y,
+                name: 'Shared',
+                color: AppThemes.primaryColor,
+                markerSettings: const MarkerSettings(isVisible: true),
+              ),
+              LineSeries<ChartData, String>(
+                dataSource: registeredData,
+                xValueMapper: (ChartData data, _) => data.x,
+                yValueMapper: (ChartData data, _) => data.y,
+                name: 'Registered',
+                color: AppThemes.greenAccent,
+                markerSettings: const MarkerSettings(isVisible: true),
+              ),
+            ],
+          ),
+          isDarkMode,
+        ),
+      ],
     );
   }
 }

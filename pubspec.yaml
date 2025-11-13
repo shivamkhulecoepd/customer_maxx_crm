@@ -22,6 +22,7 @@ dependencies:
   path_provider: ^2.1.5
   shared_preferences: ^2.5.3
   material_table_view: ^5.5.2
+  shimmer: ^3.0.0
 
 dev_dependencies:
   flutter_test:

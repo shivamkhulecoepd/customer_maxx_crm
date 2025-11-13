@@ -23,9 +23,12 @@ class UsersBloc extends Bloc<UsersEvent, UsersState> {
   ) async {
     emit(state.copyWith(isLoading: true, error: null));
     try {
+      print('Loading all users...');
       final users = await _userService.getAllUsersNoPagination();
+      print('Users loaded successfully: ${users.length} users');
       emit(state.copyWith(isLoading: false, users: users));
     } catch (e) {
+      print('Error fetching users: $e');
       log('Error fetching users: $e');
       emit(state.copyWith(
         isLoading: false,

@@ -37,6 +37,9 @@ class ApiClient {
     final headers = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0',
     };
     
     if (authenticated && authToken != null) {
@@ -53,22 +56,29 @@ class ApiClient {
     bool authenticated = false,
   }) async {
     final headers = _getHeaders(authenticated: authenticated);
+    
+    // Add cache-busting parameter to ensure fresh data
+    final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+    
     log("Headers: $headers");
     try {
       // Parse the endpoint to extract existing query parameters
       final endpointUri = Uri.parse(endpoint);
       
       // Merge existing query parameters with new ones
-      final mergedQueryParams = <String, dynamic>{};
+      final mergedQueryParams = <String , dynamic>{};
       mergedQueryParams.addAll(endpointUri.queryParameters);
       if (queryParameters != null) {
         mergedQueryParams.addAll(queryParameters);
       }
       
+      // Add cache-busting parameter
+      mergedQueryParams['_t'] = timestamp;
+      
       // Construct the full URI
       final fullUri = Uri.parse(baseUrl).replace(
         path: endpointUri.path,
-        queryParameters: mergedQueryParams.isEmpty ? null : mergedQueryParams,
+        queryParameters: mergedQueryParams,
       );
       
       log("Full URI: $fullUri");

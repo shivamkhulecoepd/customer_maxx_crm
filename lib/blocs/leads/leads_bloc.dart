@@ -32,9 +32,12 @@ class LeadsBloc extends Bloc<LeadsEvent, LeadsState> {
   ) async {
     emit(state.copyWith(isLoading: true, error: null));
     try {
+      print('Loading all leads...');
       final leads = await _leadService.getAllLeadsNoPagination();
+      print('Leads loaded successfully: ${leads.length} leads');
       emit(state.copyWith(isLoading: false, leads: leads));
     } catch (e) {
+      print('Error fetching leads: $e');
       emit(state.copyWith(
         isLoading: false,
         error: 'Error fetching leads: $e',
