@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:bloc/bloc.dart';
 import 'package:customer_maxx_crm/models/lead.dart';
 import 'package:customer_maxx_crm/services/lead_service.dart';
@@ -32,12 +34,12 @@ class LeadsBloc extends Bloc<LeadsEvent, LeadsState> {
   ) async {
     emit(state.copyWith(isLoading: true, error: null));
     try {
-      print('Loading all leads...');
+      log('Loading all leads...');
       final leads = await _leadService.getAllLeadsNoPagination();
-      print('Leads loaded successfully: ${leads.length} leads');
+      log('Leads loaded successfully: ${leads.length} leads');
       emit(state.copyWith(isLoading: false, leads: leads));
     } catch (e) {
-      print('Error fetching leads: $e');
+      log('Error fetching leads: $e');
       emit(state.copyWith(
         isLoading: false,
         error: 'Error fetching leads: $e',

@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import '../api/api_client.dart';
 import '../api/api_endpoints.dart';
 import '../models/lead.dart';
@@ -61,16 +63,20 @@ class LeadService {
         authenticated: true,
       );
       
+      log('BA Dashboard response: $response');
+      
       if (response['status'] == 'success') {
         final leads = (response['leads'] as List)
             .map((leadJson) => Lead.fromJson(leadJson))
             .toList();
         
+        log('Parsed ${leads.length} BA dashboard leads');
         return leads;
       } else {
         throw Exception(response['message'] ?? 'Failed to fetch BA dashboard data');
       }
     } catch (e) {
+      log('Error in getBADashboard: $e');
       rethrow;
     }
   }
@@ -83,16 +89,20 @@ class LeadService {
         authenticated: true,
       );
       
+      log('Registered leads response: $response');
+      
       if (response['status'] == 'success') {
         final leads = (response['leads'] as List)
             .map((leadJson) => Lead.fromJson(leadJson))
             .toList();
         
+        log('Parsed ${leads.length} registered leads');
         return leads;
       } else {
         throw Exception(response['message'] ?? 'Failed to fetch registered leads');
       }
     } catch (e) {
+      log('Error in getRegisteredLeads: $e');
       rethrow;
     }
   }

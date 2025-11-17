@@ -1,6 +1,8 @@
 // Service locator for managing API services
 
 
+import 'dart:developer';
+
 import 'package:customer_maxx_crm/api/api_client.dart';
 import 'package:customer_maxx_crm/services/auth_service.dart';
 import 'package:customer_maxx_crm/services/dashboard_service.dart';
@@ -20,11 +22,11 @@ class ServiceLocator {
   // Initialize all services
   static Future<void> init() async {
     if (_isInitialized) {
-      print('ServiceLocator already initialized');
+      log('ServiceLocator already initialized');
       return;
     }
     
-    print('Initializing ServiceLocator...');
+    log('Initializing ServiceLocator...');
     
     try {
       _apiClient = ApiClient(baseUrl: ApiConstants.baseUrl);
@@ -37,9 +39,9 @@ class ServiceLocator {
       await _authService.init();
       
       _isInitialized = true;
-      print('ServiceLocator initialized successfully');
+      log('ServiceLocator initialized successfully');
     } catch (e) {
-      print('Error initializing ServiceLocator: $e');
+      log('Error initializing ServiceLocator: $e');
       rethrow;
     }
   }

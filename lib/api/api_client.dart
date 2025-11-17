@@ -16,20 +16,20 @@ class ApiClient {
   void setAuthToken(String token) {
     // Log the token setting
     // ignore: avoid_print
-    print('Setting auth token. Previous token: $authToken, New token: $token');
+    log('Setting auth token. Previous token: $authToken, New token: $token');
     authToken = token;
     // ignore: avoid_print
-    print('Auth token set. Current token: $authToken');
+    log('Auth token set. Current token: $authToken');
   }
   
   // Clear authentication token
   void clearAuthToken() {
     // Log the token clearing
     // ignore: avoid_print
-    print('Clearing auth token. Current token: $authToken');
+    log('Clearing auth token. Current token: $authToken');
     authToken = null;
     // ignore: avoid_print
-    print('Auth token cleared. New token: $authToken');
+    log('Auth token cleared. New token: $authToken');
   }
   
   // Get headers with optional authentication

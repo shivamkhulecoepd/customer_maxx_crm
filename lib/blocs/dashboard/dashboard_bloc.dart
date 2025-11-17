@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../utils/api_service_locator.dart';
 import 'dashboard_event.dart';
@@ -15,17 +17,17 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     emit(DashboardLoading());
     try {
       if (!ServiceLocator.isInitialized) {
-        print('ServiceLocator not initialized, initializing now...');
+        log('ServiceLocator not initialized, initializing now...');
         await ServiceLocator.init();
       }
 
-      print('Loading admin stats...');
+      log('Loading admin stats...');
       final dashboardService = ServiceLocator.dashboardService;
       final stats = await dashboardService.getAdminStats();
-      print('Admin stats loaded successfully');
+      log('Admin stats loaded successfully');
       emit(DashboardLoaded(stats));
     } catch (e) {
-      print('Error loading admin stats: $e');
+      log('Error loading admin stats: $e');
       emit(DashboardError(e.toString()));
     }
   }

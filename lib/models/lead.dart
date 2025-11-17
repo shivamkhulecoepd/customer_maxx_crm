@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 class Lead {
   final int id;
   final String name;
@@ -57,7 +59,7 @@ class Lead {
       }
       return null;
     }
-    
+
     // Helper function to safely convert dynamic values to int
     int? convertToInt(dynamic value) {
       if (value == null) return null;
@@ -72,25 +74,29 @@ class Lead {
       }
       return null;
     }
-    
+
+    log('Parsing lead from JSON: $json');
+
     return Lead(
-      id: json['id'] as int,
-      name: json['name'] as String,
-      phone: json['phone'] as String,
-      email: json['email'] as String,
-      education: json['education'] as String,
-      experience: json['experience'] as String,
-      location: json['location'] as String,
-      status: json['status'] as String,
+      id: json['id'] as int? ?? 0,
+      name: json['name'] as String? ?? '',
+      phone: json['phone'] as String? ?? '',
+      email: json['email'] as String? ?? '',
+      education: json['education'] as String? ?? '',
+      experience: json['experience'] as String? ?? '',
+      location: json['location'] as String? ?? '',
+      status: json['status'] as String? ?? '',
       feedback: json['feedback'] as String? ?? '',
-      createdAt: json['created_at'] as String,
-      ownerName: json['owner_name'] as String,
-      assignedName: json['assigned_name'] as String,
-      latestHistory: json['latest_history'] as String,
+      createdAt: json['created_at'] as String? ?? '',
+      ownerName: json['owner_name'] as String? ?? '',
+      assignedName: json['assigned_name'] as String? ?? '',
+      latestHistory: json['latest_history'] as String? ?? '',
       discount: convertToInt(json['discount']),
       installment1: convertToDouble(json['installment1']),
       installment2: convertToDouble(json['installment2']),
-      date: json['created_at'] != null ? DateTime.tryParse(json['created_at']) : null,
+      date: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'])
+          : null,
       ownerId: null, // Not returned by API
       assignedTo: null, // Not returned by API
     );
@@ -115,19 +121,41 @@ class Lead {
       if (installment1 != null) 'installment1': installment1.toString(),
       if (installment2 != null) 'installment2': installment2.toString(),
     };
-    
+
     // For creation, use ID fields instead of name fields if IDs are provided
     if (ownerId != null) {
       json['owner_id'] = ownerId;
       json.remove('owner_name');
     }
-    
+
     if (assignedTo != null) {
       json['assigned_to'] = assignedTo;
       json.remove('assigned_name');
     }
-    
+
     return json;
+  }
+
+  // Helper method to calculate final fees with discount applied
+  double calculateFinalFees() {
+    final installment1 = this.installment1 ?? 0.0;
+    final installment2 = this.installment2 ?? 0.0;
+    final discount = this.discount ?? 0;
+    final total = installment1 + installment2;
+    // If discount is 0, this will return the total amount
+    // If discount is 10, this will return total * 0.9 (10% off)
+    final discountedTotal = total * (1 - discount / 100);
+    log('calculateFinalFees: inst1=$installment1, inst2=$installment2, discount=$discount, total=$total, discountedTotal=$discountedTotal');
+    return discountedTotal;
+  }
+  
+  // Helper method to calculate total fees without discount
+  double calculateTotalFees() {
+    final installment1 = this.installment1 ?? 0.0;
+    final installment2 = this.installment2 ?? 0.0;
+    final total = installment1 + installment2;
+    log('calculateTotalFees: inst1=$installment1, inst2=$installment2, total=$total');
+    return total;
   }
 }
 

@@ -1,7 +1,8 @@
-import 'dart:ui';
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:customer_maxx_crm/models/lead.dart';
+import 'package:flutter/foundation.dart';
 
 /// A generic table view that can display any kind of data
 class GenericTableView<T> extends StatefulWidget {
@@ -51,23 +52,34 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
   @override
   void initState() {
     super.initState();
+    log('GenericTableView initState - Data length: ${widget.data.length}');
     _filteredData = List<T>.from(widget.data);
+    _searchController.addListener(_onSearchChanged);
+    log('GenericTableView initState - Filtered data length: ${_filteredData.length}');
   }
 
   @override
-  void didUpdateWidget(GenericTableView<T> oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.data != widget.data) {
-      _filteredData = List<T>.from(widget.data);
-      _filterData();
-    }
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    setState(() {
+      _searchQuery = _searchController.text;
+    });
+    _filterData();
   }
 
   void _filterData() {
+    log('GenericTableView _filterData - Search query: $_searchQuery, Selected filter: $_selectedFilter');
     setState(() {
       if (_searchQuery.isEmpty && _selectedFilter == 'All') {
+        log('GenericTableView _filterData - No filters, using all data');
         _filteredData = List<T>.from(widget.data);
       } else {
+        log('GenericTableView _filterData - Applying filters');
         _filteredData = widget.data.where((item) {
           bool matchesSearch = true;
           bool matchesFilter = true;
@@ -89,16 +101,32 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
             matchesFilter = lead.status == _selectedFilter;
           }
 
+          log('GenericTableView _filterData - Item matches search: $matchesSearch, matches filter: $matchesFilter');
           return matchesSearch && matchesFilter;
         }).toList();
       }
+      log('GenericTableView _filterData - Filtered data length: ${_filteredData.length}');
     });
+  }
+
+  @override
+  void didUpdateWidget(GenericTableView<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    log('GenericTableView didUpdateWidget - Old data length: ${oldWidget.data.length}, New data length: ${widget.data.length}');
+    // Only update filtered data if the data actually changed
+    if (!listEquals(oldWidget.data, widget.data)) {
+      _filteredData = List<T>.from(widget.data);
+      _filterData();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final screen = MediaQuery.of(context).size;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
+    log('GenericTableView build - Data length: ${widget.data.length}, Filtered data length: ${_filteredData.length}');
+    log('GenericTableView build - Is loading: ${widget.isLoading}');
 
     // Wrap the entire table in a scrollable widget for refresh indicator support
     return SingleChildScrollView(
@@ -113,6 +141,8 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
             if (widget.showSearch) _buildSearchBar(context, isDarkMode, screen),
             widget.isLoading
                 ? _buildLoadingWidget()
+                : _filteredData.isEmpty && widget.data.isNotEmpty
+                ? _buildEmptySearchResultWidget(context)
                 : _filteredData.isEmpty
                 ? _buildEmptyWidget(context)
                 : _buildHorizontalScrollTable(isDarkMode, screen),
@@ -124,6 +154,9 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
 
   Widget _buildHorizontalScrollTable(bool isDarkMode, Size screen) {
     final totalWidth = _calculateTotalTableWidth(screen);
+    
+    log('GenericTableView _buildHorizontalScrollTable - Total width: $totalWidth, Screen width: ${screen.width}');
+    log('GenericTableView _buildHorizontalScrollTable - Filtered data length: ${_filteredData.length}');
 
     // Always allow horizontal scrolling to prevent overflow
     return Scrollbar(
@@ -140,6 +173,7 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: _filteredData.length,
                 itemBuilder: (context, index) {
+                  log('GenericTableView building row $index');
                   return _buildTableRow(
                     _filteredData[index],
                     index,
@@ -161,6 +195,8 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
       0.0,
       (sum, column) => sum + _getColumnWidth(column, screen),
     );
+    
+    log('GenericTableView _calculateTotalTableWidth - Columns: ${widget.columns.length}, Initial width: $totalWidth');
 
     // Calculate action column width based on number of actions
     int actionCount = 0;
@@ -171,13 +207,47 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
       // Each action needs ~50px + some padding
       double actionColumnWidth = actionCount * 50.0 + 20.0;
       totalWidth += actionColumnWidth;
+      log('GenericTableView _calculateTotalTableWidth - Added action column width: $actionColumnWidth');
     }
 
     totalWidth += screen.width * 0.08; // left-right padding
+    log('GenericTableView _calculateTotalTableWidth - Final width: $totalWidth, Screen width: ${screen.width}');
     return totalWidth < screen.width ? screen.width : totalWidth;
   }
 
+  double _getColumnWidth(GenericTableColumn<T> column, Size screen) {
+    // If column has a custom width, use it
+    if (column.width != null) {
+      log('GenericTableView _getColumnWidth - Using custom width: ${column.width}');
+      return column.width!;
+    }
+
+    // Otherwise, use default width based on title (reduced to prevent overflow)
+    switch (column.title.toLowerCase()) {
+      case 'name':
+        log('GenericTableView _getColumnWidth - Using name width: ${screen.width * 0.25}');
+        return screen.width * 0.25;
+      case 'email':
+        log('GenericTableView _getColumnWidth - Using email width: ${screen.width * 0.25}');
+        return screen.width * 0.25;
+      case 'phone':
+        log('GenericTableView _getColumnWidth - Using phone width: ${screen.width * 0.15}');
+        return screen.width * 0.15;
+      case 'status':
+        log('GenericTableView _getColumnWidth - Using status width: ${screen.width * 0.15}');
+        return screen.width * 0.15;
+      case 'date':
+        log('GenericTableView _getColumnWidth - Using date width: ${screen.width * 0.2}');
+        return screen.width * 0.2;
+      default:
+        log('GenericTableView _getColumnWidth - Using default width: ${screen.width * 0.2}');
+        return screen.width * 0.2;
+    }
+  }
+
   Widget _buildTableHeaderRow(bool isDarkMode, double totalWidth, Size screen) {
+    log('GenericTableView _buildTableHeaderRow - Building header row, Total width: $totalWidth, Columns: ${widget.columns.length}');
+    
     return Container(
       width: totalWidth,
       padding: EdgeInsets.symmetric(
@@ -253,6 +323,8 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
     double totalWidth,
     Size screen,
   ) {
+    log('GenericTableView _buildTableRow - Building row $index');
+    
     return GestureDetector(
       onTap: () => widget.onRowTap?.call(item),
       child: Container(
@@ -323,29 +395,6 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
         ),
       ),
     );
-  }
-
-  double _getColumnWidth(GenericTableColumn<T> column, Size screen) {
-    // If column has a custom width, use it
-    if (column.width != null) {
-      return column.width!;
-    }
-
-    // Otherwise, use default width based on title (reduced to prevent overflow)
-    switch (column.title.toLowerCase()) {
-      case 'name':
-        return screen.width * 0.25;
-      case 'email':
-        return screen.width * 0.25;
-      case 'phone':
-        return screen.width * 0.15;
-      case 'status':
-        return screen.width * 0.15;
-      case 'date':
-        return screen.width * 0.2;
-      default:
-        return screen.width * 0.2;
-    }
   }
 
   Widget _buildTableHeader(BuildContext context, bool isDarkMode, Size screen) {
@@ -483,10 +532,13 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
     );
   }
 
-  Widget _buildLoadingWidget() =>
-      const Center(child: CircularProgressIndicator());
+  Widget _buildLoadingWidget() {
+    log('GenericTableView _buildLoadingWidget - Building loading widget');
+    return const Center(child: CircularProgressIndicator());
+  }
 
   Widget _buildEmptyWidget(BuildContext context) {
+    log('GenericTableView _buildEmptyWidget - Building empty widget');
     return widget.emptyWidget ??
         SizedBox(
           height: MediaQuery.of(context).size.height * 0.62,
@@ -507,6 +559,38 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
             ],
           ),
         );
+  }
+
+  Widget _buildEmptySearchResultWidget(BuildContext context) {
+    log('GenericTableView _buildEmptySearchResultWidget - Building empty search result widget');
+    return SizedBox(
+      height: MediaQuery.of(context).size.height * 0.62,
+      width: double.infinity,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.search_off_rounded, size: 64, color: Colors.grey),
+          const SizedBox(height: 16),
+          const Text(
+            'No matching results found',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey,
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: () {
+              _searchController.clear();
+              setState(() => _searchQuery = '');
+              _filterData();
+            },
+            child: const Text('Clear search'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showFilterDialog(BuildContext context) {
@@ -533,6 +617,8 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
       filterOptions.addAll(['Option 1', 'Option 2', 'Option 3']);
     }
 
+    String tempSelectedFilter = _selectedFilter;
+
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -541,24 +627,22 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
             title: const Text('Filter by Status'),
             content: SizedBox(
               width: double.maxFinite,
-              child: RadioGroup<String>(
-                groupValue: _selectedFilter,
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() {
-                      _selectedFilter = value;
-                    });
-                  }
-                },
-                child: ListView(
-                  shrinkWrap: true,
-                  children: filterOptions.map((option) {
-                    return RadioListTile<String>.adaptive(
-                      title: Text(option),
-                      value: option,
-                    );
-                  }).toList(),
-                ),
+              child: ListView(
+                shrinkWrap: true,
+                children: filterOptions.map((option) {
+                  return RadioListTile<String>.adaptive(
+                    title: Text(option),
+                    value: option,
+                    groupValue: tempSelectedFilter,
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() {
+                          tempSelectedFilter = value;
+                        });
+                      }
+                    },
+                  );
+                }).toList(),
               ),
             ),
             actions: [
@@ -587,6 +671,9 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
               ElevatedButton(
                 onPressed: () {
                   Navigator.pop(context);
+                  setState(() {
+                    _selectedFilter = tempSelectedFilter;
+                  });
                   _filterData();
                   // Call the external filter callback if provided
                   if (widget.onFilterChanged != null) {

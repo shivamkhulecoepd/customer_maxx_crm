@@ -8,7 +8,8 @@ import 'package:customer_maxx_crm/blocs/theme/theme_state.dart';
 import 'package:customer_maxx_crm/utils/theme_utils.dart';
 import 'package:customer_maxx_crm/widgets/navigation_bar.dart';
 
-import 'package:customer_maxx_crm/widgets/standard_table_view.dart';
+// Changed from standard_table_view to generic_table_view
+import 'package:customer_maxx_crm/widgets/generic_table_view.dart';
 import 'package:customer_maxx_crm/models/lead.dart';
 import 'package:customer_maxx_crm/services/lead_service.dart';
 import 'package:customer_maxx_crm/utils/api_service_locator.dart';
@@ -28,12 +29,14 @@ class _ModernBASpecialistDashboardState
   late int _currentNavIndex;
   String _userName = '';
   String _userRole = '';
-  
+
+  // Separate state variables for each section
   List<Lead> _assignedLeads = [];
   List<Lead> _registeredLeads = [];
   bool _isLoadingAssigned = false;
   bool _isLoadingRegistered = false;
-  String? _errorMessage;
+  String? _assignedLeadsError;
+  String? _registeredLeadsError;
 
   final List<Widget>? actions = [];
   final bool showDrawer = true;
@@ -45,6 +48,21 @@ class _ModernBASpecialistDashboardState
     _currentNavIndex = widget.initialIndex;
     _leadService = ServiceLocator.leadService;
     _loadUserData();
+
+    print('BA Specialist Dashboard initialized with index: $_currentNavIndex');
+
+    // Load data for the initial view only
+    if (_currentNavIndex == 1) {
+      print('Loading assigned leads on init');
+      _loadAssignedLeads();
+    } else if (_currentNavIndex == 2) {
+      print('Loading registered leads on init');
+      _loadRegisteredLeads();
+    }
+    // For other views, don't preload data - let navigation handle it
+    else {
+      print('Not preloading any data for index: $_currentNavIndex');
+    }
   }
 
   void _loadUserData() {
@@ -58,12 +76,34 @@ class _ModernBASpecialistDashboardState
   }
 
   void _handleNavigation(int index) {
+    print('Handling navigation to index: $index');
     switch (index) {
       case 1:
-        _loadAssignedLeads();
+        print(
+          'Loading assigned leads - Current count: ${_assignedLeads.length}, Loading: $_isLoadingAssigned',
+        );
+        // Load assigned leads if not already loaded or if there was an error
+        if ((_assignedLeads.isEmpty && !_isLoadingAssigned) ||
+            _assignedLeadsError != null) {
+          _loadAssignedLeads();
+        } else {
+          print('Assigned leads already loaded or loading');
+        }
         break;
       case 2:
-        _loadRegisteredLeads();
+        print(
+          'Loading registered leads - Current count: ${_registeredLeads.length}, Loading: $_isLoadingRegistered',
+        );
+        // Load registered leads if not already loaded or if there was an error
+        if ((_registeredLeads.isEmpty && !_isLoadingRegistered) ||
+            _registeredLeadsError != null) {
+          _loadRegisteredLeads();
+        } else {
+          print('Registered leads already loaded or loading');
+        }
+        break;
+      default:
+        print('No action for index: $index');
         break;
     }
   }
@@ -71,18 +111,33 @@ class _ModernBASpecialistDashboardState
   Future<void> _loadAssignedLeads() async {
     setState(() {
       _isLoadingAssigned = true;
-      _errorMessage = null;
+      _assignedLeadsError = null;
     });
 
     try {
       final leads = await _leadService.getBADashboard();
+      print('Assigned leads loaded: ${leads.length} items');
+      for (var lead in leads) {
+        print(
+          'Lead ID: ${lead.id}, Name: ${lead.name}, Email: ${lead.email}, Status: "${lead.status}", Phone: ${lead.phone}',
+        );
+        print(
+          '  Education: ${lead.education}, Experience: ${lead.experience}, Location: ${lead.location}',
+        );
+        print('  Feedback: ${lead.feedback}, Created: ${lead.createdAt}');
+        print('  Owner: ${lead.ownerName}, Assigned: ${lead.assignedName}');
+      }
       setState(() {
         _assignedLeads = leads;
         _isLoadingAssigned = false;
       });
+      print(
+        'Assigned leads state updated. New count: ${_assignedLeads.length}',
+      );
     } catch (e) {
+      print('Error loading assigned leads: $e');
       setState(() {
-        _errorMessage = e.toString();
+        _assignedLeadsError = e.toString();
         _isLoadingAssigned = false;
       });
     }
@@ -91,18 +146,39 @@ class _ModernBASpecialistDashboardState
   Future<void> _loadRegisteredLeads() async {
     setState(() {
       _isLoadingRegistered = true;
-      _errorMessage = null;
+      _registeredLeadsError = null;
     });
 
     try {
       final leads = await _leadService.getRegisteredLeads();
+      print('Registered leads loaded: ${leads.length} items');
+      for (var lead in leads) {
+        print(
+          'Lead ID: ${lead.id}, Name: ${lead.name}, Email: ${lead.email}, Status: "${lead.status}", Phone: ${lead.phone}',
+        );
+        print(
+          '  Education: ${lead.education}, Experience: ${lead.experience}, Location: ${lead.location}',
+        );
+        print(
+          '  Discount: ${lead.discount}, Installment1: ${lead.installment1}, Installment2: ${lead.installment2}',
+        );
+        print('  Owner: ${lead.ownerName}, Assigned: ${lead.assignedName}');
+        // Debug calculation
+        final totalFees = lead.calculateTotalFees();
+        final finalFees = lead.calculateFinalFees();
+        print('  Calculated - Total Fees: $totalFees, Final Fees: $finalFees');
+      }
       setState(() {
         _registeredLeads = leads;
         _isLoadingRegistered = false;
       });
+      print(
+        'Registered leads state updated. New count: ${_registeredLeads.length}',
+      );
     } catch (e) {
+      print('Error loading registered leads: $e');
       setState(() {
-        _errorMessage = e.toString();
+        _registeredLeadsError = e.toString();
         _isLoadingRegistered = false;
       });
     }
@@ -113,6 +189,18 @@ class _ModernBASpecialistDashboardState
     return BlocBuilder<ThemeBloc, ThemeState>(
       builder: (context, themeState) {
         final isDarkMode = themeState.isDarkMode;
+        print(
+          'Building BA Specialist Dashboard - Current Index: $_currentNavIndex',
+        );
+        print(
+          'Assigned Leads Count: ${_assignedLeads.length}, Registered Leads Count: ${_registeredLeads.length}',
+        );
+        print(
+          'Loading States - Assigned: $_isLoadingAssigned, Registered: $_isLoadingRegistered',
+        );
+        print(
+          'Error States - Assigned: $_assignedLeadsError, Registered: $_registeredLeadsError',
+        );
 
         return Scaffold(
           appBar: AppBar(
@@ -127,13 +215,16 @@ class _ModernBASpecialistDashboardState
             currentIndex: _currentNavIndex,
             userRole: _userRole,
             onTap: (index) {
+              print('Bottom nav tapped: $index');
               setState(() {
                 _currentNavIndex = index;
               });
               _handleNavigation(index);
             },
           ),
-          floatingActionButton: _buildFloatingActionButton(isDarkMode),
+          floatingActionButton: _currentNavIndex == 0
+              ? _buildFloatingActionButton(isDarkMode)
+              : null,
           body: _buildBody(isDarkMode),
         );
       },
@@ -141,16 +232,22 @@ class _ModernBASpecialistDashboardState
   }
 
   Widget _buildBody(bool isDarkMode) {
+    print('Building body for index: $_currentNavIndex');
     switch (_currentNavIndex) {
       case 0:
+        print('Building dashboard view');
         return _buildDashboardView(isDarkMode);
       case 1:
+        print('Building assigned leads view');
         return _buildAssignedLeadsView(isDarkMode);
       case 2:
+        print('Building registered leads view');
         return _buildRegisteredLeadsView(isDarkMode);
       case 3:
+        print('Building profile view');
         return _buildProfileView(isDarkMode);
       default:
+        print('Building default dashboard view');
         return _buildDashboardView(isDarkMode);
     }
   }
@@ -452,7 +549,7 @@ class _ModernBASpecialistDashboardState
         crossAxisCount: crossAxisCount,
         crossAxisSpacing: spacing,
         mainAxisSpacing: spacing,
-        childAspectRatio: screenWidth < 400 ? 1.1 : 1.1,
+        childAspectRatio: screenWidth < 400 ? 1.05 : 1.1,
       ),
       itemCount: 4,
       itemBuilder: (context, index) {
@@ -887,16 +984,21 @@ class _ModernBASpecialistDashboardState
   }
 
   Widget _buildAssignedLeadsView(bool isDarkMode) {
+    print('Building assigned leads view with ${_assignedLeads.length} items');
+    print('Loading state: $_isLoadingAssigned, Error: $_assignedLeadsError');
+
     if (_isLoadingAssigned) {
+      print('Showing loading indicator for assigned leads');
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (_errorMessage != null) {
+    if (_assignedLeadsError != null) {
+      print('Showing error for assigned leads: $_assignedLeadsError');
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('Error: $_errorMessage'),
+            Text('Error: $_assignedLeadsError'),
             ElevatedButton(
               onPressed: _loadAssignedLeads,
               child: const Text('Retry'),
@@ -906,31 +1008,42 @@ class _ModernBASpecialistDashboardState
       );
     }
 
-    return ModernTableView<Lead>(
-      title: 'Assigned Leads',
-      data: _assignedLeads,
-      columns: [
-        TableColumn(
-          title: 'Lead',
-          value: (lead) => lead.name,
-          builder: (lead) => Row(
-            children: [
-              CircleAvatar(
-                radius: 16,
-                backgroundColor: AppThemes.getStatusColor(
-                  lead.status,
-                ).withValues(alpha: 0.1),
-                child: Text(
-                  lead.name[0].toUpperCase(),
-                  style: TextStyle(
-                    color: AppThemes.getStatusColor(lead.status),
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
+    // Debug: Print the first few leads
+    if (_assignedLeads.isNotEmpty) {
+      print(
+        'First assigned lead: ${_assignedLeads[0].name}, Status: "${_assignedLeads[0].status}", Email: ${_assignedLeads[0].email}',
+      );
+    } else {
+      print('No assigned leads to display');
+    }
+
+    print('Creating GenericTableView with ${_assignedLeads.length} items');
+
+    // Wrap with RefreshIndicator
+    return RefreshIndicator(
+      onRefresh: () async {
+        print('Refreshing assigned leads');
+        await _loadAssignedLeads();
+      },
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: GenericTableView<Lead>(
+          key: const ValueKey(
+            'assigned_leads_table',
+          ), // Unique key for this instance
+          title: 'Assigned Leads',
+          data: _assignedLeads,
+          columns: [
+            GenericTableColumn<Lead>(
+              title: 'ID',
+              value: (lead) => lead.id.toString(),
+              width: 60,
+            ),
+            GenericTableColumn<Lead>(
+              width: 200,
+              title: 'Lead',
+              value: (lead) => lead.name,
+              builder: (lead) => Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -947,68 +1060,105 @@ class _ModernBASpecialistDashboardState
                   ],
                 ),
               ),
-            ],
-          ),
-        ),
-        TableColumn(title: 'Phone', value: (lead) => lead.phone),
-        TableColumn(
-          title: 'Status',
-          value: (lead) => lead.status,
-          builder: (lead) => Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppThemes.getStatusColor(
-                lead.status,
-              ).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
             ),
-            child: Text(
-              lead.status,
-              style: TextStyle(
-                color: AppThemes.getStatusColor(lead.status),
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
+            GenericTableColumn<Lead>(
+              width: 130,
+              title: 'Phone',
+              value: (lead) => lead.phone,
+            ),
+            GenericTableColumn<Lead>(
+              width: 150,
+              title: 'Education',
+              value: (lead) => lead.education,
+            ),
+            GenericTableColumn<Lead>(
+              width: 130,
+              title: 'Experience',
+              value: (lead) => lead.experience,
+            ),
+            GenericTableColumn<Lead>(
+              width: 150,
+              title: 'Location',
+              value: (lead) => lead.location,
+            ),
+            GenericTableColumn<Lead>(
+              width: 150,
+              title: 'Status',
+              value: (lead) => lead.status.isEmpty ? 'N/A' : lead.status,
+              builder: (lead) => Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppThemes.getStatusColor(
+                    lead.status.isEmpty ? 'N/A' : lead.status,
+                  ).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  lead.status.isEmpty ? 'N/A' : lead.status,
+                  style: TextStyle(
+                    color: AppThemes.getStatusColor(
+                      lead.status.isEmpty ? 'N/A' : lead.status,
+                    ),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ),
-          ),
-        ),
-        TableColumn(
-          title: 'Priority',
-          value: (lead) => 'High', // Mock priority
-          builder: (lead) => Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppThemes.redAccent.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
+            GenericTableColumn<Lead>(
+              width: 200,
+              title: 'Feedback',
+              value: (lead) => lead.feedback,
             ),
-            child: const Text(
-              'High',
-              style: TextStyle(
-                color: AppThemes.redAccent,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
+            GenericTableColumn<Lead>(
+              width: 130,
+              title: 'Created At',
+              value: (lead) => lead.createdAt,
             ),
-          ),
+            GenericTableColumn<Lead>(
+              width: 150,
+              title: 'Owner',
+              value: (lead) => lead.ownerName,
+            ),
+            GenericTableColumn<Lead>(
+              width: 150,
+              title: 'Assigned To',
+              value: (lead) => lead.assignedName,
+            ),
+          ],
+          onRowTap: (lead) {
+            // _showLeadActions(lead);
+            _updateLeadStatusAndFeedback(lead);
+          },
+          // Enable all interactive features for assigned leads
+          showSearch: true,
+          showFilter: true,
+          showExport: true,
         ),
-      ],
-      onRowTap: (lead) {
-        _showLeadActions(lead);
-      },
+      ),
     );
   }
 
   Widget _buildRegisteredLeadsView(bool isDarkMode) {
+    print(
+      'Building registered leads view with ${_registeredLeads.length} items',
+    );
+    print(
+      'Loading state: $_isLoadingRegistered, Error: $_registeredLeadsError',
+    );
+
     if (_isLoadingRegistered) {
+      print('Showing loading indicator for registered leads');
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (_errorMessage != null) {
+    if (_registeredLeadsError != null) {
+      print('Showing error for registered leads: $_registeredLeadsError');
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('Error: $_errorMessage'),
+            Text('Error: $_registeredLeadsError'),
             ElevatedButton(
               onPressed: _loadRegisteredLeads,
               child: const Text('Retry'),
@@ -1018,31 +1168,42 @@ class _ModernBASpecialistDashboardState
       );
     }
 
-    return ModernTableView<Lead>(
-      title: 'Registered Leads',
-      data: _registeredLeads,
-      columns: [
-        TableColumn(
-          title: 'Lead',
-          value: (lead) => lead.name,
-          builder: (lead) => Row(
-            children: [
-              CircleAvatar(
-                radius: 16,
-                backgroundColor: AppThemes.getStatusColor(
-                  lead.status,
-                ).withValues(alpha: 0.1),
-                child: Text(
-                  lead.name[0].toUpperCase(),
-                  style: TextStyle(
-                    color: AppThemes.getStatusColor(lead.status),
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
+    // Debug: Print the first few leads
+    if (_registeredLeads.isNotEmpty) {
+      print(
+        'First registered lead: ${_registeredLeads[0].name}, Status: "${_registeredLeads[0].status}", Email: ${_registeredLeads[0].email}',
+      );
+    } else {
+      print('No registered leads to display');
+    }
+
+    print('Creating GenericTableView with ${_registeredLeads.length} items');
+
+    // Wrap with RefreshIndicator
+    return RefreshIndicator(
+      onRefresh: () async {
+        print('Refreshing registered leads');
+        await _loadRegisteredLeads();
+      },
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: GenericTableView<Lead>(
+          key: const ValueKey(
+            'registered_leads_table',
+          ), // Unique key for this instance
+          title: 'Registered Leads',
+          data: _registeredLeads,
+          columns: [
+            GenericTableColumn<Lead>(
+              title: 'ID',
+              value: (lead) => lead.id.toString(),
+              width: 60,
+            ),
+            GenericTableColumn<Lead>(
+              width: 200,
+              title: 'Lead',
+              value: (lead) => lead.name,
+              builder: (lead) => Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -1059,58 +1220,91 @@ class _ModernBASpecialistDashboardState
                   ],
                 ),
               ),
-            ],
-          ),
-        ),
-        TableColumn(title: 'Phone', value: (lead) => lead.phone),
-        TableColumn(
-          title: 'Status',
-          value: (lead) => lead.status,
-          builder: (lead) => Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppThemes.getStatusColor(
-                lead.status,
-              ).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
             ),
-            child: Text(
-              lead.status,
-              style: TextStyle(
-                color: AppThemes.getStatusColor(lead.status),
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
+            GenericTableColumn<Lead>(
+              width: 130,
+              title: 'Phone',
+              value: (lead) => lead.phone,
+            ),
+            GenericTableColumn<Lead>(
+              width: 150,
+              title: 'Education',
+              value: (lead) => lead.education,
+            ),
+            GenericTableColumn<Lead>(
+              width: 130,
+              title: 'Experience',
+              value: (lead) => lead.experience,
+            ),
+            GenericTableColumn<Lead>(
+              width: 150,
+              title: 'Location',
+              value: (lead) => lead.location,
+            ),
+            GenericTableColumn<Lead>(
+              width: 150,
+              title: 'Owner',
+              value: (lead) => lead.ownerName,
+            ),
+            GenericTableColumn<Lead>(
+              width: 150,
+              title: 'Assigned To',
+              value: (lead) => lead.assignedName,
+            ),
+            GenericTableColumn<Lead>(
+              width: 80,
+              title: 'Discount',
+              value: (lead) => lead.discount?.toString() ?? '0',
+            ),
+            GenericTableColumn<Lead>(
+              width: 110,
+              title: 'Installment 1',
+              value: (lead) => lead.installment1?.toStringAsFixed(2) ?? '0.00',
+            ),
+            GenericTableColumn<Lead>(
+              width: 110,
+              title: 'Installment 2',
+              value: (lead) => lead.installment2?.toStringAsFixed(2) ?? '0.00',
+            ),
+            GenericTableColumn<Lead>(
+              width: 110,
+              title: 'Total Fees',
+              value: (lead) => lead.calculateTotalFees().toStringAsFixed(2),
+              builder: (lead) => Text(
+                lead.calculateTotalFees().toStringAsFixed(2),
+                style: TextStyle(
+                  color: AppThemes.primaryColor,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
-          ),
-        ),
-        TableColumn(
-          title: 'Fee Info',
-          value: (lead) => 'View Details',
-          builder: (lead) => Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppThemes.blueAccent.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Text(
-              'View Details',
-              style: TextStyle(
-                color: AppThemes.blueAccent,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
+            GenericTableColumn<Lead>(
+              width: 110,
+              title: 'Final Fees',
+              value: (lead) => lead.calculateFinalFees().toStringAsFixed(2),
+              builder: (lead) => Text(
+                lead.calculateFinalFees().toStringAsFixed(2),
+                style: TextStyle(
+                  color: AppThemes.greenAccent,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
-          ),
+          ],
+          onRowTap: (lead) {
+            // _showLeadActions(lead);
+            _updateLeadFees(lead);
+          },
+          // Disable all interactive features for registered leads as requested
+          showSearch: false,
+          showFilter: false,
+          showExport: false,
         ),
-      ],
-      onRowTap: (lead) {
-        _showLeadActions(lead);
-      },
+      ),
     );
   }
-
-
 
   Widget _buildProfileView(bool isDarkMode) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -1378,10 +1572,12 @@ class _ModernBASpecialistDashboardState
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        margin: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Theme.of(context).scaffoldBackgroundColor,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1421,9 +1617,382 @@ class _ModernBASpecialistDashboardState
               title: const Text('Add Note'),
               onTap: () => Navigator.pop(context),
             ),
+            ListTile(
+              leading: const Icon(Icons.edit_note_rounded),
+              title: const Text('Update Status & Feedback'),
+              onTap: () {
+                Navigator.pop(context);
+                _updateLeadStatusAndFeedback(lead);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.currency_rupee_rounded),
+              title: const Text('Update Fees'),
+              onTap: () {
+                Navigator.pop(context);
+                _updateLeadFees(lead);
+              },
+            ),
             const SizedBox(height: 20),
           ],
         ),
+      ),
+    );
+  }
+
+  void _updateLeadStatusAndFeedback(Lead lead) {
+    final feedbackController = TextEditingController(text: lead.feedback);
+
+    // Available status options
+    final statusOptions = [
+      'Pending',
+      'Connected',
+      'Not Connected',
+      'Demo Interested',
+      'Demo Attended',
+      'Follow Up Planned',
+      'Follow Up Completed',
+      'Converted Warm Lead',
+      'Converted Hot Lead',
+      'Registered',
+    ];
+
+    String selectedStatus = lead.status.isEmpty
+        ? statusOptions[0]
+        : lead.status;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(top: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Update Status & Feedback',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 20),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    children: [
+                      // Status Dropdown
+                      DropdownButtonFormField<String>(
+                        initialValue: selectedStatus.isNotEmpty
+                            ? selectedStatus
+                            : null,
+                        decoration: const InputDecoration(
+                          labelText: 'Status',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: statusOptions.map((String status) {
+                          return DropdownMenuItem<String>(
+                            value: status,
+                            child: Text(status),
+                          );
+                        }).toList(),
+                        onChanged: (String? newValue) {
+                          if (newValue != null) {
+                            setState(() {
+                              selectedStatus = newValue;
+                            });
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      // Feedback Text Field
+                      TextFormField(
+                        controller: feedbackController,
+                        decoration: const InputDecoration(
+                          labelText: 'Feedback',
+                          border: OutlineInputBorder(),
+                        ),
+                        maxLines: 3,
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            try {
+                              // Update status
+                              if (selectedStatus != lead.status) {
+                                final statusResponse = await _leadService
+                                    .updateStatus(lead.id, selectedStatus);
+                                if (statusResponse['status'] != 'success') {
+                                  throw Exception(
+                                    statusResponse['message'] ??
+                                        'Failed to update status',
+                                  );
+                                }
+                              }
+
+                              // Update feedback
+                              if (feedbackController.text != lead.feedback) {
+                                final feedbackResponse = await _leadService
+                                    .updateFeedback(
+                                      lead.id,
+                                      feedbackController.text,
+                                    );
+                                if (feedbackResponse['status'] != 'success') {
+                                  throw Exception(
+                                    feedbackResponse['message'] ??
+                                        'Failed to update feedback',
+                                  );
+                                }
+                              }
+
+                              // Show success message
+                              if (context.mounted) {
+                                Navigator.pop(context);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Status and feedback updated successfully!',
+                                    ),
+                                  ),
+                                );
+
+                                // Refresh the current view to show updated data
+                                if (_currentNavIndex == 1) {
+                                  _loadAssignedLeads();
+                                } else if (_currentNavIndex == 2) {
+                                  _loadRegisteredLeads();
+                                }
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Error: ${e.toString()}'),
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                          child: const Text('Update'),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Cancel'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _updateLeadFees(Lead lead) {
+    final discountController = TextEditingController(
+      text: lead.discount?.toString() ?? '',
+    );
+    final installment1Controller = TextEditingController(
+      text: lead.installment1?.toString() ?? '',
+    );
+    final installment2Controller = TextEditingController(
+      text: lead.installment2?.toString() ?? '',
+    );
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(top: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Update Fees',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 20),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    children: [
+                      // Discount Field
+                      TextFormField(
+                        controller: discountController,
+                        decoration: const InputDecoration(
+                          labelText: 'Discount (%)',
+                          border: OutlineInputBorder(),
+                        ),
+                        keyboardType: TextInputType.number,
+                      ),
+                      const SizedBox(height: 16),
+                      // Installment 1 Field
+                      TextFormField(
+                        controller: installment1Controller,
+                        decoration: const InputDecoration(
+                          labelText: 'Installment 1',
+                          border: OutlineInputBorder(),
+                        ),
+                        keyboardType: TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      // Installment 2 Field
+                      TextFormField(
+                        controller: installment2Controller,
+                        decoration: const InputDecoration(
+                          labelText: 'Installment 2',
+                          border: OutlineInputBorder(),
+                        ),
+                        keyboardType: TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            try {
+                              // Parse values
+                              final discount =
+                                  int.tryParse(discountController.text) ?? 0;
+                              final installment1 =
+                                  double.tryParse(
+                                    installment1Controller.text,
+                                  ) ??
+                                  0.0;
+                              final installment2 =
+                                  double.tryParse(
+                                    installment2Controller.text,
+                                  ) ??
+                                  0.0;
+
+                              // Update fees
+                              final response = await _leadService.updateFee(
+                                lead.id,
+                                discount,
+                                installment1,
+                                installment2,
+                              );
+
+                              if (response['status'] == 'success') {
+                                if (context.mounted) {
+                                  Navigator.pop(context);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Fees updated successfully!',
+                                      ),
+                                    ),
+                                  );
+
+                                  // Refresh the current view to show updated data
+                                  if (_currentNavIndex == 1) {
+                                    _loadAssignedLeads();
+                                  } else if (_currentNavIndex == 2) {
+                                    _loadRegisteredLeads();
+                                  }
+                                }
+                              } else {
+                                throw Exception(
+                                  response['message'] ??
+                                      'Failed to update fees',
+                                );
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Error: ${e.toString()}'),
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                          child: const Text('Update'),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Cancel'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -1470,6 +2039,4 @@ class _ModernBASpecialistDashboardState
       ),
     );
   }
-
-
 }

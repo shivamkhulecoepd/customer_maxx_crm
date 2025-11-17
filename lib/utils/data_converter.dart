@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:customer_maxx_crm/screens/dummy_data_example.dart';
 
 /// Utility class for converting JSON data to DummyLead objects
@@ -31,7 +32,7 @@ class DataConverter {
     } catch (e) {
       // Print error for debugging
       // ignore: avoid_print
-      print('Error parsing JSON data: $e');
+      log('Error parsing JSON data: $e');
       // Return empty list if parsing fails
       return [];
     }
@@ -49,7 +50,7 @@ class DataConverter {
     } catch (e) {
       // Print error for debugging
       // ignore: avoid_print
-      print('Error converting map list to DummyLeads: $e');
+      log('Error converting map list to DummyLeads: $e');
       // Return empty list if conversion fails
       return [];
     }

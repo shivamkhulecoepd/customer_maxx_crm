@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../api/api_client.dart';
 import '../api/api_endpoints.dart';
@@ -18,7 +19,7 @@ class AuthService {
   Future<Map<String, dynamic>> login(String email, String password, String role) async {
     // Log the login attempt
     // ignore: avoid_print
-    print('AuthService login attempt with email: $email, role: $role');
+    log('AuthService login attempt with email: $email, role: $role');
     try {
       final response = await apiClient.post(
         ApiEndpoints.login,
@@ -31,7 +32,7 @@ class AuthService {
       
       // Log the response
       // ignore: avoid_print
-      print('AuthService login response: $response');
+      log('AuthService login response: $response');
       
       if (response['status'] == 'success') {
         // Save auth token and user data
@@ -99,14 +100,14 @@ class AuthService {
   Future<void> logout() async {
     // Log the logout attempt
     // ignore: avoid_print
-    print('AuthService logout attempt');
+    log('AuthService logout attempt');
     // Clear authentication data
     apiClient.clearAuthToken();
     _currentUser = null;
     await _clearAuthData();
     // Log successful logout
     // ignore: avoid_print
-    print('AuthService logout successful');
+    log('AuthService logout successful');
   }
   
   // Check if user is authenticated

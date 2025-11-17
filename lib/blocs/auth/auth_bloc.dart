@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:bloc/bloc.dart';
 import 'package:customer_maxx_crm/models/user.dart';
 import 'package:customer_maxx_crm/services/auth_service.dart';
@@ -105,7 +107,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       // Log the login attempt
       // ignore: avoid_print
-      print('Attempting login with email: ${event.email}, role: ${event.role}');
+      log('Attempting login with email: ${event.email}, role: ${event.role}');
       final result = await _authService.login(
         event.email,
         event.password,
@@ -114,7 +116,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       
       // Log successful login
       // ignore: avoid_print
-      print('Login successful: ${result['success']}');
+      log('Login successful: ${result['success']}');
       
       if (result['success']) {
         emit(Authenticated(result['user']));
@@ -124,7 +126,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     } catch (e) {
       // Log login error
       // ignore: avoid_print
-      print('Login failed with error: $e');
+      log('Login failed with error: $e');
       // Pass through the actual backend message without prefix
       emit(AuthError(e.toString()));
     }
@@ -163,16 +165,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       // Log the logout attempt
       // ignore: avoid_print
-      print('Attempting logout');
+      log('Attempting logout');
       await _authService.logout();
       // Log successful logout
       // ignore: avoid_print
-      print('Logout successful');
+      log('Logout successful');
       emit(Unauthenticated());
     } catch (e) {
       // Log logout error
       // ignore: avoid_print
-      print('Logout failed with error: $e');
+      log('Logout failed with error: $e');
       emit(Unauthenticated()); // Even if logout fails, clear local state
     }
   }
