@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:customer_maxx_crm/blocs/theme/theme_event.dart';
 import 'package:customer_maxx_crm/widgets/app_drawer.dart';
 import 'package:flutter/material.dart';
@@ -38,6 +40,10 @@ class _ModernBASpecialistDashboardState
   String? _assignedLeadsError;
   String? _registeredLeadsError;
 
+  // Flags to track initial data loading for refresh logic
+  bool _hasLoadedInitialAssignedData = false;
+  bool _hasLoadedInitialRegisteredData = false;
+
   final List<Widget>? actions = [];
   final bool showDrawer = true;
   late LeadService _leadService;
@@ -49,19 +55,19 @@ class _ModernBASpecialistDashboardState
     _leadService = ServiceLocator.leadService;
     _loadUserData();
 
-    print('BA Specialist Dashboard initialized with index: $_currentNavIndex');
+    log('BA Specialist Dashboard initialized with index: $_currentNavIndex');
 
     // Load data for the initial view only
     if (_currentNavIndex == 1) {
-      print('Loading assigned leads on init');
+      log('Loading assigned leads on init');
       _loadAssignedLeads();
     } else if (_currentNavIndex == 2) {
-      print('Loading registered leads on init');
+      log('Loading registered leads on init');
       _loadRegisteredLeads();
     }
     // For other views, don't preload data - let navigation handle it
     else {
-      print('Not preloading any data for index: $_currentNavIndex');
+      log('Not preloading any data for index: $_currentNavIndex');
     }
   }
 
@@ -76,34 +82,24 @@ class _ModernBASpecialistDashboardState
   }
 
   void _handleNavigation(int index) {
-    print('Handling navigation to index: $index');
+    log('Handling navigation to index: $index');
     switch (index) {
       case 1:
-        print(
+        log(
           'Loading assigned leads - Current count: ${_assignedLeads.length}, Loading: $_isLoadingAssigned',
         );
-        // Load assigned leads if not already loaded or if there was an error
-        if ((_assignedLeads.isEmpty && !_isLoadingAssigned) ||
-            _assignedLeadsError != null) {
-          _loadAssignedLeads();
-        } else {
-          print('Assigned leads already loaded or loading');
-        }
+        // The data will be loaded automatically by the build method now
+        // We don't need to manually trigger loading here
         break;
       case 2:
-        print(
+        log(
           'Loading registered leads - Current count: ${_registeredLeads.length}, Loading: $_isLoadingRegistered',
         );
-        // Load registered leads if not already loaded or if there was an error
-        if ((_registeredLeads.isEmpty && !_isLoadingRegistered) ||
-            _registeredLeadsError != null) {
-          _loadRegisteredLeads();
-        } else {
-          print('Registered leads already loaded or loading');
-        }
+        // The data will be loaded automatically by the build method now
+        // We don't need to manually trigger loading here
         break;
       default:
-        print('No action for index: $index');
+        log('No action for index: $index');
         break;
     }
   }
@@ -116,26 +112,26 @@ class _ModernBASpecialistDashboardState
 
     try {
       final leads = await _leadService.getBADashboard();
-      print('Assigned leads loaded: ${leads.length} items');
+      log('Assigned leads loaded: ${leads.length} items');
       for (var lead in leads) {
-        print(
+        log(
           'Lead ID: ${lead.id}, Name: ${lead.name}, Email: ${lead.email}, Status: "${lead.status}", Phone: ${lead.phone}',
         );
-        print(
+        log(
           '  Education: ${lead.education}, Experience: ${lead.experience}, Location: ${lead.location}',
         );
-        print('  Feedback: ${lead.feedback}, Created: ${lead.createdAt}');
-        print('  Owner: ${lead.ownerName}, Assigned: ${lead.assignedName}');
+        log('  Feedback: ${lead.feedback}, Created: ${lead.createdAt}');
+        log('  Owner: ${lead.ownerName}, Assigned: ${lead.assignedName}');
       }
       setState(() {
         _assignedLeads = leads;
         _isLoadingAssigned = false;
       });
-      print(
+      log(
         'Assigned leads state updated. New count: ${_assignedLeads.length}',
       );
     } catch (e) {
-      print('Error loading assigned leads: $e');
+      log('Error loading assigned leads: $e');
       setState(() {
         _assignedLeadsError = e.toString();
         _isLoadingAssigned = false;
@@ -151,32 +147,32 @@ class _ModernBASpecialistDashboardState
 
     try {
       final leads = await _leadService.getRegisteredLeads();
-      print('Registered leads loaded: ${leads.length} items');
+      log('Registered leads loaded: ${leads.length} items');
       for (var lead in leads) {
-        print(
+        log(
           'Lead ID: ${lead.id}, Name: ${lead.name}, Email: ${lead.email}, Status: "${lead.status}", Phone: ${lead.phone}',
         );
-        print(
+        log(
           '  Education: ${lead.education}, Experience: ${lead.experience}, Location: ${lead.location}',
         );
-        print(
+        log(
           '  Discount: ${lead.discount}, Installment1: ${lead.installment1}, Installment2: ${lead.installment2}',
         );
-        print('  Owner: ${lead.ownerName}, Assigned: ${lead.assignedName}');
+        log('  Owner: ${lead.ownerName}, Assigned: ${lead.assignedName}');
         // Debug calculation
         final totalFees = lead.calculateTotalFees();
         final finalFees = lead.calculateFinalFees();
-        print('  Calculated - Total Fees: $totalFees, Final Fees: $finalFees');
+        log('  Calculated - Total Fees: $totalFees, Final Fees: $finalFees');
       }
       setState(() {
         _registeredLeads = leads;
         _isLoadingRegistered = false;
       });
-      print(
+      log(
         'Registered leads state updated. New count: ${_registeredLeads.length}',
       );
     } catch (e) {
-      print('Error loading registered leads: $e');
+      log('Error loading registered leads: $e');
       setState(() {
         _registeredLeadsError = e.toString();
         _isLoadingRegistered = false;
@@ -189,16 +185,16 @@ class _ModernBASpecialistDashboardState
     return BlocBuilder<ThemeBloc, ThemeState>(
       builder: (context, themeState) {
         final isDarkMode = themeState.isDarkMode;
-        print(
+        log(
           'Building BA Specialist Dashboard - Current Index: $_currentNavIndex',
         );
-        print(
+        log(
           'Assigned Leads Count: ${_assignedLeads.length}, Registered Leads Count: ${_registeredLeads.length}',
         );
-        print(
+        log(
           'Loading States - Assigned: $_isLoadingAssigned, Registered: $_isLoadingRegistered',
         );
-        print(
+        log(
           'Error States - Assigned: $_assignedLeadsError, Registered: $_registeredLeadsError',
         );
 
@@ -215,7 +211,7 @@ class _ModernBASpecialistDashboardState
             currentIndex: _currentNavIndex,
             userRole: _userRole,
             onTap: (index) {
-              print('Bottom nav tapped: $index');
+              log('Bottom nav tapped: $index');
               setState(() {
                 _currentNavIndex = index;
               });
@@ -232,22 +228,22 @@ class _ModernBASpecialistDashboardState
   }
 
   Widget _buildBody(bool isDarkMode) {
-    print('Building body for index: $_currentNavIndex');
+    log('Building body for index: $_currentNavIndex');
     switch (_currentNavIndex) {
       case 0:
-        print('Building dashboard view');
+        log('Building dashboard view');
         return _buildDashboardView(isDarkMode);
       case 1:
-        print('Building assigned leads view');
+        log('Building assigned leads view');
         return _buildAssignedLeadsView(isDarkMode);
       case 2:
-        print('Building registered leads view');
+        log('Building registered leads view');
         return _buildRegisteredLeadsView(isDarkMode);
       case 3:
-        print('Building profile view');
+        log('Building profile view');
         return _buildProfileView(isDarkMode);
       default:
-        print('Building default dashboard view');
+        log('Building default dashboard view');
         return _buildDashboardView(isDarkMode);
     }
   }
@@ -984,324 +980,365 @@ class _ModernBASpecialistDashboardState
   }
 
   Widget _buildAssignedLeadsView(bool isDarkMode) {
-    print('Building assigned leads view with ${_assignedLeads.length} items');
-    print('Loading state: $_isLoadingAssigned, Error: $_assignedLeadsError');
+    log('Building assigned leads view with ${_assignedLeads.length} items');
+    log('Loading state: $_isLoadingAssigned, Error: $_assignedLeadsError');
 
-    if (_isLoadingAssigned) {
-      print('Showing loading indicator for assigned leads');
-      return const Center(child: CircularProgressIndicator());
+    // Load assigned leads data only when needed (first time)
+    if (!_hasLoadedInitialAssignedData &&
+        _assignedLeads.isEmpty &&
+        !_isLoadingAssigned &&
+        _assignedLeadsError == null) {
+      // Use addPostFrameCallback to avoid calling during build phase
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadAssignedLeads();
+        setState(() {
+          _hasLoadedInitialAssignedData = true;
+        });
+      });
     }
 
-    if (_assignedLeadsError != null) {
-      print('Showing error for assigned leads: $_assignedLeadsError');
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('Error: $_assignedLeadsError'),
-            ElevatedButton(
-              onPressed: _loadAssignedLeads,
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    // Debug: Print the first few leads
-    if (_assignedLeads.isNotEmpty) {
-      print(
-        'First assigned lead: ${_assignedLeads[0].name}, Status: "${_assignedLeads[0].status}", Email: ${_assignedLeads[0].email}',
-      );
-    } else {
-      print('No assigned leads to display');
-    }
-
-    print('Creating GenericTableView with ${_assignedLeads.length} items');
-
-    // Wrap with RefreshIndicator
     return RefreshIndicator(
       onRefresh: () async {
-        print('Refreshing assigned leads');
+        // Reset the flag so we can load data again if needed
+        setState(() {
+          _hasLoadedInitialAssignedData = false;
+        });
         await _loadAssignedLeads();
       },
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        child: GenericTableView<Lead>(
-          key: const ValueKey(
-            'assigned_leads_table',
-          ), // Unique key for this instance
-          title: 'Assigned Leads',
-          data: _assignedLeads,
-          columns: [
-            GenericTableColumn<Lead>(
-              title: 'ID',
-              value: (lead) => lead.id.toString(),
-              width: 60,
-            ),
-            GenericTableColumn<Lead>(
-              width: 200,
-              title: 'Lead',
-              value: (lead) => lead.name,
-              builder: (lead) => Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      lead.name,
-                      style: const TextStyle(fontWeight: FontWeight.w500),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      lead.email,
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
+      child: Builder(
+        builder: (context) {
+          if (_isLoadingAssigned && _assignedLeads.isEmpty) {
+            log('Showing loading indicator for assigned leads');
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (_assignedLeadsError != null && _assignedLeads.isEmpty) {
+            log('Showing error for assigned leads: $_assignedLeadsError');
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Error: $_assignedLeadsError'),
+                  ElevatedButton(
+                    onPressed: _loadAssignedLeads,
+                    child: const Text('Retry'),
+                  ),
+                ],
               ),
-            ),
-            GenericTableColumn<Lead>(
-              width: 130,
-              title: 'Phone',
-              value: (lead) => lead.phone,
-            ),
-            GenericTableColumn<Lead>(
-              width: 150,
-              title: 'Education',
-              value: (lead) => lead.education,
-            ),
-            GenericTableColumn<Lead>(
-              width: 130,
-              title: 'Experience',
-              value: (lead) => lead.experience,
-            ),
-            GenericTableColumn<Lead>(
-              width: 150,
-              title: 'Location',
-              value: (lead) => lead.location,
-            ),
-            GenericTableColumn<Lead>(
-              width: 150,
-              title: 'Status',
-              value: (lead) => lead.status.isEmpty ? 'N/A' : lead.status,
-              builder: (lead) => Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppThemes.getStatusColor(
-                    lead.status.isEmpty ? 'N/A' : lead.status,
-                  ).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  lead.status.isEmpty ? 'N/A' : lead.status,
-                  style: TextStyle(
-                    color: AppThemes.getStatusColor(
-                      lead.status.isEmpty ? 'N/A' : lead.status,
-                    ),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+            );
+          }
+
+          // Debug: Print the first few leads
+          if (_assignedLeads.isNotEmpty) {
+            log(
+              'First assigned lead: ${_assignedLeads[0].name}, Status: "${_assignedLeads[0].status}", Email: ${_assignedLeads[0].email}',
+            );
+          } else {
+            log('No assigned leads to display');
+          }
+
+          log('Creating GenericTableView with ${_assignedLeads.length} items');
+
+          return GenericTableView<Lead>(
+            key: const ValueKey(
+              'assigned_leads_table',
+            ), // Unique key for this instance
+            title: 'Assigned Leads',
+            data: _assignedLeads,
+            columns: [
+              GenericTableColumn<Lead>(
+                title: 'ID',
+                value: (lead) => lead.id.toString(),
+                width: 60,
+              ),
+              GenericTableColumn<Lead>(
+                width: 200,
+                title: 'Lead',
+                value: (lead) => lead.name,
+                builder: (lead) => Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        lead.name,
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        lead.email,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ),
-            GenericTableColumn<Lead>(
-              width: 200,
-              title: 'Feedback',
-              value: (lead) => lead.feedback,
-            ),
-            GenericTableColumn<Lead>(
-              width: 130,
-              title: 'Created At',
-              value: (lead) => lead.createdAt,
-            ),
-            GenericTableColumn<Lead>(
-              width: 150,
-              title: 'Owner',
-              value: (lead) => lead.ownerName,
-            ),
-            GenericTableColumn<Lead>(
-              width: 150,
-              title: 'Assigned To',
-              value: (lead) => lead.assignedName,
-            ),
-          ],
-          onRowTap: (lead) {
-            // _showLeadActions(lead);
-            _updateLeadStatusAndFeedback(lead);
-          },
-          // Enable all interactive features for assigned leads
-          showSearch: true,
-          showFilter: true,
-          showExport: true,
-        ),
+              GenericTableColumn<Lead>(
+                width: 130,
+                title: 'Phone',
+                value: (lead) => lead.phone,
+              ),
+              GenericTableColumn<Lead>(
+                width: 150,
+                title: 'Education',
+                value: (lead) => lead.education,
+              ),
+              GenericTableColumn<Lead>(
+                width: 130,
+                title: 'Experience',
+                value: (lead) => lead.experience,
+              ),
+              GenericTableColumn<Lead>(
+                width: 150,
+                title: 'Location',
+                value: (lead) => lead.location,
+              ),
+              GenericTableColumn<Lead>(
+                width: 150,
+                title: 'Status',
+                value: (lead) => lead.status.isEmpty ? 'N/A' : lead.status,
+                builder: (lead) => Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppThemes.getStatusColor(
+                      lead.status.isEmpty ? 'N/A' : lead.status,
+                    ).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    lead.status.isEmpty ? 'N/A' : lead.status,
+                    style: TextStyle(
+                      color: AppThemes.getStatusColor(
+                        lead.status.isEmpty ? 'N/A' : lead.status,
+                      ),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              GenericTableColumn<Lead>(
+                width: 200,
+                title: 'Feedback',
+                value: (lead) => lead.feedback,
+              ),
+              GenericTableColumn<Lead>(
+                width: 130,
+                title: 'Created At',
+                value: (lead) => lead.createdAt,
+              ),
+              GenericTableColumn<Lead>(
+                width: 150,
+                title: 'Owner',
+                value: (lead) => lead.ownerName,
+              ),
+              GenericTableColumn<Lead>(
+                width: 150,
+                title: 'Assigned To',
+                value: (lead) => lead.assignedName,
+              ),
+            ],
+            onRowTap: (lead) {
+              _showLeadActions(lead);
+            },
+            // Enable all interactive features for assigned leads
+            showSearch: true,
+            showFilter: true,
+            showExport: true,
+          );
+        },
       ),
     );
   }
 
   Widget _buildRegisteredLeadsView(bool isDarkMode) {
-    print(
+    log(
       'Building registered leads view with ${_registeredLeads.length} items',
     );
-    print(
+    log(
       'Loading state: $_isLoadingRegistered, Error: $_registeredLeadsError',
     );
 
-    if (_isLoadingRegistered) {
-      print('Showing loading indicator for registered leads');
-      return const Center(child: CircularProgressIndicator());
+    // Load registered leads data only when needed (first time)
+    if (!_hasLoadedInitialRegisteredData &&
+        _registeredLeads.isEmpty &&
+        !_isLoadingRegistered &&
+        _registeredLeadsError == null) {
+      // Use addPostFrameCallback to avoid calling during build phase
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadRegisteredLeads();
+        setState(() {
+          _hasLoadedInitialRegisteredData = true;
+        });
+      });
     }
 
-    if (_registeredLeadsError != null) {
-      print('Showing error for registered leads: $_registeredLeadsError');
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('Error: $_registeredLeadsError'),
-            ElevatedButton(
-              onPressed: _loadRegisteredLeads,
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    // Debug: Print the first few leads
-    if (_registeredLeads.isNotEmpty) {
-      print(
-        'First registered lead: ${_registeredLeads[0].name}, Status: "${_registeredLeads[0].status}", Email: ${_registeredLeads[0].email}',
-      );
-    } else {
-      print('No registered leads to display');
-    }
-
-    print('Creating GenericTableView with ${_registeredLeads.length} items');
-
-    // Wrap with RefreshIndicator
     return RefreshIndicator(
       onRefresh: () async {
-        print('Refreshing registered leads');
+        // Reset the flag so we can load data again if needed
+        setState(() {
+          _hasLoadedInitialRegisteredData = false;
+        });
         await _loadRegisteredLeads();
       },
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        child: GenericTableView<Lead>(
-          key: const ValueKey(
-            'registered_leads_table',
-          ), // Unique key for this instance
-          title: 'Registered Leads',
-          data: _registeredLeads,
-          columns: [
-            GenericTableColumn<Lead>(
-              title: 'ID',
-              value: (lead) => lead.id.toString(),
-              width: 60,
-            ),
-            GenericTableColumn<Lead>(
-              width: 200,
-              title: 'Lead',
-              value: (lead) => lead.name,
-              builder: (lead) => Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      lead.name,
-                      style: const TextStyle(fontWeight: FontWeight.w500),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      lead.email,
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+      child: Builder(
+        builder: (context) {
+          if (_isLoadingRegistered && _registeredLeads.isEmpty) {
+            log('Showing loading indicator for registered leads');
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (_registeredLeadsError != null && _registeredLeads.isEmpty) {
+            log('Showing error for registered leads: $_registeredLeadsError');
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Error: $_registeredLeadsError'),
+                  ElevatedButton(
+                    onPressed: _loadRegisteredLeads,
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          // Debug: Print the first few leads
+          if (_registeredLeads.isNotEmpty) {
+            log(
+              'First registered lead: ${_registeredLeads[0].name}, Status: "${_registeredLeads[0].status}", Email: ${_registeredLeads[0].email}',
+            );
+          } else {
+            log('No registered leads to display');
+          }
+
+          log('Creating GenericTableView with ${_registeredLeads.length} items');
+
+          return GenericTableView<Lead>(
+            key: const ValueKey(
+              'registered_leads_table',
+            ), // Unique key for this instance
+            title: 'Registered Leads',
+            data: _registeredLeads,
+            columns: [
+              GenericTableColumn<Lead>(
+                title: 'ID',
+                value: (lead) => lead.id.toString(),
+                width: 60,
+              ),
+              GenericTableColumn<Lead>(
+                width: 200,
+                title: 'Lead',
+                value: (lead) => lead.name,
+                builder: (lead) => Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        lead.name,
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        lead.email,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            GenericTableColumn<Lead>(
-              width: 130,
-              title: 'Phone',
-              value: (lead) => lead.phone,
-            ),
-            GenericTableColumn<Lead>(
-              width: 150,
-              title: 'Education',
-              value: (lead) => lead.education,
-            ),
-            GenericTableColumn<Lead>(
-              width: 130,
-              title: 'Experience',
-              value: (lead) => lead.experience,
-            ),
-            GenericTableColumn<Lead>(
-              width: 150,
-              title: 'Location',
-              value: (lead) => lead.location,
-            ),
-            GenericTableColumn<Lead>(
-              width: 150,
-              title: 'Owner',
-              value: (lead) => lead.ownerName,
-            ),
-            GenericTableColumn<Lead>(
-              width: 150,
-              title: 'Assigned To',
-              value: (lead) => lead.assignedName,
-            ),
-            GenericTableColumn<Lead>(
-              width: 80,
-              title: 'Discount',
-              value: (lead) => lead.discount?.toString() ?? '0',
-            ),
-            GenericTableColumn<Lead>(
-              width: 110,
-              title: 'Installment 1',
-              value: (lead) => lead.installment1?.toStringAsFixed(2) ?? '0.00',
-            ),
-            GenericTableColumn<Lead>(
-              width: 110,
-              title: 'Installment 2',
-              value: (lead) => lead.installment2?.toStringAsFixed(2) ?? '0.00',
-            ),
-            GenericTableColumn<Lead>(
-              width: 110,
-              title: 'Total Fees',
-              value: (lead) => lead.calculateTotalFees().toStringAsFixed(2),
-              builder: (lead) => Text(
-                lead.calculateTotalFees().toStringAsFixed(2),
-                style: TextStyle(
-                  color: AppThemes.primaryColor,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
+              GenericTableColumn<Lead>(
+                width: 130,
+                title: 'Phone',
+                value: (lead) => lead.phone,
+              ),
+              GenericTableColumn<Lead>(
+                width: 150,
+                title: 'Education',
+                value: (lead) => lead.education,
+              ),
+              GenericTableColumn<Lead>(
+                width: 130,
+                title: 'Experience',
+                value: (lead) => lead.experience,
+              ),
+              GenericTableColumn<Lead>(
+                width: 150,
+                title: 'Location',
+                value: (lead) => lead.location,
+              ),
+              GenericTableColumn<Lead>(
+                width: 150,
+                title: 'Owner',
+                value: (lead) => lead.ownerName,
+              ),
+              GenericTableColumn<Lead>(
+                width: 150,
+                title: 'Assigned To',
+                value: (lead) => lead.assignedName,
+              ),
+              GenericTableColumn<Lead>(
+                width: 80,
+                title: 'Discount',
+                value: (lead) => lead.discount?.toString() ?? '0',
+              ),
+              GenericTableColumn<Lead>(
+                width: 110,
+                title: 'Installment 1',
+                value: (lead) => lead.installment1?.toStringAsFixed(2) ?? '0.00',
+              ),
+              GenericTableColumn<Lead>(
+                width: 110,
+                title: 'Installment 2',
+                value: (lead) => lead.installment2?.toStringAsFixed(2) ?? '0.00',
+              ),
+              GenericTableColumn<Lead>(
+                width: 110,
+                title: 'Total Fees',
+                value: (lead) => lead.calculateTotalFees().toStringAsFixed(2),
+                builder: (lead) => Text(
+                  lead.calculateTotalFees().toStringAsFixed(2),
+                  style: TextStyle(
+                    color: AppThemes.primaryColor,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-            ),
-            GenericTableColumn<Lead>(
-              width: 110,
-              title: 'Final Fees',
-              value: (lead) => lead.calculateFinalFees().toStringAsFixed(2),
-              builder: (lead) => Text(
-                lead.calculateFinalFees().toStringAsFixed(2),
-                style: TextStyle(
-                  color: AppThemes.greenAccent,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
+              GenericTableColumn<Lead>(
+                width: 110,
+                title: 'Final Fees',
+                value: (lead) => lead.calculateFinalFees().toStringAsFixed(2),
+                builder: (lead) => Text(
+                  lead.calculateFinalFees().toStringAsFixed(2),
+                  style: TextStyle(
+                    color: AppThemes.greenAccent,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-            ),
-          ],
-          onRowTap: (lead) {
-            // _showLeadActions(lead);
-            _updateLeadFees(lead);
-          },
-          // Disable all interactive features for registered leads as requested
-          showSearch: false,
-          showFilter: false,
-          showExport: false,
-        ),
+            ],
+            onRowTap: (lead) {
+              _showLeadActions(lead);
+            },
+            // Disable all interactive features for registered leads as requested
+            showSearch: false,
+            showFilter: false,
+            showExport: false,
+          );
+        },
       ),
     );
   }
