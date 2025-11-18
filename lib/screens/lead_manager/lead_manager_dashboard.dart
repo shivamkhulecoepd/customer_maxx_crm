@@ -1992,18 +1992,6 @@ class _ModernLeadManagerDashboardState
                     () => _uploadData(),
                     isDarkMode,
                   ),
-                  _buildActionButton(
-                    context,
-                    Icons.table_chart,
-                    'Table Examples',
-                    () {
-                      final currentContext = context;
-                      if (currentContext.mounted) {
-                        Navigator.pushNamed(currentContext, '/table-examples');
-                      }
-                    },
-                    isDarkMode,
-                  ),
                 ],
               ),
             ),
