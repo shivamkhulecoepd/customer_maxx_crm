@@ -1,16 +1,19 @@
-name: Flutter CI
+name: Flutter CI/CD
 
 on:
   push:
     branches:
       - main
+    tags:
+      - 'v*'
   pull_request:
     branches:
       - main
 
 jobs:
-  build:
-    name: Build and Test Flutter App
+  # Test job runs on all branches and PRs
+  test:
+    name: Test Flutter App
     runs-on: windows-latest
 
     steps:
@@ -38,18 +41,111 @@ jobs:
         run: flutter analyze
 
       # Step 6: Run Tests
-      # - name: Run Tests
-      #   run: flutter test
+      - name: Run Tests
+        run: flutter test
 
-      # Step 7: Build APK (Android)
+      # Run tests with coverage
+      - name: Run Tests with Coverage
+        run: flutter test --coverage
+
+      # Upload coverage to Codecov
+      - name: Upload Coverage
+        uses: codecov/codecov-action@v4
+        with:
+          file: coverage/lcov.info
+          fail_ci_if_error: false
+
+  # Build job runs on all branches and PRs
+  build:
+    name: Build Flutter App
+    runs-on: windows-latest
+    needs: test
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # Step 2: Setup Flutter SDK
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.7'
+          channel: 'stable'
+
+      # Step 3: Install Dependencies
+      - name: Install Dependencies
+        run: flutter pub get
+
+      # Step 4: Build APK (Android)
       - name: Build Android APK
         run: flutter build apk --release
 
-
-      # Optional: Step 9: Upload build artifacts
+      # Optional: Step 5: Upload build artifacts
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: flutter-builds
           path: |
             build/app/outputs/flutter-apk/app-release.apk
+
+  # Deploy job only runs on tag pushes (releases)
+  deploy:
+    name: Deploy to Production
+    runs-on: windows-latest
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # Step 2: Setup Flutter SDK
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.7'
+          channel: 'stable'
+
+      # Step 3: Install Dependencies
+      - name: Install Dependencies
+        run: flutter pub get
+
+      # Step 4: Build for production
+      - name: Build for Production
+        run: |
+          flutter build appbundle --release
+          flutter build apk --release
+
+      # Step 5: Create GitHub Release
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      # Step 6: Upload Release Assets
+      - name: Upload Release Assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: build/app/outputs/flutter-apk/app-release.apk
+          asset_name: customer-maxx-crm-${{ github.ref }}.apk
+          asset_content_type: application/vnd.android.package-archive
+
+      - name: Upload AAB Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: build/app/outputs/bundle/release/app-release.aab
+          asset_name: customer-maxx-crm-${{ github.ref }}.aab
+          asset_content_type: application/x-authorware-bin

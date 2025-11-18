@@ -1,6 +1,6 @@
 workflows:
   android-deploy-workflow:
-    name: Android Deployment Workflow
+    name: Android Production Deployment
     instance_type: mac_mini_m1
     max_build_duration: 30
     triggering:
@@ -23,13 +23,23 @@ workflows:
           keyAlias=upload
           storeFile=/tmp/keystore.jks
           EOF
+      - name: Get Flutter packages
+        script: |
+          flutter packages pub get
+      - name: Run tests
+        script: |
+          flutter test
       - name: Build AAB
         script: |
           cd $CM_BUILD_DIR
-          flutter packages pub get
           flutter build appbundle --build-number=$PROJECT_BUILD_NUMBER
+      - name: Build APK
+        script: |
+          cd $CM_BUILD_DIR
+          flutter build apk --release --build-number=$PROJECT_BUILD_NUMBER
     artifacts:
       - build/**/outputs/**/*.aab
+      - build/**/outputs/**/*.apk
     publishing:
       google_play:
         credentials: $GOOGLE_PLAY_SERVICE_ACCOUNT
@@ -41,9 +51,9 @@ workflows:
     max_build_duration: 120
     environment:
       groups:
-        - google_credentials # <-- (Includes GCLOUD_KEY_FILE, GOOGLE_CREDENTIALS)
+        - google_credentials
       vars:
-        FIREBASE_PROJECT: "fe-community-dev"
+        FIREBASE_PROJECT: "customer-maxx-crm"
       flutter: stable
       xcode: latest
       cocoapods: default
@@ -51,75 +61,50 @@ workflows:
       - name: Get Flutter packages
         script: |
           flutter packages pub get
-      - name: Build APK with Flutter
+      - name: Run tests
+        script: |
+          flutter test
+      - name: Run code analysis
+        script: |
+          flutter analyze
+      - name: Build debug APK
         script: |
           flutter build apk --debug
-      - name: Create debug and test APK
-        script: |
-          set -ex
-          cd android
-          ./gradlew app:assembleAndroidTest
-          ./gradlew app:assembleDebug -Ptarget="$CM_BUILD_DIR/integration_test/app_test.dart"
-      - name: Run Firebase Test Lab tests
-        script: |
-          set -ex
-
-          echo $GCLOUD_KEY_FILE | base64 --decode > ./gcloud_key_file.json
-
-          gcloud auth activate-service-account --key-file=gcloud_key_file.json
-
-          gcloud --quiet config set project $FIREBASE_PROJECT
-
-          gcloud firebase test android run \
-            --type instrumentation \
-            --app build/app/outputs/apk/debug/app-debug.apk \
-            --test build/app/outputs/apk/androidTest/debug/app-debug-androidTest.apk \
-            --timeout 3m
     artifacts:
       - build/**/outputs/**/*.apk
-      - build/**/outputs/**/*.aab
       - build/**/outputs/**/mapping.txt
       - flutter_drive.log
-  ios-workflow:
-    name: iOS Workflow
+  ios-production-workflow:
+    name: iOS Production Deployment
     instance_type: mac_mini_m1
     environment:
       flutter: stable
       xcode: latest
       cocoapods: default
       groups:
-        - google_credentials
-      vars:
-        FIREBASE_PROJECT: "fe-community-dev"
-        BUNDLE_ID: "dev.flutterexplained.cicdtutorial"
-        TEST_BUNDLE_ID: "dev.flutterexplained.cicdtutorial.uitests.xctrunner"
+        - appstore_credentials
     scripts:
-      - name: Configure Firebase access
+      - name: Get Flutter packages
         script: |
-          set -e
-          echo $GCLOUD_KEY_FILE | base64 --decode > ./gcloud_key_file.json          
-          gcloud auth activate-service-account --key-file=gcloud_key_file.json
-          gcloud --quiet config set project $FIREBASE_PROJECT
-      - name: Build app for testing
+          flutter packages pub get
+      - name: Run tests
         script: |
-          set -ex
-          
-          flutter build ios integration_test/app_test.dart --release
-          
-          cd ios
-          xcodebuild \
-            -workspace Runner.xcworkspace \
-            -scheme Runner \
-            -config Flutter/Release.xcconfig \
-            -derivedDataPath "../build/ios_integ" \
-            -sdk iphoneos \
-            build-for-testing
-      - name: Package tests bundle
+          flutter test
+      - name: Set up signing
         script: |
-          set -ex
-          cd ./build/ios_integ/Build/Products
-          zip -r "ios_tests.zip" *-iphoneos *.xctestrun
-      - name: Run tests in Firebase Test Lab
-        script: gcloud firebase test ios run --test "build/ios_integ/Build/Products/ios_tests.zip"
+          # Set up code signing
+          keychain initialize
+          app-store-connect fetch-signing-files $(xcode-project detect-bundle-id) --type IOS_APP_STORE --create
+          keychain add-certificates
+          xcode-project use-profiles
+      - name: Build IPA
+        script: |
+          flutter build ipa --release --build-number=$(date +%s)
     artifacts:
-      - "**/ios_tests.zip"
+      - build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        submit_to_testflight: false

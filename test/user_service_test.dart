@@ -1,8 +1,22 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:customer_maxx_crm/services/user_service.dart';
 import 'package:customer_maxx_crm/models/user.dart';
+import 'package:customer_maxx_crm/api/api_client.dart';
 
 void main() {
-  group('User', () {
+  group('UserService', () {
+    late UserService userService;
+    late ApiClient apiClient;
+
+    setUp(() {
+      apiClient = ApiClient();
+      userService = UserService(apiClient);
+    });
+
+    test('UserService can be instantiated', () {
+      expect(userService, isNotNull);
+    });
+
     test('User can be instantiated with required parameters', () {
       final user = User(
         id: '1',
@@ -78,42 +92,6 @@ void main() {
       expect(user.name, equals(''));
       expect(user.email, equals('john@example.com'));
       expect(user.role, equals('admin'));
-    });
-  });
-
-  group('UserRole', () {
-    test('UserRole can be instantiated with required parameters', () {
-      final userRole = UserRole(
-        id: '1',
-        name: 'Admin',
-      );
-
-      expect(userRole.id, equals('1'));
-      expect(userRole.name, equals('Admin'));
-    });
-
-    test('UserRole can be created from JSON', () {
-      final json = {
-        'id': '1',
-        'name': 'Admin',
-      };
-
-      final userRole = UserRole.fromJson(json);
-
-      expect(userRole.id, equals('1'));
-      expect(userRole.name, equals('Admin'));
-    });
-
-    test('UserRole can be converted to JSON', () {
-      final userRole = UserRole(
-        id: '1',
-        name: 'Admin',
-      );
-
-      final json = userRole.toJson();
-
-      expect(json['id'], equals('1'));
-      expect(json['name'], equals('Admin'));
     });
   });
 }

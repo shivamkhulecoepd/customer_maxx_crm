@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:developer';
 import 'package:customer_maxx_crm/utils/api_constants.dart';
 import 'package:http/http.dart' as http;
 import '../utils/api_exceptions.dart';
@@ -7,29 +6,18 @@ import '../utils/api_exceptions.dart';
 class ApiClient {
   final String baseUrl;
   String? authToken;
+  final int timeout;
   
-  static const int _timeout = 30; // seconds
-  
-  ApiClient({this.baseUrl = ApiConstants.baseUrl});
+  ApiClient({this.baseUrl = ApiConstants.baseUrl, this.timeout = 30});
   
   // Set authentication token
   void setAuthToken(String token) {
-    // Log the token setting
-    // ignore: avoid_print
-    log('Setting auth token. Previous token: $authToken, New token: $token');
     authToken = token;
-    // ignore: avoid_print
-    log('Auth token set. Current token: $authToken');
   }
   
   // Clear authentication token
   void clearAuthToken() {
-    // Log the token clearing
-    // ignore: avoid_print
-    log('Clearing auth token. Current token: $authToken');
     authToken = null;
-    // ignore: avoid_print
-    log('Auth token cleared. New token: $authToken');
   }
   
   // Get headers with optional authentication
@@ -57,10 +45,6 @@ class ApiClient {
   }) async {
     final headers = _getHeaders(authenticated: authenticated);
     
-    // Add cache-busting parameter to ensure fresh data
-    final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
-    
-    log("Headers: $headers");
     try {
       // Parse the endpoint to extract existing query parameters
       final endpointUri = Uri.parse(endpoint);
@@ -72,21 +56,15 @@ class ApiClient {
         mergedQueryParams.addAll(queryParameters);
       }
       
-      // Add cache-busting parameter
-      mergedQueryParams['_t'] = timestamp;
-      
       // Construct the full URI
       final fullUri = Uri.parse(baseUrl).replace(
         path: endpointUri.path,
-        queryParameters: mergedQueryParams,
+        queryParameters: mergedQueryParams.isEmpty ? null : mergedQueryParams,
       );
       
-      log("Full URI: $fullUri");
       final response = await http.get(fullUri, headers: headers).timeout(
-        Duration(seconds: _timeout),
+        Duration(seconds: timeout),
       );
-      log("Response status code: ${response.statusCode}");
-      log("Response body: ${response.body}");
       
       return _handleResponse(response);
     } on http.ClientException catch (e) {
@@ -126,7 +104,7 @@ class ApiClient {
         fullUri,
         headers: headers,
         body: jsonEncode(body),
-      ).timeout(Duration(seconds: _timeout));
+      ).timeout(Duration(seconds: timeout));
       
       return _handleResponse(response);
     } on http.ClientException catch (e) {
@@ -178,7 +156,7 @@ class ApiClient {
       request.files.add(multipartFile);
       
       // Send request
-      final response = await request.send().timeout(Duration(seconds: _timeout));
+      final response = await request.send().timeout(Duration(seconds: timeout));
       
       // Get response body
       final responseBody = await response.stream.bytesToString();
@@ -228,7 +206,7 @@ class ApiClient {
         fullUri,
         headers: headers,
         body: jsonEncode(body),
-      ).timeout(Duration(seconds: _timeout));
+      ).timeout(Duration(seconds: timeout));
       
       return _handleResponse(response);
     } on http.ClientException catch (e) {
@@ -264,7 +242,7 @@ class ApiClient {
   
     try {
       final response = await http.delete(fullUri, headers: headers).timeout(
-        Duration(seconds: _timeout),
+        Duration(seconds: timeout),
       );
       
       return _handleResponse(response);
