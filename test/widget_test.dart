@@ -1,4 +1,4 @@
-// This is a simple unit test for the CustomerMaxx CRM app.
+// This is a simple unit test for the CustomerMax CRM app.
 
 import 'package:flutter_test/flutter_test.dart';
 
@@ -8,6 +8,6 @@ void main() {
   });
 
   test('String test', () {
-    expect('CustomerMaxx CRM'.contains('CRM'), isTrue);
+    expect('CustomerMax CRM'.contains('CRM'), isTrue);
   });
 }

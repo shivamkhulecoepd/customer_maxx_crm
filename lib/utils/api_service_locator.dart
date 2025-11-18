@@ -7,6 +7,7 @@ import 'package:customer_maxx_crm/api/api_client.dart';
 import 'package:customer_maxx_crm/services/auth_service.dart';
 import 'package:customer_maxx_crm/services/dashboard_service.dart';
 import 'package:customer_maxx_crm/services/lead_service.dart';
+import 'package:customer_maxx_crm/services/profile_service.dart';
 import 'package:customer_maxx_crm/services/user_service.dart';
 import 'package:customer_maxx_crm/utils/api_constants.dart';
 
@@ -16,6 +17,7 @@ class ServiceLocator {
   static late LeadService _leadService;
   static late UserService _userService;
   static late DashboardService _dashboardService;
+  static late ProfileService _profileService;
   
   static bool _isInitialized = false;
   
@@ -34,6 +36,7 @@ class ServiceLocator {
       _leadService = LeadService(_apiClient);
       _userService = UserService(_apiClient);
       _dashboardService = DashboardService(_apiClient);
+      _profileService = ProfileService(_apiClient);
       
       // Initialize auth service
       await _authService.init();
@@ -51,6 +54,7 @@ class ServiceLocator {
   static LeadService get leadService => _leadService;
   static UserService get userService => _userService;
   static DashboardService get dashboardService => _dashboardService;
+  static ProfileService get profileService => _profileService;
   
   // Check if services are initialized
   static bool get isInitialized => _isInitialized;

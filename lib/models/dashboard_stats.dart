@@ -134,15 +134,20 @@ class MonthlyData {
 }
 
 class LeadManagerStats {
+  final int totalLeads;
   final Map<String, int> statusCounts;
   final List<RecentLead> recentLeads;
 
   LeadManagerStats({
+    required this.totalLeads,
     required this.statusCounts,
     required this.recentLeads,
   });
 
   factory LeadManagerStats.fromJson(Map<String, dynamic> json) {
+    // Parse total leads
+    final totalLeads = json['total_leads'] as int? ?? 0;
+    
     // Parse status counts map
     final statusCounts = <String, int>{};
     if (json['status_counts'] is Map) {
@@ -162,9 +167,45 @@ class LeadManagerStats {
     }
 
     return LeadManagerStats(
+      totalLeads: totalLeads,
       statusCounts: statusCounts,
       recentLeads: recentLeads,
     );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other.runtimeType != runtimeType) return false;
+    return other is LeadManagerStats &&
+        other.totalLeads == totalLeads &&
+        _mapsEqual(other.statusCounts, statusCounts) &&
+        _listsEqual(other.recentLeads, recentLeads);
+  }
+
+  @override
+  int get hashCode => Object.hash(totalLeads, statusCounts, recentLeads);
+
+  // Helper method to compare maps
+  bool _mapsEqual(Map<String, int> map1, Map<String, int> map2) {
+    if (map1.length != map2.length) return false;
+    for (final key in map1.keys) {
+      if (!map2.containsKey(key) || map1[key] != map2[key]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // Helper method to compare lists
+  bool _listsEqual(List<RecentLead> list1, List<RecentLead> list2) {
+    if (list1.length != list2.length) return false;
+    for (int i = 0; i < list1.length; i++) {
+      if (list1[i] != list2[i]) {
+        return false;
+      }
+    }
+    return true;
   }
 }
 
@@ -192,6 +233,21 @@ class RecentLead {
       createdAt: json['created_at'] as String,
     );
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other.runtimeType != runtimeType) return false;
+    return other is RecentLead &&
+        other.name == name &&
+        other.email == email &&
+        other.phone == phone &&
+        other.status == status &&
+        other.createdAt == createdAt;
+  }
+
+  @override
+  int get hashCode => Object.hash(name, email, phone, status, createdAt);
 }
 
 class BAStats {

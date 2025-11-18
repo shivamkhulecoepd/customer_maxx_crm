@@ -24,6 +24,10 @@ class _ModernSettingsScreenState extends State<ModernSettingsScreen> {
   @override
   void initState() {
     super.initState();
+    _loadUserData();
+  }
+
+  void _loadUserData() {
     // Get user info from auth bloc
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -232,85 +236,94 @@ class _ModernSettingsScreenState extends State<ModernSettingsScreen> {
   }
 
   Widget _buildProfileCard(BuildContext context, bool isDarkMode) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Row(
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, authState) {
+        String userName = _userName;
+        String userEmail = _userEmail;
+        
+        // Update local state if auth state changes
+        if (authState is Authenticated && authState.user != null) {
+          userName = authState.user!.name;
+          userEmail = authState.user!.email;
+        }
+        
+        return Card(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          elevation: 2,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
               children: [
-                CircleAvatar(
-                  radius: 30,
-                  backgroundColor: const Color(
-                    0xFF00BCD4,
-                  ).withValues(alpha: 0.1),
-                  child: Text(
-                    _userName.isNotEmpty ? _userName[0].toUpperCase() : 'A',
-                    style: const TextStyle(
-                      color: Color(0xFF00BCD4),
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _userName,
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 30,
+                      backgroundColor: const Color(
+                        0xFF00BCD4,
+                      ).withValues(alpha: 0.1),
+                      child: Text(
+                        userName.isNotEmpty ? userName[0].toUpperCase() : 'A',
                         style: const TextStyle(
-                          fontSize: 18,
+                          color: Color(0xFF00BCD4),
+                          fontSize: 24,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _userEmail,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: isDarkMode ? Colors.white70 : Colors.grey[600],
-                        ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            userName,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            userEmail,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: isDarkMode ? Colors.white70 : Colors.grey[600],
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.edit),
+                      onPressed: () => _showEditProfileDialog(context, userName, userEmail),
+                    ),
+                  ],
                 ),
-                IconButton(
-                  icon: const Icon(Icons.edit),
-                  onPressed: () {
-                    // Edit profile functionality
+                const SizedBox(height: 16),
+                const Divider(),
+                const SizedBox(height: 16),
+                _buildSettingsItem(
+                  context,
+                  Icons.person_outline,
+                  'Edit Profile',
+                  'Update your personal information',
+                  () => _showEditProfileDialog(context, userName, userEmail),
+                ),
+                const SizedBox(height: 16),
+                _buildSettingsItem(
+                  context,
+                  Icons.lock_outline,
+                  'Change Password',
+                  'Update your password',
+                  () {
+                    // Navigate to change password
                   },
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            const Divider(),
-            const SizedBox(height: 16),
-            _buildSettingsItem(
-              context,
-              Icons.person_outline,
-              'Edit Profile',
-              'Update your personal information',
-              () {
-                // Navigate to edit profile
-              },
-            ),
-            const SizedBox(height: 16),
-            _buildSettingsItem(
-              context,
-              Icons.lock_outline,
-              'Change Password',
-              'Update your password',
-              () {
-                // Navigate to change password
-              },
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -534,6 +547,76 @@ class _ModernSettingsScreenState extends State<ModernSettingsScreen> {
           ? const Icon(Icons.check, color: Color(0xFF00BCD4))
           : null,
       onTap: onTap,
+    );
+  }
+
+  void _showEditProfileDialog(BuildContext context, String currentName, String currentEmail) {
+    final nameController = TextEditingController(text: currentName);
+    final emailController = TextEditingController(text: currentEmail);
+    
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Edit Profile'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Full Name',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: emailController,
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                // In a real app, this would call an API to update the profile
+                try {
+                  // Update local state
+                  setState(() {
+                    _userName = nameController.text;
+                    _userEmail = emailController.text;
+                  });
+                  
+                  // Show success message
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Profile updated successfully!')),
+                    );
+                    
+                    // Refresh the auth state to reflect changes
+                    context.read<AuthBloc>().add(CheckAuthStatus());
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error updating profile: ${e.toString()}')),
+                    );
+                  }
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
     );
   }
 

@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import '../api/api_client.dart';
 import '../api/api_endpoints.dart';
 import '../models/dashboard_stats.dart';
@@ -39,8 +40,13 @@ class DashboardService {
         authenticated: true,
       );
       
+      // Log the response for debugging
+      developer.log('LeadManagerStats API Response: $response');
+      
       if (response['status'] == 'success') {
-        return LeadManagerStats.fromJson(response['stats']);
+        final stats = LeadManagerStats.fromJson(response['stats']);
+        developer.log('Parsed LeadManagerStats: ${stats.totalLeads} total leads, status counts: ${stats.statusCounts}');
+        return stats;
       } else {
         throw Exception(response['message'] ?? 'Failed to fetch lead manager stats');
       }

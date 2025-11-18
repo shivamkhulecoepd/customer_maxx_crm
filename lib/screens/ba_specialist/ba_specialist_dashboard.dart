@@ -14,7 +14,11 @@ import 'package:customer_maxx_crm/widgets/navigation_bar.dart';
 import 'package:customer_maxx_crm/widgets/generic_table_view.dart';
 import 'package:customer_maxx_crm/models/lead.dart';
 import 'package:customer_maxx_crm/services/lead_service.dart';
+import 'package:customer_maxx_crm/services/profile_service.dart';
 import 'package:customer_maxx_crm/utils/api_service_locator.dart';
+import 'package:customer_maxx_crm/models/dashboard_stats.dart'; // Added import for BAStats
+import 'package:customer_maxx_crm/services/dashboard_service.dart'; // Added import for DashboardService
+import 'package:shimmer/shimmer.dart'; // Added import for shimmer effect
 
 class ModernBASpecialistDashboard extends StatefulWidget {
   final int initialIndex;
@@ -31,28 +35,61 @@ class _ModernBASpecialistDashboardState
   late int _currentNavIndex;
   String _userName = '';
   String _userRole = '';
+  String _userId = '';
+
+  // Profile stats
+  int _assignedLeadsCount = 0;
+  int _completedLeadsCount = 0;
+  int _inProgressLeadsCount = 0;
+  int _followUpsCount = 0;
+
+  // Profile loading state
+  bool _isLoadingProfile = false;
+  String? _profileError;
+
+  late LeadService _leadService;
+  late ProfileService _profileService;
+  late DashboardService _dashboardService; // Added DashboardService
 
   // Separate state variables for each section
   List<Lead> _assignedLeads = [];
   List<Lead> _registeredLeads = [];
   bool _isLoadingAssigned = false;
   bool _isLoadingRegistered = false;
+  bool _isLoadingProfileData = false;
+  bool _isLoadingDashboardStats = false; // Added for dashboard stats loading
   String? _assignedLeadsError;
   String? _registeredLeadsError;
+  String? _profileDataError;
+  String? _dashboardStatsError; // Added for dashboard stats error
+
+  // Profile data
+  Map<String, dynamic>? _profileData;
+
+  // Profile stats
+  int _assignedLeadsCountProfile = 0;
+  int _completedLeadsCountProfile = 0;
+  int _successRateProfile = 0;
+
+  // Dashboard stats
+  BAStats? _baStats; // Added BAStats object
 
   // Flags to track initial data loading for refresh logic
   bool _hasLoadedInitialAssignedData = false;
   bool _hasLoadedInitialRegisteredData = false;
+  bool _hasLoadedInitialProfileData = false;
+  bool _hasLoadedInitialDashboardStats = false; // Added for dashboard stats
 
   final List<Widget>? actions = [];
   final bool showDrawer = true;
-  late LeadService _leadService;
 
   @override
   void initState() {
     super.initState();
     _currentNavIndex = widget.initialIndex;
     _leadService = ServiceLocator.leadService;
+    _profileService = ServiceLocator.profileService;
+    _dashboardService = ServiceLocator.dashboardService; // Initialize DashboardService
     _loadUserData();
 
     log('BA Specialist Dashboard initialized with index: $_currentNavIndex');
@@ -64,6 +101,12 @@ class _ModernBASpecialistDashboardState
     } else if (_currentNavIndex == 2) {
       log('Loading registered leads on init');
       _loadRegisteredLeads();
+    } else if (_currentNavIndex == 3) {
+      log('Loading profile data on init');
+      _loadProfileData();
+    } else if (_currentNavIndex == 0) {
+      log('Loading dashboard stats on init');
+      _loadDashboardStats(); // Load dashboard stats for main dashboard
     }
     // For other views, don't preload data - let navigation handle it
     else {
@@ -77,6 +120,7 @@ class _ModernBASpecialistDashboardState
       setState(() {
         _userName = authState.user!.name;
         _userRole = authState.user!.role;
+        _userId = authState.user!.id;
       });
     }
   }
@@ -84,6 +128,10 @@ class _ModernBASpecialistDashboardState
   void _handleNavigation(int index) {
     log('Handling navigation to index: $index');
     switch (index) {
+      case 0:
+        log('Loading dashboard stats');
+        _loadDashboardStats();
+        break;
       case 1:
         log(
           'Loading assigned leads - Current count: ${_assignedLeads.length}, Loading: $_isLoadingAssigned',
@@ -98,9 +146,48 @@ class _ModernBASpecialistDashboardState
         // The data will be loaded automatically by the build method now
         // We don't need to manually trigger loading here
         break;
+      case 3:
+        log('Loading profile data');
+        // Load dashboard stats for profile screen to display statistics
+        _loadDashboardStats();
+        break;
       default:
         log('No action for index: $index');
         break;
+    }
+  }
+
+  Future<void> _loadDashboardStats({bool forceRefresh = false}) async {
+    // Don't load if already loaded or currently loading, unless force refresh is requested
+    if (!forceRefresh && _hasLoadedInitialDashboardStats && _baStats != null && !_isLoadingDashboardStats) {
+      return;
+    }
+
+    setState(() {
+      _isLoadingDashboardStats = true;
+      _dashboardStatsError = null;
+      // Reset the stats to show loading shimmer
+      if (forceRefresh) {
+        _baStats = null;
+      }
+    });
+
+    try {
+      log('Loading BA dashboard stats');
+      final stats = await _dashboardService.getBAStats();
+      log('BA Stats loaded: Total Leads: ${stats.totalLeads}, Registered: ${stats.registeredLeads}, Conversion Rate: ${stats.conversionRate}%');
+      
+      setState(() {
+        _baStats = stats;
+        _isLoadingDashboardStats = false;
+        _hasLoadedInitialDashboardStats = true;
+      });
+    } catch (e) {
+      log('Error loading BA dashboard stats: $e');
+      setState(() {
+        _dashboardStatsError = e.toString();
+        _isLoadingDashboardStats = false;
+      });
     }
   }
 
@@ -176,6 +263,51 @@ class _ModernBASpecialistDashboardState
       setState(() {
         _registeredLeadsError = e.toString();
         _isLoadingRegistered = false;
+      });
+    }
+  }
+
+  Future<void> _loadProfileData() async {
+    if (_userId.isEmpty) {
+      log('User ID is empty, cannot load profile data');
+      return;
+    }
+
+    setState(() {
+      _isLoadingProfileData = true;
+      _profileDataError = null;
+    });
+
+    try {
+      log('Loading profile data for user ID: $_userId');
+      final profileResponse = await _profileService.fetchUserProfile(_userId);
+      
+      if (profileResponse['success'] == true) {
+        final profileData = profileResponse['data'];
+        log('Profile data loaded successfully: $profileData');
+        
+        setState(() {
+          _profileData = profileData;
+          _isLoadingProfileData = false;
+          
+          // Update user name from profile data if available
+          if (profileData['fullname'] != null) {
+            _userName = profileData['fullname'];
+          }
+          
+          // Set default values for profile stats
+          _assignedLeadsCountProfile = profileData['assigned_leads'] as int? ?? 0;
+          _completedLeadsCountProfile = profileData['completed_leads'] as int? ?? 0;
+          _successRateProfile = profileData['success_rate'] as int? ?? 0;
+        });
+      } else {
+        throw Exception(profileResponse['message'] ?? 'Failed to load profile data');
+      }
+    } catch (e) {
+      log('Error loading profile data: $e');
+      setState(() {
+        _profileDataError = e.toString();
+        _isLoadingProfileData = false;
       });
     }
   }
@@ -407,7 +539,13 @@ class _ModernBASpecialistDashboardState
             ListTile(
               leading: const Icon(Icons.person_outline_rounded),
               title: const Text('Profile'),
-              onTap: () => Navigator.pop(context),
+              onTap: () {
+                Navigator.pop(context);
+                setState(() {
+                  _currentNavIndex = 3;
+                });
+                _loadProfileData();
+              },
             ),
             ListTile(
               leading: const Icon(Icons.settings_outlined),
@@ -430,9 +568,19 @@ class _ModernBASpecialistDashboardState
   }
 
   Widget _buildDashboardView(bool isDarkMode) {
+    // Load dashboard stats if not already loaded
+    if (!_hasLoadedInitialDashboardStats && 
+        _baStats == null && 
+        !_isLoadingDashboardStats && 
+        _dashboardStatsError == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadDashboardStats();
+      });
+    }
+
     return RefreshIndicator(
       onRefresh: () async {
-        await Future.delayed(const Duration(seconds: 1));
+        await _loadDashboardStats(forceRefresh: true);
       },
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -445,10 +593,6 @@ class _ModernBASpecialistDashboardState
               const SizedBox(height: 24),
               _buildWorkStatsGrid(isDarkMode),
               const SizedBox(height: 24),
-              _buildTodaysTasks(isDarkMode),
-              const SizedBox(height: 24),
-              _buildRecentActivity(isDarkMode),
-              const SizedBox(height: 100), // Space for floating nav
             ],
           ),
         ),
@@ -504,7 +648,7 @@ class _ModernBASpecialistDashboardState
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'BA Specialist Dashboard - CustomerMaxx CRM',
+                  'BA Specialist Dashboard - CustomerMax CRM',
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.9),
                     fontSize: 14,
@@ -538,6 +682,11 @@ class _ModernBASpecialistDashboardState
     final crossAxisCount = screenWidth < 600 ? 2 : 4;
     final spacing = screenWidth * 0.03;
 
+    // Show shimmer effect while loading
+    if (_isLoadingDashboardStats && _baStats == null) {
+      return _buildShimmerStatsGrid(isDarkMode, crossAxisCount, spacing, screenWidth);
+    }
+
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -547,37 +696,38 @@ class _ModernBASpecialistDashboardState
         mainAxisSpacing: spacing,
         childAspectRatio: screenWidth < 400 ? 1.05 : 1.1,
       ),
-      itemCount: 4,
+      itemCount: 3,
       itemBuilder: (context, index) {
+        // Use dynamic data from _baStats if available, otherwise use static data
         final stats = [
           {
             'title': 'Assigned Leads',
-            'value': '47',
+            'value': _baStats != null ? _baStats!.totalLeads.toString() : '47',
             'icon': Icons.assignment_rounded,
             'color': AppThemes.blueAccent,
             'change': '+3 today',
           },
           {
-            'title': 'Completed',
-            'value': '23',
+            'title': 'Registered',
+            'value': _baStats != null ? _baStats!.registeredLeads.toString() : '23',
             'icon': Icons.check_circle_rounded,
             'color': AppThemes.greenAccent,
             'change': 'This week',
           },
           {
-            'title': 'In Progress',
-            'value': '12',
-            'icon': Icons.hourglass_empty_rounded,
-            'color': AppThemes.orangeAccent,
-            'change': 'Active now',
-          },
-          {
-            'title': 'Follow-ups',
-            'value': '8',
-            'icon': Icons.schedule_rounded,
+            'title': 'Conversion Rate',
+            'value': _baStats != null ? '${_baStats!.conversionRate.toStringAsFixed(1)}%' : '28.6%',
+            'icon': Icons.trending_up_rounded,
             'color': AppThemes.purpleAccent,
-            'change': 'Due today',
+            'change': 'Overall',
           },
+          // {
+          //   'title': 'Follow-ups',
+          //   'value': '8',
+          //   'icon': Icons.schedule_rounded,
+          //   'color': AppThemes.orangeAccent,
+          //   'change': 'Due today',
+          // },
         ];
         final stat = stats[index];
         return _buildStatCard(
@@ -589,6 +739,78 @@ class _ModernBASpecialistDashboardState
           isDarkMode,
         );
       },
+    );
+  }
+
+  Widget _buildShimmerStatsGrid(bool isDarkMode, int crossAxisCount, double spacing, double screenWidth) {
+    return Shimmer.fromColors(
+      baseColor: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
+      highlightColor: isDarkMode ? Colors.grey[600]! : Colors.grey[100]!,
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: crossAxisCount,
+          crossAxisSpacing: spacing,
+          mainAxisSpacing: spacing,
+          childAspectRatio: screenWidth < 400 ? 1.05 : 1.1,
+        ),
+        itemCount: 4,
+        itemBuilder: (context, index) {
+          return Container(
+            padding: EdgeInsets.all(screenWidth * 0.04),
+            decoration: BoxDecoration(
+              color: isDarkMode ? Colors.grey[800] : Colors.white,
+              borderRadius: BorderRadius.circular(screenWidth * 0.03),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: isDarkMode ? Colors.grey[700] : Colors.grey[200],
+                        borderRadius: BorderRadius.circular(screenWidth * 0.03),
+                      ),
+                    ),
+                    Container(
+                      width: 60,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        color: isDarkMode ? Colors.grey[700] : Colors.grey[200],
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  width: 60,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: isDarkMode ? Colors.grey[700] : Colors.grey[200],
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  width: 80,
+                  height: 15,
+                  decoration: BoxDecoration(
+                    color: isDarkMode ? Colors.grey[700] : Colors.grey[200],
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -1345,178 +1567,475 @@ class _ModernBASpecialistDashboardState
 
   Widget _buildProfileView(bool isDarkMode) {
     final screenWidth = MediaQuery.of(context).size.width;
-    return Padding(
-      padding: EdgeInsets.all(screenWidth * 0.04),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                color: isDarkMode ? Colors.black : const Color(0xFFF8FAFC),
+    
+    return RefreshIndicator(
+      onRefresh: () async {
+        await _loadDashboardStats(forceRefresh: true);
+      },
+      child: Padding(
+        padding: EdgeInsets.all(screenWidth * 0.04),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: isDarkMode ? Colors.black : const Color(0xFFF8FAFC),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Profile',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: isDarkMode
+                              ? Colors.white
+                              : const Color(0xFF1A1A1A),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    _buildActionButton(
+                      context,
+                      Icons.edit_rounded,
+                      'Edit Profile',
+                      () => _showEditProfileDialog(),
+                      isDarkMode,
+                    ),
+                  ],
+                ),
               ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Profile',
+              const SizedBox(height: 24),
+              Container(
+                width: double.infinity,
+                margin: EdgeInsets.symmetric(
+                  horizontal: screenWidth * 0.01,
+                  vertical: 8,
+                ),
+                padding: EdgeInsets.all(screenWidth * 0.04),
+                decoration: BoxDecoration(
+                  color: isDarkMode ? const Color(0xFF1A1A1A) : Colors.white,
+                  borderRadius: BorderRadius.circular(screenWidth * 0.04),
+                  boxShadow: [
+                    BoxShadow(
+                      color: isDarkMode
+                          ? Colors.black.withValues(alpha: 0.15)
+                          : Colors.grey.withValues(alpha: 0.06),
+                      blurRadius: screenWidth * 0.01,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    CircleAvatar(
+                      radius: screenWidth < 360 ? 40 : 50,
+                      backgroundColor: AppThemes.primaryColor.withValues(
+                        alpha: 0.1,
+                      ),
+                      child: Text(
+                        _userName.isNotEmpty ? _userName[0].toUpperCase() : 'U',
+                        style: TextStyle(
+                          color: AppThemes.primaryColor,
+                          fontSize: screenWidth < 360 ? 28 : 36,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      _userName,
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: screenWidth < 360 ? 20 : 24,
                         fontWeight: FontWeight.w600,
                         color: isDarkMode
                             ? Colors.white
-                            : const Color(0xFF1A1A1A),
+                            : AppThemes.lightPrimaryText,
                       ),
-                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  _buildActionButton(
-                    context,
-                    Icons.edit_rounded,
-                    'Edit Profile',
-                    () => (),
-                    isDarkMode,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            Container(
-              width: double.infinity,
-              margin: EdgeInsets.symmetric(
-                horizontal: screenWidth * 0.01,
-                vertical: 8,
-              ),
-              padding: EdgeInsets.all(screenWidth * 0.04),
-              decoration: BoxDecoration(
-                color: isDarkMode ? const Color(0xFF1A1A1A) : Colors.white,
-                borderRadius: BorderRadius.circular(screenWidth * 0.04),
-                boxShadow: [
-                  BoxShadow(
-                    color: isDarkMode
-                        ? Colors.black.withValues(alpha: 0.15)
-                        : Colors.grey.withValues(alpha: 0.06),
-                    blurRadius: screenWidth * 0.01,
-                    offset: const Offset(0, 1),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  CircleAvatar(
-                    radius: screenWidth < 360 ? 40 : 50,
-                    backgroundColor: AppThemes.primaryColor.withValues(
-                      alpha: 0.1,
-                    ),
-                    child: Text(
-                      _userName.isNotEmpty ? _userName[0].toUpperCase() : 'U',
+                    Text(
+                      _userRole,
                       style: TextStyle(
-                        color: AppThemes.primaryColor,
-                        fontSize: screenWidth < 360 ? 28 : 36,
-                        fontWeight: FontWeight.w600,
+                        fontSize: screenWidth < 360 ? 14 : 16,
+                        color: isDarkMode
+                            ? AppThemes.darkSecondaryText
+                            : AppThemes.lightSecondaryText,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    _userName,
-                    style: TextStyle(
-                      fontSize: screenWidth < 360 ? 20 : 24,
-                      fontWeight: FontWeight.w600,
+                    const SizedBox(height: 30),
+                    _buildProfileStats(isDarkMode),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              // Add BA Stats section to profile view
+              Container(
+                width: double.infinity,
+                margin: EdgeInsets.symmetric(
+                  horizontal: screenWidth * 0.01,
+                  vertical: 8,
+                ),
+                padding: EdgeInsets.all(screenWidth * 0.04),
+                decoration: BoxDecoration(
+                  color: isDarkMode ? const Color(0xFF1A1A1A) : Colors.white,
+                  borderRadius: BorderRadius.circular(screenWidth * 0.04),
+                  boxShadow: [
+                    BoxShadow(
                       color: isDarkMode
-                          ? Colors.white
-                          : AppThemes.lightPrimaryText,
+                          ? Colors.black.withValues(alpha: 0.15)
+                          : Colors.grey.withValues(alpha: 0.06),
+                      blurRadius: screenWidth * 0.01,
+                      offset: const Offset(0, 1),
                     ),
-                  ),
-                  Text(
-                    _userRole,
-                    style: TextStyle(
-                      fontSize: screenWidth < 360 ? 14 : 16,
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Performance Statistics',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: isDarkMode
+                            ? Colors.white
+                            : AppThemes.lightPrimaryText,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildBAStatsSection(isDarkMode),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              Container(
+                width: double.infinity,
+                margin: EdgeInsets.symmetric(
+                  horizontal: screenWidth * 0.01,
+                  vertical: 8,
+                ),
+                padding: EdgeInsets.all(screenWidth * 0.04),
+                decoration: BoxDecoration(
+                  color: isDarkMode ? const Color(0xFF1A1A1A) : Colors.white,
+                  borderRadius: BorderRadius.circular(screenWidth * 0.04),
+                  boxShadow: [
+                    BoxShadow(
                       color: isDarkMode
-                          ? AppThemes.darkSecondaryText
-                          : AppThemes.lightSecondaryText,
+                          ? Colors.black.withValues(alpha: 0.15)
+                          : Colors.grey.withValues(alpha: 0.06),
+                      blurRadius: screenWidth * 0.01,
+                      offset: const Offset(0, 1),
                     ),
-                  ),
-                  const SizedBox(height: 30),
-                  _buildProfileStats(isDarkMode),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            Container(
-              width: double.infinity,
-              margin: EdgeInsets.symmetric(
-                horizontal: screenWidth * 0.01,
-                vertical: 8,
-              ),
-              padding: EdgeInsets.all(screenWidth * 0.04),
-              decoration: BoxDecoration(
-                color: isDarkMode ? const Color(0xFF1A1A1A) : Colors.white,
-                borderRadius: BorderRadius.circular(screenWidth * 0.04),
-                boxShadow: [
-                  BoxShadow(
-                    color: isDarkMode
-                        ? Colors.black.withValues(alpha: 0.15)
-                        : Colors.grey.withValues(alpha: 0.06),
-                    blurRadius: screenWidth * 0.01,
-                    offset: const Offset(0, 1),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Settings',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: isDarkMode
-                          ? Colors.white
-                          : AppThemes.lightPrimaryText,
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Settings',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: isDarkMode
+                            ? Colors.white
+                            : AppThemes.lightPrimaryText,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildSettingsItem(
-                    Icons.notifications_rounded,
-                    'Notifications',
-                    isDarkMode,
-                  ),
-                  _buildSettingsItem(
-                    Icons.security_rounded,
-                    'Privacy & Security',
-                    isDarkMode,
-                  ),
-                  _buildSettingsItem(
-                    Icons.help_rounded,
-                    'Help & Support',
-                    isDarkMode,
-                  ),
-                  _buildSettingsItem(
-                    Icons.logout_rounded,
-                    'Logout',
-                    isDarkMode,
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    _buildSettingsItem(
+                      Icons.notifications_rounded,
+                      'Notifications',
+                      isDarkMode,
+                    ),
+                    _buildSettingsItem(
+                      Icons.security_rounded,
+                      'Privacy & Security',
+                      isDarkMode,
+                    ),
+                    _buildSettingsItem(
+                      Icons.help_rounded,
+                      'Help & Support',
+                      isDarkMode,
+                    ),
+                    _buildSettingsItem(
+                      Icons.logout_rounded,
+                      'Logout',
+                      isDarkMode,
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 100), // Space for floating nav
-          ],
+              const SizedBox(height: 100), // Space for floating nav
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildProfileStats(bool isDarkMode) {
+    // Show shimmer effect while loading
+    if (_isLoadingDashboardStats && _baStats == null) {
+      return _buildShimmerProfileStats(isDarkMode);
+    }
+    
+    // Use dynamic data from _baStats if available, otherwise use static data
+    String leadsValue = _baStats != null ? _baStats!.totalLeads.toString() : '47';
+    String completedValue = _baStats != null ? _baStats!.registeredLeads.toString() : '23';
+    String successRateValue = _baStats != null ? '${_baStats!.conversionRate.toStringAsFixed(1)}%' : '89%';
+    
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        _buildStatColumn('47', 'Leads', isDarkMode),
-        _buildStatColumn('23', 'Completed', isDarkMode),
-        _buildStatColumn('89%', 'Success Rate', isDarkMode),
+        _buildStatColumn(leadsValue, 'Leads', isDarkMode),
+        _buildStatColumn(completedValue, 'Registered', isDarkMode),
+        _buildStatColumn(successRateValue, 'Conversion', isDarkMode),
       ],
     );
   }
+
+  Widget _buildShimmerProfileStats(bool isDarkMode) {
+    return Shimmer.fromColors(
+      baseColor: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
+      highlightColor: isDarkMode ? Colors.grey[600]! : Colors.grey[100]!,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          Column(
+            children: [
+              Container(
+                width: 50,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: isDarkMode ? Colors.grey[700] : Colors.grey[200],
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Container(
+                width: 50,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: isDarkMode ? Colors.grey[700] : Colors.grey[200],
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ],
+          ),
+          Column(
+            children: [
+              Container(
+                width: 50,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: isDarkMode ? Colors.grey[700] : Colors.grey[200],
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Container(
+                width: 50,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: isDarkMode ? Colors.grey[700] : Colors.grey[200],
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ],
+          ),
+          Column(
+            children: [
+              Container(
+                width: 50,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: isDarkMode ? Colors.grey[700] : Colors.grey[200],
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Container(
+                width: 50,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: isDarkMode ? Colors.grey[700] : Colors.grey[200],
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBAStatsSection(bool isDarkMode) {
+    // Show shimmer effect while loading
+    if (_isLoadingDashboardStats && _baStats == null) {
+      return _buildShimmerBAStatsSection(isDarkMode);
+    }
+
+    if (_dashboardStatsError != null) {
+      return Center(
+        child: Column(
+          children: [
+            Text('Error loading stats: $_dashboardStatsError'),
+            ElevatedButton(
+              onPressed: () => _loadDashboardStats(forceRefresh: true),
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_baStats == null) {
+      // Load stats if not available
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadDashboardStats();
+      });
+      return _buildShimmerBAStatsSection(isDarkMode);
+    }
+
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _buildStatItem(
+              'Total Leads',
+              _baStats!.totalLeads.toString(),
+              AppThemes.blueAccent,
+              isDarkMode,
+            ),
+            _buildStatItem(
+              'Registered',
+              _baStats!.registeredLeads.toString(),
+              AppThemes.greenAccent,
+              isDarkMode,
+            ),
+            _buildStatItem(
+              'Conversion',
+              '${_baStats!.conversionRate.toStringAsFixed(1)}%',
+              AppThemes.purpleAccent,
+              isDarkMode,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildShimmerBAStatsSection(bool isDarkMode) {
+    return Shimmer.fromColors(
+      baseColor: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
+      highlightColor: isDarkMode ? Colors.grey[600]! : Colors.grey[100]!,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          Column(
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: isDarkMode ? Colors.grey[700] : Colors.grey[200],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                width: 60,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: isDarkMode ? Colors.grey[700] : Colors.grey[200],
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ],
+          ),
+          Column(
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: isDarkMode ? Colors.grey[700] : Colors.grey[200],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                width: 60,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: isDarkMode ? Colors.grey[700] : Colors.grey[200],
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ],
+          ),
+          Column(
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: isDarkMode ? Colors.grey[700] : Colors.grey[200],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                width: 60,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: isDarkMode ? Colors.grey[700] : Colors.grey[200],
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String label, String value, Color color, bool isDarkMode) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            value,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: isDarkMode
+                ? AppThemes.darkSecondaryText
+                : AppThemes.lightSecondaryText,
+          ),
+        ),
+      ],
+    );
+  }
+
+
 
   Widget _buildActionButton(
     BuildContext context,
@@ -2071,6 +2590,70 @@ class _ModernBASpecialistDashboardState
               );
             },
             child: const Text('Add Task'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditProfileDialog() {
+    final nameController = TextEditingController(text: _userName);
+    final roleController = TextEditingController(text: _userRole);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Profile'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(
+                labelText: 'Name',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: roleController,
+              decoration: const InputDecoration(
+                labelText: 'Role',
+                border: OutlineInputBorder(),
+              ),
+              enabled: false, // Role shouldn't be editable
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              try {
+                // In a real implementation, this would call an API to update the profile
+                // For now, we'll just update the UI
+                setState(() {
+                  _userName = nameController.text;
+                });
+                
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Profile updated successfully!')),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error updating profile: ${e.toString()}')),
+                  );
+                }
+              }
+            },
+            child: const Text('Save'),
           ),
         ],
       ),

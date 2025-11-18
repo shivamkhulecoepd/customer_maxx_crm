@@ -19,9 +19,8 @@ import 'package:customer_maxx_crm/blocs/leads/leads_state.dart';
 import 'package:customer_maxx_crm/blocs/leads/leads_event.dart';
 import 'package:customer_maxx_crm/services/lead_service.dart';
 import 'package:customer_maxx_crm/blocs/lead_manager_dashboard/lead_manager_dashboard_bloc.dart';
-import 'package:customer_maxx_crm/blocs/lead_manager_dashboard/lead_manager_dashboard_event.dart';
-import 'package:customer_maxx_crm/blocs/lead_manager_dashboard/lead_manager_dashboard_state.dart';
 import 'package:customer_maxx_crm/models/dashboard_stats.dart';
+import 'package:shimmer/shimmer.dart';
 
 class ModernLeadManagerDashboard extends StatefulWidget {
   final int initialIndex;
@@ -39,6 +38,10 @@ class _ModernLeadManagerDashboardState
   String _userName = '';
   String _userRole = '';
   String _userId = '';
+  bool _isLoadingDashboardStats = false;
+  bool _hasLoadedInitialDashboardStats = false;
+  LeadManagerStats? _leadManagerStats;
+  String? _dashboardStatsError;
 
   // Add Lead Form Controllers
   final _formKey = GlobalKey<FormState>();
@@ -70,6 +73,7 @@ class _ModernLeadManagerDashboardState
   bool _hasLoadedInitialLeadsData = false;
 
   final leadService = ServiceLocator.leadService;
+  late final LeadManagerDashboardBloc _leadManagerDashboardBloc;
 
   @override
   void initState() {
@@ -92,38 +96,35 @@ class _ModernLeadManagerDashboardState
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => LeadManagerDashboardBloc(),
-      child: BlocBuilder<ThemeBloc, ThemeState>(
-        builder: (context, themeState) {
-          final isDarkMode = themeState.isDarkMode;
+    return BlocBuilder<ThemeBloc, ThemeState>(
+      builder: (context, themeState) {
+        final isDarkMode = themeState.isDarkMode;
 
-          return Scaffold(
-            appBar: AppBar(
-              automaticallyImplyLeading: false,
-              title: _buildCustomAppBar(context, isDarkMode),
-              centerTitle: true,
-              backgroundColor: isDarkMode ? Colors.black : Colors.white,
-            ),
-            // drawer: _buildModernDrawer(context),
-            drawer: ModernDrawer(),
-            bottomNavigationBar: FloatingNavigationBar(
-              currentIndex: _currentNavIndex,
-              userRole: _userRole,
-              onTap: (index) {
-                setState(() {
-                  _currentNavIndex = index;
-                });
-              },
-            ),
-            // Only show floating action button on the main dashboard (index 0)
-            floatingActionButton: _currentNavIndex == 0
-                ? _buildFloatingActionButton(isDarkMode)
-                : null,
-            body: _buildBody(isDarkMode),
-          );
-        },
-      ),
+        return Scaffold(
+          appBar: AppBar(
+            automaticallyImplyLeading: false,
+            title: _buildCustomAppBar(context, isDarkMode),
+            centerTitle: true,
+            backgroundColor: isDarkMode ? Colors.black : Colors.white,
+          ),
+          // drawer: _buildModernDrawer(context),
+          drawer: ModernDrawer(),
+          bottomNavigationBar: FloatingNavigationBar(
+            currentIndex: _currentNavIndex,
+            userRole: _userRole,
+            onTap: (index) {
+              setState(() {
+                _currentNavIndex = index;
+              });
+            },
+          ),
+          // Only show floating action button on the main dashboard (index 0)
+          floatingActionButton: _currentNavIndex == 0
+              ? _buildFloatingActionButton(isDarkMode)
+              : null,
+          body: _buildBody(isDarkMode),
+        );
+      },
     );
   }
 
@@ -149,10 +150,15 @@ class _ModernLeadManagerDashboardState
       context.read<LeadsBloc>().add(LoadAllLeads());
 
       // Force refresh lead manager dashboard data
-      final managerId = int.tryParse(_userId);
-      if (managerId != null) {
-        context.read<LeadManagerDashboardBloc>().add(
-          LoadLeadManagerStats(managerId: managerId),
+      await _loadDashboardStats(forceRefresh: true);
+
+      // Show a success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Data refreshed successfully'),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     } catch (e) {
@@ -165,6 +171,53 @@ class _ModernLeadManagerDashboardState
           ),
         );
       }
+    }
+  }
+
+  Future<void> _loadDashboardStats({bool forceRefresh = false}) async {
+    // Don't load if already loaded or currently loading, unless force refresh is requested
+    if (!forceRefresh &&
+        _hasLoadedInitialDashboardStats &&
+        _leadManagerStats != null &&
+        !_isLoadingDashboardStats) {
+      return;
+    }
+
+    setState(() {
+      _isLoadingDashboardStats = true;
+      _dashboardStatsError = null;
+      // Reset the stats to show loading shimmer
+      if (forceRefresh) {
+        _leadManagerStats = null;
+      }
+    });
+
+    try {
+      log('Loading Lead Manager dashboard stats for managerId: $_userId');
+      final managerId = int.tryParse(_userId);
+      if (managerId != null) {
+        final dashboardService = ServiceLocator.dashboardService;
+        final stats = await dashboardService.getLeadManagerStats(
+          managerId: managerId,
+        );
+        log(
+          'Lead Manager Stats loaded: Total Leads: ${stats.totalLeads}, Status Counts: ${stats.statusCounts.length}',
+        );
+
+        setState(() {
+          _leadManagerStats = stats;
+          _isLoadingDashboardStats = false;
+          _hasLoadedInitialDashboardStats = true;
+        });
+      } else {
+        throw Exception('Invalid manager ID: $_userId');
+      }
+    } catch (e) {
+      log('Error loading Lead Manager dashboard stats: $e');
+      setState(() {
+        _dashboardStatsError = e.toString();
+        _isLoadingDashboardStats = false;
+      });
     }
   }
 
@@ -434,8 +487,20 @@ class _ModernLeadManagerDashboardState
   }
 
   Widget _buildDashboardView(bool isDarkMode) {
+    // Load dashboard stats if not already loaded
+    if (!_hasLoadedInitialDashboardStats &&
+        _leadManagerStats == null &&
+        !_isLoadingDashboardStats &&
+        _dashboardStatsError == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadDashboardStats();
+      });
+    }
+
     return RefreshIndicator(
-      onRefresh: _refreshAllData,
+      onRefresh: () async {
+        await _loadDashboardStats(forceRefresh: true);
+      },
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         child: Padding(
@@ -502,13 +567,30 @@ class _ModernLeadManagerDashboardState
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  'You have 12 new leads today',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.8),
-                    fontSize: 12,
+                if (_leadManagerStats != null)
+                  Text(
+                    'You have ${_leadManagerStats!.statusCounts['Registered'] ?? 0} registered leads',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.8),
+                      fontSize: 12,
+                    ),
+                  )
+                else if (_isLoadingDashboardStats)
+                  Text(
+                    'Loading lead statistics...',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.8),
+                      fontSize: 12,
+                    ),
+                  )
+                else
+                  Text(
+                    'Welcome to your dashboard',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.8),
+                      fontSize: 12,
+                    ),
                   ),
-                ),
               ],
             ),
           ),
@@ -623,65 +705,138 @@ class _ModernLeadManagerDashboardState
   }
 
   Widget _buildLeadManagerStats(bool isDarkMode) {
-    return BlocBuilder<LeadManagerDashboardBloc, LeadManagerDashboardState>(
-      builder: (context, state) {
-        // Load stats data when the view is first accessed
-        if (state is LeadManagerDashboardInitial) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            final managerId = int.tryParse(_userId);
-            if (managerId != null) {
-              context.read<LeadManagerDashboardBloc>().add(
-                LoadLeadManagerStats(managerId: managerId),
-              );
-            }
-          });
-        }
-
-        if (state is LeadManagerDashboardLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (state is LeadManagerDashboardError) {
-          return Center(
-            child: Column(
-              children: [
-                Text('Error: ${state.message}'),
-                ElevatedButton(
-                  onPressed: () {
-                    final managerId = int.tryParse(_userId);
-                    if (managerId != null) {
-                      context.read<LeadManagerDashboardBloc>().add(
-                        LoadLeadManagerStats(managerId: managerId),
-                      );
-                    }
-                  },
-                  child: const Text('Retry'),
-                ),
-              ],
-            ),
-          );
-        }
-
-        if (state is LeadManagerDashboardLoaded) {
-          final stats = state.stats;
-          return _buildPerformanceStatsGrid(stats, isDarkMode);
-        }
-
-        return const SizedBox.shrink();
-      },
-    );
-  }
-
-  Widget _buildPerformanceStatsGrid(LeadManagerStats stats, bool isDarkMode) {
     final screenWidth = MediaQuery.of(context).size.width;
     final crossAxisCount = screenWidth < 600 ? 2 : 4;
     final spacing = screenWidth * 0.03;
 
-    // Calculate total leads from status counts
-    int totalLeads = 0;
-    stats.statusCounts.forEach((key, value) {
-      totalLeads += value;
-    });
+    // Show shimmer effect while loading
+    if (_isLoadingDashboardStats && _leadManagerStats == null) {
+      return _buildShimmerLeadManagerStats(isDarkMode);
+    }
+
+    // Show error if there was an error loading stats
+    if (_dashboardStatsError != null && _leadManagerStats == null) {
+      return Center(
+        child: Column(
+          children: [
+            Text('Error: $_dashboardStatsError'),
+            ElevatedButton(
+              onPressed: () {
+                _loadDashboardStats(forceRefresh: true);
+              },
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Show stats grid if we have data
+    if (_leadManagerStats != null) {
+      return _buildPerformanceStatsGrid(_leadManagerStats!, isDarkMode);
+    }
+
+    // Fallback to shimmer if no data and not loading
+    return _buildShimmerLeadManagerStats(isDarkMode);
+  }
+
+  Widget _buildShimmerLeadManagerStats(bool isDarkMode) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final crossAxisCount = screenWidth < 600 ? 2 : 4;
+    final spacing = screenWidth * 0.03;
+
+    return Shimmer.fromColors(
+      baseColor: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
+      highlightColor: isDarkMode ? Colors.grey[600]! : Colors.grey[100]!,
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: crossAxisCount,
+          crossAxisSpacing: spacing,
+          mainAxisSpacing: spacing,
+          childAspectRatio: screenWidth < 400 ? 1.2 : 1.1,
+        ),
+        itemCount: 4, // Show 4 shimmer cards
+        itemBuilder: (context, index) {
+          return Container(
+            padding: EdgeInsets.all(screenWidth * 0.04),
+            decoration: BoxDecoration(
+              color: isDarkMode ? Colors.grey[800] : Colors.white,
+              borderRadius: BorderRadius.circular(screenWidth * 0.03),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: isDarkMode ? Colors.grey[700] : Colors.grey[200],
+                        borderRadius: BorderRadius.circular(screenWidth * 0.03),
+                      ),
+                    ),
+                    Container(
+                      width: 60,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        color: isDarkMode ? Colors.grey[700] : Colors.grey[200],
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  width: 60,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: isDarkMode ? Colors.grey[700] : Colors.grey[200],
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  width: 80,
+                  height: 15,
+                  decoration: BoxDecoration(
+                    color: isDarkMode ? Colors.grey[700] : Colors.grey[200],
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  width: 60,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: isDarkMode ? Colors.grey[700] : Colors.grey[200],
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildPerformanceStatsGrid(LeadManagerStats stats, bool isDarkMode) {
+    developer.log(
+      'Building PerformanceStatsGrid with ${stats.totalLeads} total leads',
+    );
+    developer.log('Status counts: ${stats.statusCounts}');
+
+    final screenWidth = MediaQuery.of(context).size.width;
+    final crossAxisCount = screenWidth < 600 ? 2 : 4;
+    final spacing = screenWidth * 0.03;
+
+    // Use totalLeads from the stats object
+    final totalLeads = stats.totalLeads;
 
     return GridView.builder(
       shrinkWrap: true,
@@ -760,54 +915,49 @@ class _ModernLeadManagerDashboardState
   }
 
   Widget _buildStatusCountsChart(bool isDarkMode) {
-    return BlocBuilder<LeadManagerDashboardBloc, LeadManagerDashboardState>(
-      builder: (context, state) {
-        if (state is LeadManagerDashboardLoaded) {
-          final stats = state.stats;
+    if (_leadManagerStats == null) {
+      return const SizedBox.shrink();
+    }
 
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Status Distribution',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: isDarkMode ? Colors.white : AppThemes.lightPrimaryText,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                width: double.infinity,
-                margin: EdgeInsets.symmetric(
-                  horizontal: MediaQuery.of(context).size.width * 0.01,
-                  vertical: 8,
-                ),
-                padding: EdgeInsets.all(
-                  MediaQuery.of(context).size.width * 0.04,
-                ),
-                decoration: BoxDecoration(
-                  color: isDarkMode ? const Color(0xFF1A1A1A) : Colors.white,
-                  borderRadius: BorderRadius.circular(
-                    MediaQuery.of(context).size.width * 0.04,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: isDarkMode
-                          ? Colors.black.withValues(alpha: 0.15)
-                          : Colors.grey.withValues(alpha: 0.06),
-                      blurRadius: MediaQuery.of(context).size.width * 0.01,
-                      offset: const Offset(0, 1),
-                    ),
-                  ],
-                ),
-                child: Column(children: _buildStatusBars(stats, isDarkMode)),
+    final stats = _leadManagerStats!;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Status Distribution',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: isDarkMode ? Colors.white : AppThemes.lightPrimaryText,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          width: double.infinity,
+          margin: EdgeInsets.symmetric(
+            horizontal: MediaQuery.of(context).size.width * 0.01,
+            vertical: 8,
+          ),
+          padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.04),
+          decoration: BoxDecoration(
+            color: isDarkMode ? const Color(0xFF1A1A1A) : Colors.white,
+            borderRadius: BorderRadius.circular(
+              MediaQuery.of(context).size.width * 0.04,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: isDarkMode
+                    ? Colors.black.withValues(alpha: 0.15)
+                    : Colors.grey.withValues(alpha: 0.06),
+                blurRadius: MediaQuery.of(context).size.width * 0.01,
+                offset: const Offset(0, 1),
               ),
             ],
-          );
-        }
-        return const SizedBox.shrink();
-      },
+          ),
+          child: Column(children: _buildStatusBars(stats, isDarkMode)),
+        ),
+      ],
     );
   }
 
@@ -903,35 +1053,70 @@ class _ModernLeadManagerDashboardState
           ],
         ),
         const SizedBox(height: 16),
-        Container(
-          width: double.infinity,
-          margin: EdgeInsets.symmetric(
-            horizontal: MediaQuery.of(context).size.width * 0.01,
-            vertical: 8,
-          ),
-          padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.04),
-          decoration: BoxDecoration(
-            color: isDarkMode ? const Color(0xFF1A1A1A) : Colors.white,
-            borderRadius: BorderRadius.circular(
-              MediaQuery.of(context).size.width * 0.04,
+        // Show shimmer while loading and no data
+        if (_isLoadingDashboardStats && _leadManagerStats == null)
+          _buildShimmerRecentLeads(isDarkMode)
+        else if (_leadManagerStats != null)
+          Container(
+            width: double.infinity,
+            margin: EdgeInsets.symmetric(
+              horizontal: MediaQuery.of(context).size.width * 0.01,
+              vertical: 8,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: isDarkMode
-                    ? Colors.black.withValues(alpha: 0.15)
-                    : Colors.grey.withValues(alpha: 0.06),
-                blurRadius: MediaQuery.of(context).size.width * 0.01,
-                offset: const Offset(0, 1),
+            padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.04),
+            decoration: BoxDecoration(
+              color: isDarkMode ? const Color(0xFF1A1A1A) : Colors.white,
+              borderRadius: BorderRadius.circular(
+                MediaQuery.of(context).size.width * 0.04,
               ),
-            ],
+              boxShadow: [
+                BoxShadow(
+                  color: isDarkMode
+                      ? Colors.black.withValues(alpha: 0.15)
+                      : Colors.grey.withValues(alpha: 0.06),
+                  blurRadius: MediaQuery.of(context).size.width * 0.01,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+            ),
+            child: Column(
+              children: _leadManagerStats!.recentLeads
+                  .take(5)
+                  .map((lead) => _buildDynamicLeadListItem(lead, isDarkMode))
+                  .toList(),
+            ),
+          )
+        else
+          // Fallback to dummy data if there's an error or no data
+          Container(
+            width: double.infinity,
+            margin: EdgeInsets.symmetric(
+              horizontal: MediaQuery.of(context).size.width * 0.01,
+              vertical: 8,
+            ),
+            padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.04),
+            decoration: BoxDecoration(
+              color: isDarkMode ? const Color(0xFF1A1A1A) : Colors.white,
+              borderRadius: BorderRadius.circular(
+                MediaQuery.of(context).size.width * 0.04,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: isDarkMode
+                      ? Colors.black.withValues(alpha: 0.15)
+                      : Colors.grey.withValues(alpha: 0.06),
+                  blurRadius: MediaQuery.of(context).size.width * 0.01,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+            ),
+            child: Column(
+              children: _getDummyLeads()
+                  .take(5)
+                  .map((lead) => _buildLeadListItem(lead, isDarkMode))
+                  .toList(),
+            ),
           ),
-          child: Column(
-            children: _getDummyLeads()
-                .take(5)
-                .map((lead) => _buildLeadListItem(lead, isDarkMode))
-                .toList(),
-          ),
-        ),
       ],
     );
   }
@@ -972,7 +1157,6 @@ class _ModernLeadManagerDashboardState
                         : AppThemes.lightSecondaryText,
                   ),
                 ),
-                
               ],
             ),
           ),
@@ -1009,6 +1193,180 @@ class _ModernLeadManagerDashboardState
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDynamicLeadListItem(RecentLead lead, bool isDarkMode) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  lead.name,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: isDarkMode
+                        ? Colors.white
+                        : AppThemes.lightPrimaryText,
+                  ),
+                ),
+                Text(
+                  lead.email,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDarkMode
+                        ? AppThemes.darkSecondaryText
+                        : AppThemes.lightSecondaryText,
+                  ),
+                ),
+                Text(
+                  lead.phone,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDarkMode
+                        ? AppThemes.darkSecondaryText
+                        : AppThemes.lightSecondaryText,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                'Current Status',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDarkMode
+                      ? AppThemes.darkSecondaryText
+                      : AppThemes.lightSecondaryText,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppThemes.getStatusColor(
+                    lead.status,
+                  ).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  lead.status,
+                  style: TextStyle(
+                    color: AppThemes.getStatusColor(lead.status),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShimmerRecentLeads(bool isDarkMode) {
+    return Shimmer.fromColors(
+      baseColor: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
+      highlightColor: isDarkMode ? Colors.grey[600]! : Colors.grey[100]!,
+      child: Container(
+        width: double.infinity,
+        margin: EdgeInsets.symmetric(
+          horizontal: MediaQuery.of(context).size.width * 0.01,
+          vertical: 8,
+        ),
+        padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.04),
+        decoration: BoxDecoration(
+          color: isDarkMode ? const Color(0xFF1A1A1A) : Colors.white,
+          borderRadius: BorderRadius.circular(
+            MediaQuery.of(context).size.width * 0.04,
+          ),
+        ),
+        child: Column(
+          children: List.generate(
+            5,
+            (index) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          height: 16,
+                          width: 100,
+                          decoration: BoxDecoration(
+                            color: isDarkMode
+                                ? Colors.grey[700]
+                                : Colors.grey[200],
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          height: 12,
+                          width: 150,
+                          decoration: BoxDecoration(
+                            color: isDarkMode
+                                ? Colors.grey[700]
+                                : Colors.grey[200],
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          height: 12,
+                          width: 120,
+                          decoration: BoxDecoration(
+                            color: isDarkMode
+                                ? Colors.grey[700]
+                                : Colors.grey[200],
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Container(
+                        height: 12,
+                        width: 80,
+                        decoration: BoxDecoration(
+                          color: isDarkMode
+                              ? Colors.grey[700]
+                              : Colors.grey[200],
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        height: 20,
+                        width: 60,
+                        decoration: BoxDecoration(
+                          color: isDarkMode
+                              ? Colors.grey[700]
+                              : Colors.grey[200],
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -1475,8 +1833,8 @@ class _ModernLeadManagerDashboardState
                   'Not Connected',
                   'Demo Interested',
                   'Demo Attended',
-                  'Follow Up Planned',
-                  'Follow Up Completed',
+                  'Follow-up Planned',
+                  'Follow-up Completed',
                   'Converted Warm Lead',
                   'Converted Hot Lead',
                   'Registered',

@@ -770,7 +770,7 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Admin Dashboard - CustomerMaxx CRM',
+                  'Admin Dashboard - CustomerMax CRM',
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.9),
                     fontSize: 14,

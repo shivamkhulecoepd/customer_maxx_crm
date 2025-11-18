@@ -606,15 +606,15 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
         'Not Connected',
         'Demo Interested',
         'Demo Attended',
-        'Follow Up Planned',
-        'Follow Up Completed',
+        'Follow-up Planned',
+        'Follow-up Completed',
         'Converted Warm Lead',
         'Converted Hot Lead',
         'Registered',
       ]);
     } else {
       // Generic options
-      filterOptions.addAll(['Option 1', 'Option 2', 'Option 3']);
+      // filterOptions.addAll(['Option 1', 'Option 2', 'Option 3']);
     }
 
     String tempSelectedFilter = _selectedFilter;
@@ -629,10 +629,8 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
               width: double.maxFinite,
               child: ListView(
                 shrinkWrap: true,
-                children: filterOptions.map((option) {
-                  return RadioListTile<String>.adaptive(
-                    title: Text(option),
-                    value: option,
+                children: [
+                  RadioGroup<String>(
                     groupValue: tempSelectedFilter,
                     onChanged: (value) {
                       if (value != null) {
@@ -641,8 +639,16 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
                         });
                       }
                     },
-                  );
-                }).toList(),
+                    child: Column(
+                      children: filterOptions.map((option) {
+                        return RadioListTile<String>.adaptive(
+                          title: Text(option),
+                          value: option,
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
               ),
             ),
             actions: [

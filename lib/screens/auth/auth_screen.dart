@@ -17,10 +17,7 @@ enum AuthMode { login, register }
 class ModernAuthScreen extends StatefulWidget {
   final AuthMode authMode;
 
-  const ModernAuthScreen({
-    super.key,
-    required this.authMode,
-  });
+  const ModernAuthScreen({super.key, required this.authMode});
 
   @override
   State<ModernAuthScreen> createState() => _ModernAuthScreenState();
@@ -42,47 +39,44 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
   String _selectedRole = 'Admin';
-  
+
   // Error handling state
   String _errorMessage = '';
   bool _showError = false;
-  bool _isSuccessMessage = false;  // Flag to indicate if the message is a success message
-  
+  bool _isSuccessMessage =
+      false; // Flag to indicate if the message is a success message
+
   // Map display names to API role values
   final Map<String, String> _roleMap = {
     'Admin': 'admin',
     'Lead Manager': 'lead_manager',
     'BA Specialist': 'ba_specialist',
   };
-  
+
   final List<String> _roles = ['Admin', 'Lead Manager', 'BA Specialist'];
 
   @override
   void initState() {
     super.initState();
     _currentMode = widget.authMode;
-    
+
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
-    
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutCubic,
-    ));
-    
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: Curves.easeOutCubic,
+          ),
+        );
+
     _animationController.forward();
   }
 
@@ -101,48 +95,59 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         // Add logging to see what state is being emitted
-        developer.log('AuthScreen received state: ${state.runtimeType}', name: 'AuthScreen');
-        
+        developer.log(
+          'AuthScreen received state: ${state.runtimeType}',
+          name: 'AuthScreen',
+        );
+
         if (state is AuthError) {
           // Log the technical error details
-          developer.log('Authentication error: ${state.message}', name: 'AuthScreen');
-          
+          developer.log(
+            'Authentication error: ${state.message}',
+            name: 'AuthScreen',
+          );
+
           // Show the actual backend error message to the user
           setState(() {
-            _errorMessage = state.message;  // Display the actual backend message
+            _errorMessage = state.message; // Display the actual backend message
             _showError = true;
-            _isSuccessMessage = false;  // Flag to indicate this is an error message
+            _isSuccessMessage =
+                false; // Flag to indicate this is an error message
           });
-          
+
           // Automatically hide the error after 5 seconds
           Future.delayed(const Duration(seconds: 5), () {
             if (mounted) {
               setState(() {
                 _showError = false;
-                _isSuccessMessage = false;  // Reset the flag
+                _isSuccessMessage = false; // Reset the flag
               });
             }
           });
         } else if (state is AuthInitial && _currentMode == AuthMode.register) {
           // Show success message for registration
-          developer.log('Registration success: Switching to login mode', name: 'AuthScreen');
+          developer.log(
+            'Registration success: Switching to login mode',
+            name: 'AuthScreen',
+          );
           setState(() {
             _errorMessage = 'Registration successful! Please login.';
             _showError = true;
-            _isSuccessMessage = true;  // Flag to indicate this is a success message
+            _isSuccessMessage =
+                true; // Flag to indicate this is a success message
             _currentMode = AuthMode.login;
             _nameController.clear();
             _emailController.clear();
             _passwordController.clear();
             _confirmPasswordController.clear();
           });
-          
+
           // Automatically hide the message after 3 seconds
           Future.delayed(const Duration(seconds: 3), () {
             if (mounted) {
               setState(() {
                 _showError = false;
-                _isSuccessMessage = false;  // Reset the flag
+                _isSuccessMessage = false; // Reset the flag
               });
             }
           });
@@ -166,7 +171,8 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
                   dashboard = const ModernAdminDashboard();
                 } else if (userRole.toLowerCase().contains('lead')) {
                   dashboard = const ModernLeadManagerDashboard();
-                } else if (userRole.toLowerCase().contains('ba') || userRole.toLowerCase().contains('specialist')) {
+                } else if (userRole.toLowerCase().contains('ba') ||
+                    userRole.toLowerCase().contains('specialist')) {
                   dashboard = const ModernBASpecialistDashboard();
                 } else {
                   return;
@@ -188,12 +194,12 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
       child: BlocBuilder<ThemeBloc, ThemeState>(
         builder: (context, themeState) {
           final isDarkMode = themeState.isDarkMode;
-          
+
           return Scaffold(
-            backgroundColor: isDarkMode ? AppThemes.darkBackground : AppThemes.lightBackground,
-            body: SafeArea(
-              child: _buildMobileLayout(isDarkMode),
-            ),
+            backgroundColor: isDarkMode
+                ? AppThemes.darkBackground
+                : AppThemes.lightBackground,
+            body: SafeArea(child: _buildMobileLayout(isDarkMode)),
           );
         },
       ),
@@ -204,7 +210,7 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
     final width = MediaQuery.of(context).size.width;
     final padding = width < 360 ? 16.0 : 24.0;
     final topSpacing = width < 360 ? 20.0 : 40.0;
-    
+
     return SingleChildScrollView(
       child: Padding(
         padding: EdgeInsets.all(padding),
@@ -225,8 +231,6 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
     );
   }
 
-
-
   Widget _buildHeader(bool isDarkMode) {
     return FadeTransition(
       opacity: _fadeAnimation,
@@ -235,22 +239,24 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
         child: Column(
           children: [
             Container(
-              width: 80,
-              height: 80,
+              width: 100,
+              height: 100,
+              padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                gradient: AppThemes.getPrimaryGradient(),
+                gradient: AppThemes.getPrimaryGradient().withOpacity(0.1),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: AppThemes.getElevatedShadow(isDarkMode),
               ),
-              child: const Icon(
-                Icons.business_center_rounded,
-                color: Colors.white,
-                size: 40,
-              ),
+              // child: const Icon(
+              //   Icons.business_center_rounded,
+              //   color: Colors.white,
+              //   size: 40,
+              // ),
+              child: Image.asset("assets/customermaxcrm1.png"),
             ),
             const SizedBox(height: 24),
             Text(
-              'CustomerMaxx CRM',
+              'CustomerMax CRM',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.w700,
@@ -259,16 +265,17 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
             ),
             const SizedBox(height: 8),
             Text(
-              _currentMode == AuthMode.login 
+              _currentMode == AuthMode.login
                   ? 'Welcome back! Please sign in to continue'
                   : 'Create your account to get started',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
-                color: isDarkMode ? AppThemes.darkSecondaryText : AppThemes.lightSecondaryText,
+                color: isDarkMode
+                    ? AppThemes.darkSecondaryText
+                    : AppThemes.lightSecondaryText,
               ),
             ),
-
           ],
         ),
       ),
@@ -299,13 +306,17 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
                 ),
               ),
               const SizedBox(height: 24),
-              
+
               // Error/SUCCESS message display
               if (_showError) ...[
-                _buildMessageDisplay(_errorMessage, isDarkMode, _isSuccessMessage),
+                _buildMessageDisplay(
+                  _errorMessage,
+                  isDarkMode,
+                  _isSuccessMessage,
+                ),
                 const SizedBox(height: 16),
               ],
-              
+
               if (_currentMode == AuthMode.register) ...[
                 _buildTextField(
                   controller: _nameController,
@@ -321,7 +332,7 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
                 ),
                 const SizedBox(height: 16),
               ],
-              
+
               _buildTextField(
                 controller: _emailController,
                 label: 'Email Address',
@@ -339,7 +350,7 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
                 },
               ),
               const SizedBox(height: 16),
-              
+
               _buildTextField(
                 controller: _passwordController,
                 label: 'Password',
@@ -362,19 +373,16 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
                   return null;
                 },
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Role Selection Dropdown
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
                     'Role',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
@@ -400,10 +408,7 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
                       ),
                     ),
                     items: _roles.map((role) {
-                      return DropdownMenuItem(
-                        value: role,
-                        child: Text(role),
-                      );
+                      return DropdownMenuItem(value: role, child: Text(role));
                     }).toList(),
                     onChanged: (value) {
                       if (value != null) {
@@ -421,7 +426,7 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
                   ),
                 ],
               ),
-              
+
               if (_currentMode == AuthMode.register) ...[
                 const SizedBox(height: 16),
                 _buildTextField(
@@ -447,7 +452,7 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
                   },
                 ),
               ],
-              
+
               if (_currentMode == AuthMode.login) ...[
                 const SizedBox(height: 12),
                 Align(
@@ -466,9 +471,9 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
                   ),
                 ),
               ],
-              
+
               const SizedBox(height: 24),
-              
+
               BlocBuilder<AuthBloc, AuthState>(
                 builder: (context, authState) {
                   final isLoading = authState is AuthLoading;
@@ -495,7 +500,9 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
                               ),
                             )
                           : Text(
-                              _currentMode == AuthMode.login ? 'Sign In' : 'Create Account',
+                              _currentMode == AuthMode.login
+                                  ? 'Sign In'
+                                  : 'Create Account',
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
@@ -528,10 +535,7 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
       children: [
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
         ),
         const SizedBox(height: 8),
         TextFormField(
@@ -552,14 +556,10 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
                     onPressed: onTogglePassword,
                   )
                 : null,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: Colors.grey.withValues(alpha: 0.3),
-              ),
+              borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.3)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -583,7 +583,9 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
               ? 'Don\'t have an account? '
               : 'Already have an account? ',
           style: TextStyle(
-            color: isDarkMode ? AppThemes.darkSecondaryText : AppThemes.lightSecondaryText,
+            color: isDarkMode
+                ? AppThemes.darkSecondaryText
+                : AppThemes.lightSecondaryText,
           ),
         ),
         TextButton(
@@ -611,57 +613,48 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
   // New method to build user-friendly message display (both error and success)
   Widget _buildMessageDisplay(String message, bool isDarkMode, bool isSuccess) {
     // Determine colors based on message type
-    final Color backgroundColor = isSuccess 
-        ? AppThemes.greenAccent.withValues(alpha: 0.1) 
+    final Color backgroundColor = isSuccess
+        ? AppThemes.greenAccent.withValues(alpha: 0.1)
         : AppThemes.redAccent.withValues(alpha: 0.1);
-    final Color borderColor = isSuccess 
-        ? AppThemes.greenAccent.withValues(alpha: 0.3) 
+    final Color borderColor = isSuccess
+        ? AppThemes.greenAccent.withValues(alpha: 0.3)
         : AppThemes.redAccent.withValues(alpha: 0.3);
-    final Color iconColor = isSuccess 
-        ? AppThemes.greenAccent 
+    final Color iconColor = isSuccess
+        ? AppThemes.greenAccent
         : AppThemes.redAccent;
-    final IconData icon = isSuccess 
-        ? Icons.check_circle_outline 
+    final IconData icon = isSuccess
+        ? Icons.check_circle_outline
         : Icons.error_outline;
-    
+
     return Container(
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: borderColor,
-          width: 1,
-        ),
+        border: Border.all(color: borderColor, width: 1),
       ),
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          Icon(
-            icon,
-            color: iconColor,
-            size: 24,
-          ),
+          Icon(icon, color: iconColor, size: 24),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               message,
               style: TextStyle(
-                color: isDarkMode ? AppThemes.darkPrimaryText : AppThemes.lightPrimaryText,
+                color: isDarkMode
+                    ? AppThemes.darkPrimaryText
+                    : AppThemes.lightPrimaryText,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
             ),
           ),
           IconButton(
-            icon: Icon(
-              Icons.close,
-              color: iconColor,
-              size: 20,
-            ),
+            icon: Icon(Icons.close, color: iconColor, size: 20),
             onPressed: () {
               setState(() {
                 _showError = false;
-                _isSuccessMessage = false;  // Reset the flag
+                _isSuccessMessage = false; // Reset the flag
               });
             },
           ),
@@ -698,21 +691,25 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
       }
     } catch (e) {
       // Log the exception
-      developer.log('Exception in _handleSubmit: $e', name: 'AuthScreen', error: e);
-      
+      developer.log(
+        'Exception in _handleSubmit: $e',
+        name: 'AuthScreen',
+        error: e,
+      );
+
       // Show user-friendly error message
       setState(() {
         _errorMessage = 'An unexpected error occurred. Please try again.';
         _showError = true;
-        _isSuccessMessage = false;  // Flag to indicate this is an error message
+        _isSuccessMessage = false; // Flag to indicate this is an error message
       });
-      
+
       // Automatically hide the error after 5 seconds
       Future.delayed(const Duration(seconds: 5), () {
         if (mounted) {
           setState(() {
             _showError = false;
-            _isSuccessMessage = false;  // Reset the flag
+            _isSuccessMessage = false; // Reset the flag
           });
         }
       });

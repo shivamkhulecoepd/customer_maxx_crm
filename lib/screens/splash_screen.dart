@@ -19,7 +19,7 @@ class _ModernSplashScreenState extends State<ModernSplashScreen>
   late AnimationController _logoController;
   late AnimationController _textController;
   late AnimationController _progressController;
-  
+
   late Animation<double> _logoScaleAnimation;
   late Animation<double> _logoRotationAnimation;
   late Animation<double> _textFadeAnimation;
@@ -39,75 +39,56 @@ class _ModernSplashScreenState extends State<ModernSplashScreen>
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
-    
-    _logoScaleAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _logoController,
-      curve: Curves.elasticOut,
-    ));
-    
-    _logoRotationAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _logoController,
-      curve: Curves.easeInOut,
-    ));
+
+    _logoScaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _logoController, curve: Curves.elasticOut),
+    );
+
+    _logoRotationAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _logoController, curve: Curves.easeInOut),
+    );
 
     // Text animations
     _textController = AnimationController(
       duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
-    
-    _textFadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _textController,
-      curve: Curves.easeInOut,
-    ));
-    
-    _textSlideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.5),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _textController,
-      curve: Curves.easeOutCubic,
-    ));
+
+    _textFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _textController, curve: Curves.easeInOut),
+    );
+
+    _textSlideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.5), end: Offset.zero).animate(
+          CurvedAnimation(parent: _textController, curve: Curves.easeOutCubic),
+        );
 
     // Progress animation
     _progressController = AnimationController(
       duration: const Duration(milliseconds: 2000),
       vsync: this,
     );
-    
-    _progressAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _progressController,
-      curve: Curves.easeInOut,
-    ));
+
+    _progressAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _progressController, curve: Curves.easeInOut),
+    );
   }
 
   void _startAnimationSequence() async {
     // Initialize auth status check
     context.read<AuthBloc>().add(AppStarted());
-    
+
     // Start logo animation
     _logoController.forward();
-    
+
     // Wait a bit, then start text animation
     await Future.delayed(const Duration(milliseconds: 500));
     _textController.forward();
-    
+
     // Start progress animation
     await Future.delayed(const Duration(milliseconds: 300));
     _progressController.forward();
-    
+
     // Wait for animations to complete, then navigate
     await Future.delayed(const Duration(milliseconds: 3000));
     _navigateToNextScreen();
@@ -115,13 +96,14 @@ class _ModernSplashScreenState extends State<ModernSplashScreen>
 
   void _navigateToNextScreen() {
     if (!mounted) return;
-    
+
     final authState = context.read<AuthBloc>().state;
-    
+
     if (authState is Authenticated) {
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) => const AuthWrapper(),
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              const AuthWrapper(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(opacity: animation, child: child);
           },
@@ -131,7 +113,7 @@ class _ModernSplashScreenState extends State<ModernSplashScreen>
     } else {
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) => 
+          pageBuilder: (context, animation, secondaryAnimation) =>
               const ModernAuthScreen(authMode: AuthMode.login),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(opacity: animation, child: child);
@@ -155,7 +137,7 @@ class _ModernSplashScreenState extends State<ModernSplashScreen>
     return BlocBuilder<ThemeBloc, ThemeState>(
       builder: (context, themeState) {
         final isDarkMode = themeState.isDarkMode;
-        
+
         return Scaffold(
           body: Container(
             decoration: BoxDecoration(
@@ -214,7 +196,7 @@ class _ModernSplashScreenState extends State<ModernSplashScreen>
               width: 120,
               height: 120,
               decoration: BoxDecoration(
-                gradient: AppThemes.getPrimaryGradient(),
+                gradient: AppThemes.getPrimaryGradient().withOpacity(0.1),
                 borderRadius: BorderRadius.circular(30),
                 boxShadow: [
                   BoxShadow(
@@ -224,11 +206,12 @@ class _ModernSplashScreenState extends State<ModernSplashScreen>
                   ),
                 ],
               ),
-              child: const Icon(
-                Icons.business_center_rounded,
-                color: Colors.white,
-                size: 60,
-              ),
+              // child: const Icon(
+              //   Icons.business_center_rounded,
+              //   color: Colors.white,
+              //   size: 60,
+              // ),
+              child: Image.asset("assets/customermaxcrm1.png"),
             ),
           ),
         );
@@ -247,11 +230,13 @@ class _ModernSplashScreenState extends State<ModernSplashScreen>
             child: Column(
               children: [
                 Text(
-                  'CustomerMaxx CRM',
+                  'CustomerMax CRM',
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.w700,
-                    color: isDarkMode ? Colors.white : AppThemes.lightPrimaryText,
+                    color: isDarkMode
+                        ? Colors.white
+                        : AppThemes.lightPrimaryText,
                     letterSpacing: -0.5,
                   ),
                 ),
@@ -261,15 +246,18 @@ class _ModernSplashScreenState extends State<ModernSplashScreen>
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16,
-                    color: isDarkMode 
-                        ? AppThemes.darkSecondaryText 
+                    color: isDarkMode
+                        ? AppThemes.darkSecondaryText
                         : AppThemes.lightSecondaryText,
                     letterSpacing: 0.2,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: AppThemes.primaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
@@ -304,7 +292,7 @@ class _ModernSplashScreenState extends State<ModernSplashScreen>
               width: 200,
               height: 4,
               decoration: BoxDecoration(
-                color: isDarkMode 
+                color: isDarkMode
                     ? Colors.white.withValues(alpha: 0.1)
                     : Colors.grey.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(2),
@@ -333,8 +321,8 @@ class _ModernSplashScreenState extends State<ModernSplashScreen>
               'Loading...',
               style: TextStyle(
                 fontSize: 14,
-                color: isDarkMode 
-                    ? AppThemes.darkTertiaryText 
+                color: isDarkMode
+                    ? AppThemes.darkTertiaryText
                     : AppThemes.lightTertiaryText,
                 fontWeight: FontWeight.w500,
               ),
@@ -357,16 +345,20 @@ class _ModernSplashScreenState extends State<ModernSplashScreen>
               const SizedBox(width: 12),
               _buildFeatureChip('Fast', Icons.speed_rounded, isDarkMode),
               const SizedBox(width: 12),
-              _buildFeatureChip('Modern', Icons.auto_awesome_rounded, isDarkMode),
+              _buildFeatureChip(
+                'Modern',
+                Icons.auto_awesome_rounded,
+                isDarkMode,
+              ),
             ],
           ),
           const SizedBox(height: 20),
           Text(
-            '© 2025 CustomerMaxx. All rights reserved.',
+            '© 2025 CustomerMax. All rights reserved.',
             style: TextStyle(
               fontSize: 12,
-              color: isDarkMode 
-                  ? AppThemes.darkTertiaryText 
+              color: isDarkMode
+                  ? AppThemes.darkTertiaryText
                   : AppThemes.lightTertiaryText,
             ),
           ),
@@ -379,12 +371,12 @@ class _ModernSplashScreenState extends State<ModernSplashScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: isDarkMode 
+        color: isDarkMode
             ? Colors.white.withValues(alpha: 0.05)
             : Colors.black.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDarkMode 
+          color: isDarkMode
               ? Colors.white.withValues(alpha: 0.1)
               : Colors.black.withValues(alpha: 0.1),
         ),
@@ -395,8 +387,8 @@ class _ModernSplashScreenState extends State<ModernSplashScreen>
           Icon(
             icon,
             size: 14,
-            color: isDarkMode 
-                ? AppThemes.darkSecondaryText 
+            color: isDarkMode
+                ? AppThemes.darkSecondaryText
                 : AppThemes.lightSecondaryText,
           ),
           const SizedBox(width: 6),
@@ -405,8 +397,8 @@ class _ModernSplashScreenState extends State<ModernSplashScreen>
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color: isDarkMode 
-                  ? AppThemes.darkSecondaryText 
+              color: isDarkMode
+                  ? AppThemes.darkSecondaryText
                   : AppThemes.lightSecondaryText,
             ),
           ),

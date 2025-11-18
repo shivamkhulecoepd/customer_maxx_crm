@@ -60,7 +60,7 @@ class MainApp extends StatelessWidget {
     return BlocBuilder<ThemeBloc, ThemeState>(
       builder: (context, themeState) {
         return MaterialApp(
-          title: 'CustomerMaxx CRM',
+          title: 'CustomerMax CRM',
           theme: AppThemes.lightTheme,
           darkTheme: AppThemes.darkTheme,
           themeMode: themeState.themeMode,

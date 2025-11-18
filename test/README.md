@@ -1,6 +1,6 @@
-# Testing CustomerMaxx CRM
+# Testing CustomerMax CRM
 
-This directory contains tests for the CustomerMaxx CRM Flutter application.
+This directory contains tests for the CustomerMax CRM Flutter application.
 
 ## Running Tests
 
