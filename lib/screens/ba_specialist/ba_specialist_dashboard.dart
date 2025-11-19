@@ -1277,25 +1277,23 @@ class _ModernBASpecialistDashboardState
                 width: 200,
                 title: 'Lead',
                 value: (lead) => lead.name,
-                builder: (lead) => Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        lead.name,
-                        style: const TextStyle(fontWeight: FontWeight.w500),
-                        overflow: TextOverflow.ellipsis,
+                builder: (lead) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      lead.name,
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      lead.email,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
                       ),
-                      Text(
-                        lead.email,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
               ),
               GenericTableColumn<Lead>(
@@ -1367,7 +1365,8 @@ class _ModernBASpecialistDashboardState
               ),
             ],
             onRowTap: (lead) {
-              _showLeadActions(lead);
+              // _showLeadActions(lead);
+              _updateLeadStatusAndFeedback(lead);
             },
             // Enable all interactive features for assigned leads
             showSearch: true,
@@ -1459,25 +1458,23 @@ class _ModernBASpecialistDashboardState
                 width: 200,
                 title: 'Lead',
                 value: (lead) => lead.name,
-                builder: (lead) => Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        lead.name,
-                        style: const TextStyle(fontWeight: FontWeight.w500),
-                        overflow: TextOverflow.ellipsis,
+                builder: (lead) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      lead.name,
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      lead.email,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
                       ),
-                      Text(
-                        lead.email,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
               ),
               GenericTableColumn<Lead>(
@@ -1553,7 +1550,8 @@ class _ModernBASpecialistDashboardState
               ),
             ],
             onRowTap: (lead) {
-              _showLeadActions(lead);
+              // _showLeadActions(lead);
+              _updateLeadFees(lead);
             },
             // Disable all interactive features for registered leads as requested
             showSearch: false,
@@ -1664,12 +1662,12 @@ class _ModernBASpecialistDashboardState
                             : AppThemes.lightSecondaryText,
                       ),
                     ),
-                    const SizedBox(height: 30),
-                    _buildProfileStats(isDarkMode),
+                    // const SizedBox(height: 30),
+                    // _buildProfileStats(isDarkMode),
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 12),
               // Add BA Stats section to profile view
               Container(
                 width: double.infinity,
@@ -1709,7 +1707,7 @@ class _ModernBASpecialistDashboardState
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 12),
               Container(
                 width: double.infinity,
                 margin: EdgeInsets.symmetric(
@@ -1767,7 +1765,7 @@ class _ModernBASpecialistDashboardState
                   ],
                 ),
               ),
-              const SizedBox(height: 100), // Space for floating nav
+              // const SizedBox(height: 10), // Space for floating nav
             ],
           ),
         ),
@@ -2126,71 +2124,79 @@ class _ModernBASpecialistDashboardState
   void _showLeadActions(Lead lead) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom > 0 
+              ? MediaQuery.of(context).viewInsets.bottom 
+              : 20,
+        ),
         decoration: BoxDecoration(
           color: Theme.of(context).scaffoldBackgroundColor,
-          borderRadius: BorderRadius.only(
+          borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(20),
             topRight: Radius.circular(20),
           ),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(top: 12),
-              decoration: BoxDecoration(
-                color: Colors.grey.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(top: 12),
+                decoration: BoxDecoration(
+                  color: Colors.grey.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Lead Actions',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 20),
-            ListTile(
-              leading: const Icon(Icons.call_rounded),
-              title: const Text('Call Lead'),
-              onTap: () => Navigator.pop(context),
-            ),
-            ListTile(
-              leading: const Icon(Icons.email_rounded),
-              title: const Text('Send Email'),
-              onTap: () => Navigator.pop(context),
-            ),
-            ListTile(
-              leading: const Icon(Icons.event_rounded),
-              title: const Text('Schedule Meeting'),
-              onTap: () => Navigator.pop(context),
-            ),
-            ListTile(
-              leading: const Icon(Icons.note_add_rounded),
-              title: const Text('Add Note'),
-              onTap: () => Navigator.pop(context),
-            ),
-            ListTile(
-              leading: const Icon(Icons.edit_note_rounded),
-              title: const Text('Update Status & Feedback'),
-              onTap: () {
-                Navigator.pop(context);
-                _updateLeadStatusAndFeedback(lead);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.currency_rupee_rounded),
-              title: const Text('Update Fees'),
-              onTap: () {
-                Navigator.pop(context);
-                _updateLeadFees(lead);
-              },
-            ),
-            const SizedBox(height: 20),
-          ],
+              const SizedBox(height: 20),
+              const Text(
+                'Lead Actions',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 20),
+              ListTile(
+                leading: const Icon(Icons.call_rounded),
+                title: const Text('Call Lead'),
+                onTap: () => Navigator.pop(context),
+              ),
+              ListTile(
+                leading: const Icon(Icons.email_rounded),
+                title: const Text('Send Email'),
+                onTap: () => Navigator.pop(context),
+              ),
+              ListTile(
+                leading: const Icon(Icons.event_rounded),
+                title: const Text('Schedule Meeting'),
+                onTap: () => Navigator.pop(context),
+              ),
+              ListTile(
+                leading: const Icon(Icons.note_add_rounded),
+                title: const Text('Add Note'),
+                onTap: () => Navigator.pop(context),
+              ),
+              ListTile(
+                leading: const Icon(Icons.edit_note_rounded),
+                title: const Text('Update Status & Feedback'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _updateLeadStatusAndFeedback(lead);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.currency_rupee_rounded),
+                title: const Text('Update Fees'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _updateLeadFees(lead);
+                },
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
     );
@@ -2224,154 +2230,162 @@ class _ModernBASpecialistDashboardState
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
           return Container(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+              left: 0,
+              right: 0,
+              top: 20,
+            ),
             decoration: BoxDecoration(
               color: Theme.of(context).scaffoldBackgroundColor,
-              borderRadius: BorderRadius.only(
+              borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(20),
                 topRight: Radius.circular(20),
               ),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(top: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(2),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(top: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Update Status & Feedback',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 20),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    children: [
-                      // Status Dropdown
-                      DropdownButtonFormField<String>(
-                        initialValue: selectedStatus.isNotEmpty
-                            ? selectedStatus
-                            : null,
-                        decoration: const InputDecoration(
-                          labelText: 'Status',
-                          border: OutlineInputBorder(),
-                        ),
-                        items: statusOptions.map((String status) {
-                          return DropdownMenuItem<String>(
-                            value: status,
-                            child: Text(status),
-                          );
-                        }).toList(),
-                        onChanged: (String? newValue) {
-                          if (newValue != null) {
-                            setState(() {
-                              selectedStatus = newValue;
-                            });
-                          }
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      // Feedback Text Field
-                      TextFormField(
-                        controller: feedbackController,
-                        decoration: const InputDecoration(
-                          labelText: 'Feedback',
-                          border: OutlineInputBorder(),
-                        ),
-                        maxLines: 3,
-                      ),
-                      const SizedBox(height: 20),
-                    ],
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Update Status & Feedback',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 10,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            try {
-                              // Update status
-                              if (selectedStatus != lead.status) {
-                                final statusResponse = await _leadService
-                                    .updateStatus(lead.id, selectedStatus);
-                                if (statusResponse['status'] != 'success') {
-                                  throw Exception(
-                                    statusResponse['message'] ??
-                                        'Failed to update status',
-                                  );
-                                }
-                              }
-
-                              // Update feedback
-                              if (feedbackController.text != lead.feedback) {
-                                final feedbackResponse = await _leadService
-                                    .updateFeedback(
-                                      lead.id,
-                                      feedbackController.text,
-                                    );
-                                if (feedbackResponse['status'] != 'success') {
-                                  throw Exception(
-                                    feedbackResponse['message'] ??
-                                        'Failed to update feedback',
-                                  );
-                                }
-                              }
-
-                              // Show success message
-                              if (context.mounted) {
-                                Navigator.pop(context);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Status and feedback updated successfully!',
-                                    ),
-                                  ),
-                                );
-
-                                // Refresh the current view to show updated data
-                                if (_currentNavIndex == 1) {
-                                  _loadAssignedLeads();
-                                } else if (_currentNavIndex == 2) {
-                                  _loadRegisteredLeads();
-                                }
-                              }
-                            } catch (e) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Error: ${e.toString()}'),
-                                  ),
-                                );
-                              }
+                  const SizedBox(height: 20),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      children: [
+                        // Status Dropdown
+                        DropdownButtonFormField<String>(
+                          initialValue: selectedStatus.isNotEmpty
+                              ? selectedStatus
+                              : null,
+                          decoration: const InputDecoration(
+                            labelText: 'Status',
+                            border: OutlineInputBorder(),
+                          ),
+                          items: statusOptions.map((String status) {
+                            return DropdownMenuItem<String>(
+                              value: status,
+                              child: Text(status),
+                            );
+                          }).toList(),
+                          onChanged: (String? newValue) {
+                            if (newValue != null) {
+                              setState(() {
+                                selectedStatus = newValue;
+                              });
                             }
                           },
-                          child: const Text('Update'),
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Cancel'),
+                        const SizedBox(height: 16),
+                        // Feedback Text Field
+                        TextFormField(
+                          controller: feedbackController,
+                          decoration: const InputDecoration(
+                            labelText: 'Feedback',
+                            border: OutlineInputBorder(),
+                          ),
+                          maxLines: 3,
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 20),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 20),
-              ],
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 10,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              try {
+                                // Update status
+                                if (selectedStatus != lead.status) {
+                                  final statusResponse = await _leadService
+                                      .updateStatus(lead.id, selectedStatus);
+                                  if (statusResponse['status'] != 'success') {
+                                    throw Exception(
+                                      statusResponse['message'] ??
+                                          'Failed to update status',
+                                    );
+                                  }
+                                }
+
+                                // Update feedback
+                                if (feedbackController.text != lead.feedback) {
+                                  final feedbackResponse = await _leadService
+                                      .updateFeedback(
+                                        lead.id,
+                                        feedbackController.text,
+                                      );
+                                  if (feedbackResponse['status'] != 'success') {
+                                    throw Exception(
+                                      feedbackResponse['message'] ??
+                                          'Failed to update feedback',
+                                    );
+                                  }
+                                }
+
+                                // Show success message
+                                if (context.mounted) {
+                                  Navigator.pop(context);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Status and feedback updated successfully!',
+                                      ),
+                                    ),
+                                  );
+
+                                  // Refresh the current view to show updated data
+                                  if (_currentNavIndex == 1) {
+                                    _loadAssignedLeads();
+                                  } else if (_currentNavIndex == 2) {
+                                    _loadRegisteredLeads();
+                                  }
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Error: ${e.toString()}'),
+                                    ),
+                                  );
+                                }
+                              }
+                            },
+                            child: const Text('Update'),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Cancel'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
             ),
           );
         },
@@ -2397,155 +2411,163 @@ class _ModernBASpecialistDashboardState
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
           return Container(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+              left: 0,
+              right: 0,
+              top: 20,
+            ),
             decoration: BoxDecoration(
               color: Theme.of(context).scaffoldBackgroundColor,
-              borderRadius: BorderRadius.only(
+              borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(20),
                 topRight: Radius.circular(20),
               ),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(top: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(2),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(top: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Update Fees',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 20),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    children: [
-                      // Discount Field
-                      TextFormField(
-                        controller: discountController,
-                        decoration: const InputDecoration(
-                          labelText: 'Discount (%)',
-                          border: OutlineInputBorder(),
-                        ),
-                        keyboardType: TextInputType.number,
-                      ),
-                      const SizedBox(height: 16),
-                      // Installment 1 Field
-                      TextFormField(
-                        controller: installment1Controller,
-                        decoration: const InputDecoration(
-                          labelText: 'Installment 1',
-                          border: OutlineInputBorder(),
-                        ),
-                        keyboardType: TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      // Installment 2 Field
-                      TextFormField(
-                        controller: installment2Controller,
-                        decoration: const InputDecoration(
-                          labelText: 'Installment 2',
-                          border: OutlineInputBorder(),
-                        ),
-                        keyboardType: TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                    ],
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Update Fees',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 10,
+                  const SizedBox(height: 20),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      children: [
+                        // Discount Field
+                        TextFormField(
+                          controller: discountController,
+                          decoration: const InputDecoration(
+                            labelText: 'Discount (%)',
+                            border: OutlineInputBorder(),
+                          ),
+                          keyboardType: TextInputType.number,
+                        ),
+                        const SizedBox(height: 16),
+                        // Installment 1 Field
+                        TextFormField(
+                          controller: installment1Controller,
+                          decoration: const InputDecoration(
+                            labelText: 'Installment 1',
+                            border: OutlineInputBorder(),
+                          ),
+                          keyboardType: TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        // Installment 2 Field
+                        TextFormField(
+                          controller: installment2Controller,
+                          decoration: const InputDecoration(
+                            labelText: 'Installment 2',
+                            border: OutlineInputBorder(),
+                          ),
+                          keyboardType: TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                      ],
+                    ),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            try {
-                              // Parse values
-                              final discount =
-                                  int.tryParse(discountController.text) ?? 0;
-                              final installment1 =
-                                  double.tryParse(
-                                    installment1Controller.text,
-                                  ) ??
-                                  0.0;
-                              final installment2 =
-                                  double.tryParse(
-                                    installment2Controller.text,
-                                  ) ??
-                                  0.0;
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 10,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              try {
+                                // Parse values
+                                final discount =
+                                    int.tryParse(discountController.text) ?? 0;
+                                final installment1 =
+                                    double.tryParse(
+                                      installment1Controller.text,
+                                    ) ??
+                                    0.0;
+                                final installment2 =
+                                    double.tryParse(
+                                      installment2Controller.text,
+                                    ) ??
+                                    0.0;
 
-                              // Update fees
-                              final response = await _leadService.updateFee(
-                                lead.id,
-                                discount,
-                                installment1,
-                                installment2,
-                              );
+                                // Update fees
+                                final response = await _leadService.updateFee(
+                                  lead.id,
+                                  discount,
+                                  installment1,
+                                  installment2,
+                                );
 
-                              if (response['status'] == 'success') {
-                                if (context.mounted) {
-                                  Navigator.pop(context);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Fees updated successfully!',
+                                if (response['status'] == 'success') {
+                                  if (context.mounted) {
+                                    Navigator.pop(context);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Fees updated successfully!',
+                                        ),
                                       ),
+                                    );
+
+                                    // Refresh the current view to show updated data
+                                    if (_currentNavIndex == 1) {
+                                      _loadAssignedLeads();
+                                    } else if (_currentNavIndex == 2) {
+                                      _loadRegisteredLeads();
+                                    }
+                                  }
+                                } else {
+                                  throw Exception(
+                                    response['message'] ??
+                                        'Failed to update fees',
+                                  );
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Error: ${e.toString()}'),
                                     ),
                                   );
-
-                                  // Refresh the current view to show updated data
-                                  if (_currentNavIndex == 1) {
-                                    _loadAssignedLeads();
-                                  } else if (_currentNavIndex == 2) {
-                                    _loadRegisteredLeads();
-                                  }
                                 }
-                              } else {
-                                throw Exception(
-                                  response['message'] ??
-                                      'Failed to update fees',
-                                );
                               }
-                            } catch (e) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Error: ${e.toString()}'),
-                                  ),
-                                );
-                              }
-                            }
-                          },
-                          child: const Text('Update'),
+                            },
+                            child: const Text('Update'),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Cancel'),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Cancel'),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 20),
-              ],
+                  const SizedBox(height: 20),
+                ],
+              ),
             ),
           );
         },
@@ -2558,24 +2580,26 @@ class _ModernBASpecialistDashboardState
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Add New Task'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              decoration: const InputDecoration(
-                labelText: 'Task Title',
-                border: OutlineInputBorder(),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                decoration: const InputDecoration(
+                  labelText: 'Task Title',
+                  border: OutlineInputBorder(),
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              decoration: const InputDecoration(
-                labelText: 'Description',
-                border: OutlineInputBorder(),
+              const SizedBox(height: 16),
+              TextField(
+                decoration: const InputDecoration(
+                  labelText: 'Description',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 3,
               ),
-              maxLines: 3,
-            ),
-          ],
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -2604,26 +2628,28 @@ class _ModernBASpecialistDashboardState
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Edit Profile'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'Name',
-                border: OutlineInputBorder(),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Name',
+                  border: OutlineInputBorder(),
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: roleController,
-              decoration: const InputDecoration(
-                labelText: 'Role',
-                border: OutlineInputBorder(),
+              const SizedBox(height: 16),
+              TextField(
+                controller: roleController,
+                decoration: const InputDecoration(
+                  labelText: 'Role',
+                  border: OutlineInputBorder(),
+                ),
+                enabled: false, // Role shouldn't be editable
               ),
-              enabled: false, // Role shouldn't be editable
-            ),
-          ],
+            ],
+          ),
         ),
         actions: [
           TextButton(

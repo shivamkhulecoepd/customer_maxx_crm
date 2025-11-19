@@ -137,25 +137,18 @@ class Lead {
   }
 
   // Helper method to calculate final fees with discount applied
-  double calculateFinalFees() {
-    final installment1 = this.installment1 ?? 0.0;
-    final installment2 = this.installment2 ?? 0.0;
-    final discount = this.discount ?? 0;
-    final total = installment1 + installment2;
-    // If discount is 0, this will return the total amount
-    // If discount is 10, this will return total * 0.9 (10% off)
-    final discountedTotal = total * (1 - discount / 100);
-    log('calculateFinalFees: inst1=$installment1, inst2=$installment2, discount=$discount, total=$total, discountedTotal=$discountedTotal');
-    return discountedTotal;
-  }
-  
-  // Helper method to calculate total fees without discount
   double calculateTotalFees() {
-    final installment1 = this.installment1 ?? 0.0;
-    final installment2 = this.installment2 ?? 0.0;
-    final total = installment1 + installment2;
-    log('calculateTotalFees: inst1=$installment1, inst2=$installment2, total=$total');
-    return total;
+    final i1 = installment1 ?? 0;
+    final i2 = installment2 ?? 0;
+    return i1 + i2;
+  }
+
+  double calculateFinalFees() {
+    final total = calculateTotalFees();
+    final disc = discount ?? 0;
+
+    // Apply discount logic properly
+    return total * (1 - (disc / 100));
   }
 }
 

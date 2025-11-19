@@ -90,7 +90,7 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
 
   // Hardcoded roles as per requirements
   List<String> _getUserRoles() {
-    return ['Admin', 'Lead Manager', 'BA Specialist'];
+    return ['Admin', 'BDE', 'Operations'];
   }
 
   String _convertRoleToDatabaseFormat(String role) {
@@ -102,10 +102,10 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
     switch (role) {
       case 'Admin':
         return 'admin';
-      case 'Lead Manager':
-        return 'lead_manager';
-      case 'BA Specialist':
-        return 'ba_specialist';
+      case 'BDE':
+        return 'bde';
+      case 'Operations':
+        return 'operations';
       default:
         // Handle any other format by converting to lowercase with underscores
         return role.toLowerCase().replaceAll(' ', '_');
@@ -116,14 +116,14 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
     switch (dbRole) {
       case 'admin':
         return 'Admin';
-      case 'lead_manager':
-        return 'Lead Manager';
-      case 'ba_specialist':
-        return 'BA Specialist';
+      case 'bde':
+        return 'BDE';
+      case 'operations':
+        return 'Operations';
       default:
         // Handle other possible formats
-        if (dbRole == 'LeadManager') return 'Lead Manager';
-        if (dbRole == 'BASpecialist') return 'BA Specialist';
+        if (dbRole == 'BDE') return 'BDE';
+        if (dbRole == 'Operations') return 'Operations';
         return dbRole
             .split('_')
             .map(
@@ -800,84 +800,103 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
   }
 
   Widget _buildStatsGrid(bool isDarkMode) {
-    return BlocBuilder<UsersBloc, UsersState>(
-      builder: (context, usersState) {
-        return BlocBuilder<LeadsBloc, LeadsState>(
-          builder: (context, leadsState) {
-            final screenWidth = MediaQuery.of(context).size.width;
-            final crossAxisCount = screenWidth < 600 ? 2 : 4;
+    return BlocBuilder<DashboardBloc, DashboardState>(
+      builder: (context, dashboardState) {
+        return BlocBuilder<UsersBloc, UsersState>(
+          builder: (context, usersState) {
+            return BlocBuilder<LeadsBloc, LeadsState>(
+              builder: (context, leadsState) {
+                final screenWidth = MediaQuery.of(context).size.width;
+                final crossAxisCount = screenWidth < 600 ? 2 : 4;
 
-            // Show shimmer if either users or leads are loading
-            if ((usersState.isLoading && usersState.users.isEmpty) ||
-                (leadsState.isLoading && leadsState.leads.isEmpty)) {
-              return _buildStatsGridShimmer(isDarkMode, crossAxisCount, screenWidth);
-            }
+                // Show shimmer only if dashboard data is not loaded yet
+                // Since we primarily use dashboard stats, show data as soon as it's available
+                if (dashboardState is DashboardLoading || dashboardState is DashboardInitial) {
+                  // But still show shimmer if users/leads are loading and dashboard hasn't loaded yet
+                  if ((usersState.isLoading && usersState.users.isEmpty) ||
+                      (leadsState.isLoading && leadsState.leads.isEmpty)) {
+                    return _buildStatsGridShimmer(isDarkMode, crossAxisCount, screenWidth);
+                  }
+                }
 
-            final totalUsers = usersState.users.length;
-            final totalLeads = leadsState.leads.length;
-            final activeLeads = leadsState.leads
-                .where(
-                  (lead) =>
-                      lead.status.toLowerCase() != 'completed' &&
-                      lead.status.toLowerCase() != 'rejected',
-                )
-                .length;
-            final completedLeads = leadsState.leads
-                .where((lead) => lead.status.toLowerCase() == 'completed')
-                .length;
-            final conversionRate = totalLeads > 0
-                ? ((completedLeads / totalLeads) * 100).toStringAsFixed(1)
-                : '0.0';
+                // Use dashboard stats for consistent user count, with fallback to users bloc
+                final totalUsers = dashboardState is DashboardLoaded 
+                    ? dashboardState.stats.users.total 
+                    : usersState.users.length;
+                
+                // Use dashboard stats for leads when available, otherwise calculate from leads bloc
+                final totalLeads = dashboardState is DashboardLoaded
+                    ? dashboardState.stats.leads.total
+                    : leadsState.leads.length;
+                final activeLeads = dashboardState is DashboardLoaded
+                    ? (dashboardState.stats.leads.total - dashboardState.stats.registrations.total)
+                    : leadsState.leads
+                        .where(
+                          (lead) =>
+                              lead.status.toLowerCase() != 'completed' &&
+                              lead.status.toLowerCase() != 'rejected',
+                        )
+                        .length;
+                final completedLeads = dashboardState is DashboardLoaded
+                    ? dashboardState.stats.registrations.total
+                    : leadsState.leads
+                        .where((lead) => lead.status.toLowerCase() == 'completed')
+                        .length;
+                final conversionRate = totalLeads > 0
+                    ? ((completedLeads / totalLeads) * 100).toStringAsFixed(1)
+                    : '0.0';
 
-            return GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: crossAxisCount,
-                mainAxisSpacing: screenWidth * 0.03,
-                crossAxisSpacing: screenWidth * 0.03,
-                childAspectRatio: screenWidth < 400 ? 1.1 : 1.2,
-              ),
-              itemCount: 4,
-              itemBuilder: (context, index) {
-                final stats = [
-                  {
-                    'title': 'Total Users',
-                    'value': totalUsers.toString(),
-                    'icon': Icons.people_rounded,
-                    'color': AppThemes.blueAccent,
-                    'change': '+12%',
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: crossAxisCount,
+                    mainAxisSpacing: screenWidth * 0.03,
+                    crossAxisSpacing: screenWidth * 0.03,
+                    childAspectRatio: screenWidth < 400 ? 1.1 : 1.2,
+                  ),
+                  itemCount: 4,
+                  itemBuilder: (context, index) {
+                    final stats = [
+                      {
+                        'title': 'Total Users',
+                        'value': totalUsers.toString(),
+                        'icon': Icons.people_rounded,
+                        'color': AppThemes.blueAccent,
+                        'change': '+12%',
+                      },
+                      {
+                        'title': 'Active Leads',
+                        'value': activeLeads.toString(),
+                        'icon': Icons.leaderboard_rounded,
+                        'color': AppThemes.greenAccent,
+                        'change': '+8%',
+                      },
+                      {
+                        'title': 'Total Leads',
+                        'value': totalLeads.toString(),
+                        'icon': Icons.assignment_rounded,
+                        'color': AppThemes.purpleAccent,
+                        'change': '+15%',
+                      },
+                      {
+                        'title': 'Conversion Rate',
+                        'value': '$conversionRate%',
+                        'icon': Icons.trending_up_rounded,
+                        'color': AppThemes.orangeAccent,
+                        'change': '+3%',
+                      },
+                    ];
+                    final stat = stats[index];
+                    return _buildStatCard(
+                      stat['title'] as String,
+                      stat['value'] as String,
+                      stat['icon'] as IconData,
+                      stat['color'] as Color,
+                      stat['change'] as String,
+                      isDarkMode,
+                    );
                   },
-                  {
-                    'title': 'Active Leads',
-                    'value': activeLeads.toString(),
-                    'icon': Icons.leaderboard_rounded,
-                    'color': AppThemes.greenAccent,
-                    'change': '+8%',
-                  },
-                  {
-                    'title': 'Total Leads',
-                    'value': totalLeads.toString(),
-                    'icon': Icons.assignment_rounded,
-                    'color': AppThemes.purpleAccent,
-                    'change': '+15%',
-                  },
-                  {
-                    'title': 'Conversion Rate',
-                    'value': '$conversionRate%',
-                    'icon': Icons.trending_up_rounded,
-                    'color': AppThemes.orangeAccent,
-                    'change': '+3%',
-                  },
-                ];
-                final stat = stats[index];
-                return _buildStatCard(
-                  stat['title'] as String,
-                  stat['value'] as String,
-                  stat['icon'] as IconData,
-                  stat['color'] as Color,
-                  stat['change'] as String,
-                  isDarkMode,
                 );
               },
             );
