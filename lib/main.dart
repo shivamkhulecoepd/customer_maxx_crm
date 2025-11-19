@@ -75,23 +75,10 @@ class AuthWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, authState) {
-        // Show loading while initializing
-        if (authState is AuthLoading) {
-          return const Scaffold(
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Loading...'),
-                ],
-              ),
-            ),
-          );
-        }
+        // For AuthLoading state, we don't show a generic loading screen
+        // Instead, we let the AuthScreen handle loading states on the buttons
+        // This provides a better UX as the user can see which action is loading
         
-        // Navigate based on authentication status
         if (authState is Authenticated) {
           final userRole = authState.user?.role;
           if (userRole != null) {
