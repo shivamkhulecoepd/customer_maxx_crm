@@ -145,14 +145,14 @@ class ModernNavigationBar extends StatelessWidget {
         NavigationItem(icon: Icons.leaderboard_rounded, label: 'Leads'),
         NavigationItem(icon: Icons.analytics_rounded, label: 'Analytics'),
       ];
-    } else if (normalizedRole.contains('lead')) {
+    } else if (normalizedRole.contains('bde') || normalizedRole.contains('lead')) {
       return [
         NavigationItem(icon: Icons.dashboard_rounded, label: 'Dashboard'),
         NavigationItem(icon: Icons.add_circle_rounded, label: 'Add Lead'),
         NavigationItem(icon: Icons.visibility_rounded, label: 'View Leads'),
         NavigationItem(icon: Icons.analytics_rounded, label: 'Reports'),
       ];
-    } else if (normalizedRole.contains('ba') || normalizedRole.contains('specialist')) {
+    } else if (normalizedRole.contains('operations') || normalizedRole.contains('ba') || normalizedRole.contains('specialist')) {
       return [
         NavigationItem(icon: Icons.dashboard_rounded, label: 'Dashboard'),
         NavigationItem(icon: Icons.app_registration_rounded, label: 'Registered'),
@@ -330,14 +330,14 @@ class FloatingNavigationBar extends StatelessWidget {
         NavigationItem(icon: Icons.leaderboard_rounded, label: 'Leads'),
         NavigationItem(icon: Icons.analytics_rounded, label: 'Analytics'),
       ];
-    } else if (normalizedRole.contains('lead')) {
+    } else if (normalizedRole.contains('bde') || normalizedRole.contains('lead')) {
       return [
         NavigationItem(icon: Icons.dashboard_rounded, label: 'Dashboard'),
         NavigationItem(icon: Icons.add_circle_rounded, label: 'Add'),
         NavigationItem(icon: Icons.visibility_rounded, label: 'View'),
         NavigationItem(icon: Icons.analytics_rounded, label: 'Reports'),
       ];
-    } else if (normalizedRole.contains('ba') || normalizedRole.contains('specialist')) {
+    } else if (normalizedRole.contains('operations') || normalizedRole.contains('ba') || normalizedRole.contains('specialist')) {
       return [
         NavigationItem(icon: Icons.dashboard_rounded, label: 'Dashboard'),
         NavigationItem(icon: Icons.app_registration_rounded, label: 'Leads'),

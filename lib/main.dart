@@ -98,17 +98,17 @@ class AuthWrapper extends StatelessWidget {
             switch (userRole) {
               case 'admin':
                 return const ModernAdminDashboard();
-              case 'lead_manager':
+              case 'bde':
                 return const ModernLeadManagerDashboard();
-              case 'ba_specialist':
+              case 'operations':
                 return const ModernBASpecialistDashboard();
               default:
                 // Handle case where role names don't match exactly
                 if (userRole.toLowerCase().contains('admin')) {
                   return const ModernAdminDashboard();
-                } else if (userRole.toLowerCase().contains('lead')) {
+                } else if (userRole.toLowerCase().contains('bde') || userRole.toLowerCase().contains('lead')) {
                   return const ModernLeadManagerDashboard();
-                } else if (userRole.toLowerCase().contains('ba') || userRole.toLowerCase().contains('specialist')) {
+                } else if (userRole.toLowerCase().contains('operations') || userRole.toLowerCase().contains('ba') || userRole.toLowerCase().contains('specialist')) {
                   return const ModernBASpecialistDashboard();
                 } else {
                   return const ModernAuthScreen(authMode: AuthMode.login);

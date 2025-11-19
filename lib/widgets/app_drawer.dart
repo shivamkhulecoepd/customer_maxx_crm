@@ -129,14 +129,14 @@ class ModernDrawer extends StatelessWidget {
                           builder: (context) => const ModernAdminDashboard(),
                         ),
                       );
-                    } else if (userRole.toLowerCase().contains('lead')) {
+                    } else if (userRole.toLowerCase().contains('bde') || userRole.toLowerCase().contains('lead')) {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
                           builder: (context) => const ModernLeadManagerDashboard(),
                         ),
                       );
-                    } else if (userRole.toLowerCase().contains('ba') || userRole.toLowerCase().contains('specialist')) {
+                    } else if (userRole.toLowerCase().contains('operations') || userRole.toLowerCase().contains('ba') || userRole.toLowerCase().contains('specialist')) {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
@@ -185,7 +185,7 @@ class ModernDrawer extends StatelessWidget {
                     );
                   },
                 ),
-              ] else if (userRole.toLowerCase().contains('lead')) ...[
+              ] else if (userRole.toLowerCase().contains('bde') || userRole.toLowerCase().contains('lead')) ...[
                 _buildModernDrawerItem(
                   context,
                   Icons.add_outlined,
@@ -214,7 +214,7 @@ class ModernDrawer extends StatelessWidget {
                     );
                   },
                 ),
-              ] else if (userRole.toLowerCase().contains('ba') || userRole.toLowerCase().contains('specialist')) ...[
+              ] else if (userRole.toLowerCase().contains('operations') || userRole.toLowerCase().contains('ba') || userRole.toLowerCase().contains('specialist')) ...[
                 _buildModernDrawerItem(
                   context,
                   Icons.app_registration_outlined,

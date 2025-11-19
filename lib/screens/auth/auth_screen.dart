@@ -49,11 +49,13 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
   // Map display names to API role values
   final Map<String, String> _roleMap = {
     'Admin': 'admin',
-    'Lead Manager': 'lead_manager',
-    'BA Specialist': 'ba_specialist',
+    // 'Lead Manager': 'bde',
+    // 'BA Specialist': 'operations',
+    'BDE': 'bde',
+    'Operations': 'operations',
   };
 
-  final List<String> _roles = ['Admin', 'Lead Manager', 'BA Specialist'];
+  final List<String> _roles = ['Admin', 'BDE', 'Operations'];
 
   @override
   void initState() {
@@ -159,19 +161,20 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
               case 'admin':
                 dashboard = const ModernAdminDashboard();
                 break;
-              case 'lead_manager':
+              case 'bde':
                 dashboard = const ModernLeadManagerDashboard();
                 break;
-              case 'ba_specialist':
+              case 'operations':
                 dashboard = const ModernBASpecialistDashboard();
                 break;
               default:
                 // Handle case where role names don't match exactly
                 if (userRole.toLowerCase().contains('admin')) {
                   dashboard = const ModernAdminDashboard();
-                } else if (userRole.toLowerCase().contains('lead')) {
+                } else if (userRole.toLowerCase().contains('bde') || userRole.toLowerCase().contains('lead')) {
                   dashboard = const ModernLeadManagerDashboard();
-                } else if (userRole.toLowerCase().contains('ba') ||
+                } else if (userRole.toLowerCase().contains('operations') ||
+                    userRole.toLowerCase().contains('ba') ||
                     userRole.toLowerCase().contains('specialist')) {
                   dashboard = const ModernBASpecialistDashboard();
                 } else {
