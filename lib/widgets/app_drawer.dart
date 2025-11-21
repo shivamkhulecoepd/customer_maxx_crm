@@ -8,6 +8,8 @@ import 'package:customer_maxx_crm/screens/lead_manager/lead_manager_dashboard.da
 import 'package:customer_maxx_crm/screens/ba_specialist/ba_specialist_dashboard.dart';
 import 'package:customer_maxx_crm/screens/settings_screen.dart';
 import 'package:customer_maxx_crm/screens/help_support_screen.dart';
+import 'package:customer_maxx_crm/screens/notifications/notification_screen.dart';
+import 'package:customer_maxx_crm/screens/leads/stale_leads_screen.dart';
 import 'package:customer_maxx_crm/main.dart';
 
 class ModernDrawer extends StatelessWidget {
@@ -62,7 +64,9 @@ class ModernDrawer extends StatelessWidget {
                         children: [
                           CircleAvatar(
                             radius: avatarRadius,
-                            backgroundColor: Colors.white.withValues(alpha: 0.2),
+                            backgroundColor: Colors.white.withValues(
+                              alpha: 0.2,
+                            ),
                             child: Text(
                               userName.isNotEmpty
                                   ? userName[0].toUpperCase()
@@ -97,7 +101,9 @@ class ModernDrawer extends StatelessWidget {
                                     userRole,
                                     style: TextStyle(
                                       fontSize: roleFontSize,
-                                      color: Colors.white.withValues(alpha: 0.9),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.9,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -129,18 +135,23 @@ class ModernDrawer extends StatelessWidget {
                           builder: (context) => const ModernAdminDashboard(),
                         ),
                       );
-                    } else if (userRole.toLowerCase().contains('bde') || userRole.toLowerCase().contains('lead')) {
+                    } else if (userRole.toLowerCase().contains('bde') ||
+                        userRole.toLowerCase().contains('lead')) {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const ModernLeadManagerDashboard(),
+                          builder: (context) =>
+                              const ModernLeadManagerDashboard(),
                         ),
                       );
-                    } else if (userRole.toLowerCase().contains('operations') || userRole.toLowerCase().contains('ba') || userRole.toLowerCase().contains('specialist')) {
+                    } else if (userRole.toLowerCase().contains('operations') ||
+                        userRole.toLowerCase().contains('ba') ||
+                        userRole.toLowerCase().contains('specialist')) {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const ModernBASpecialistDashboard(),
+                          builder: (context) =>
+                              const ModernBASpecialistDashboard(),
                         ),
                       );
                     } else {
@@ -166,7 +177,8 @@ class ModernDrawer extends StatelessWidget {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const ModernAdminDashboard(initialIndex: 1),
+                        builder: (context) =>
+                            const ModernAdminDashboard(initialIndex: 1),
                       ),
                     );
                   },
@@ -180,12 +192,14 @@ class ModernDrawer extends StatelessWidget {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const ModernAdminDashboard(initialIndex: 2),
+                        builder: (context) =>
+                            const ModernAdminDashboard(initialIndex: 2),
                       ),
                     );
                   },
                 ),
-              ] else if (userRole.toLowerCase().contains('bde') || userRole.toLowerCase().contains('lead')) ...[
+              ] else if (userRole.toLowerCase().contains('bde') ||
+                  userRole.toLowerCase().contains('lead')) ...[
                 _buildModernDrawerItem(
                   context,
                   Icons.add_outlined,
@@ -195,7 +209,8 @@ class ModernDrawer extends StatelessWidget {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const ModernLeadManagerDashboard(initialIndex: 1),
+                        builder: (context) =>
+                            const ModernLeadManagerDashboard(initialIndex: 1),
                       ),
                     );
                   },
@@ -209,12 +224,15 @@ class ModernDrawer extends StatelessWidget {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const ModernLeadManagerDashboard(initialIndex: 2),
+                        builder: (context) =>
+                            const ModernLeadManagerDashboard(initialIndex: 2),
                       ),
                     );
                   },
                 ),
-              ] else if (userRole.toLowerCase().contains('operations') || userRole.toLowerCase().contains('ba') || userRole.toLowerCase().contains('specialist')) ...[
+              ] else if (userRole.toLowerCase().contains('operations') ||
+                  userRole.toLowerCase().contains('ba') ||
+                  userRole.toLowerCase().contains('specialist')) ...[
                 _buildModernDrawerItem(
                   context,
                   Icons.app_registration_outlined,
@@ -224,7 +242,8 @@ class ModernDrawer extends StatelessWidget {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const ModernBASpecialistDashboard(initialIndex: 1),
+                        builder: (context) =>
+                            const ModernBASpecialistDashboard(initialIndex: 1),
                       ),
                     );
                   },
@@ -238,12 +257,47 @@ class ModernDrawer extends StatelessWidget {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const ModernBASpecialistDashboard(initialIndex: 2),
+                        builder: (context) =>
+                            const ModernBASpecialistDashboard(initialIndex: 2),
                       ),
                     );
                   },
                 ),
               ],
+
+              const Divider(),
+
+              // Notifications
+              _buildModernDrawerItem(
+                context,
+                Icons.notifications_outlined,
+                'Notifications',
+                () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const NotificationScreen(),
+                    ),
+                  );
+                },
+              ),
+
+              // Stale Leads
+              _buildModernDrawerItem(
+                context,
+                Icons.warning_amber_rounded,
+                'Stale Leads',
+                () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const StaleLeadsScreen(),
+                    ),
+                  );
+                },
+              ),
 
               const Divider(),
 
@@ -315,9 +369,7 @@ class ModernDrawer extends StatelessWidget {
                       currentContext,
                       rootNavigator: true,
                     ).pushAndRemoveUntil(
-                      MaterialPageRoute(
-                        builder: (_) => const AuthWrapper(),
-                      ),
+                      MaterialPageRoute(builder: (_) => const AuthWrapper()),
                       (route) => false,
                     );
                   }

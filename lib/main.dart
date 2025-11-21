@@ -7,6 +7,7 @@ import 'package:customer_maxx_crm/blocs/users/users_bloc.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_bloc.dart';
 import 'package:customer_maxx_crm/blocs/dashboard/dashboard_bloc.dart';
 import 'package:customer_maxx_crm/blocs/lead_manager_dashboard/lead_manager_dashboard_bloc.dart';
+import 'package:customer_maxx_crm/blocs/manager_dashboard/manager_dashboard_bloc.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_event.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_state.dart';
 import 'package:customer_maxx_crm/screens/splash_screen.dart';
@@ -14,33 +15,29 @@ import 'package:customer_maxx_crm/screens/auth/auth_screen.dart';
 import 'package:customer_maxx_crm/screens/admin/admin_dashboard.dart';
 import 'package:customer_maxx_crm/screens/lead_manager/lead_manager_dashboard.dart';
 import 'package:customer_maxx_crm/screens/ba_specialist/ba_specialist_dashboard.dart';
+import 'package:customer_maxx_crm/screens/manager/manager_dashboard.dart';
 import 'package:customer_maxx_crm/utils/theme_utils.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Initialize services through ServiceLocator
   await ServiceLocator.init();
-  
+
   runApp(
     MultiBlocProvider(
       providers: [
-        BlocProvider<AuthBloc>(
-          create: (context) => AuthBloc(),
-        ),
-        BlocProvider<LeadsBloc>(
-          create: (context) => LeadsBloc(),
-        ),
-        BlocProvider<UsersBloc>(
-          create: (context) => UsersBloc(),
-        ),
+        BlocProvider<AuthBloc>(create: (context) => AuthBloc()),
+        BlocProvider<LeadsBloc>(create: (context) => LeadsBloc()),
+        BlocProvider<UsersBloc>(create: (context) => UsersBloc()),
         BlocProvider<ThemeBloc>(
           create: (context) => ThemeBloc()..add(LoadTheme()),
         ),
-        BlocProvider<DashboardBloc>(
-          create: (context) => DashboardBloc(),
-        ),
+        BlocProvider<DashboardBloc>(create: (context) => DashboardBloc()),
         BlocProvider<LeadManagerDashboardBloc>(
           create: (context) => LeadManagerDashboardBloc(),
+        ),
+        BlocProvider<ManagerDashboardBloc>(
+          create: (context) => ManagerDashboardBloc(),
         ),
       ],
       child: const MainApp(),
@@ -78,7 +75,7 @@ class AuthWrapper extends StatelessWidget {
         // For AuthLoading state, we don't show a generic loading screen
         // Instead, we let the AuthScreen handle loading states on the buttons
         // This provides a better UX as the user can see which action is loading
-        
+
         if (authState is Authenticated) {
           final userRole = authState.user?.role;
           if (userRole != null) {
@@ -89,14 +86,21 @@ class AuthWrapper extends StatelessWidget {
                 return const ModernLeadManagerDashboard();
               case 'operations':
                 return const ModernBASpecialistDashboard();
+              case 'manager':
+                return const ModernManagerDashboard();
               default:
                 // Handle case where role names don't match exactly
                 if (userRole.toLowerCase().contains('admin')) {
                   return const ModernAdminDashboard();
-                } else if (userRole.toLowerCase().contains('bde') || userRole.toLowerCase().contains('lead')) {
+                } else if (userRole.toLowerCase().contains('bde') ||
+                    userRole.toLowerCase().contains('lead')) {
                   return const ModernLeadManagerDashboard();
-                } else if (userRole.toLowerCase().contains('operations') || userRole.toLowerCase().contains('ba') || userRole.toLowerCase().contains('specialist')) {
+                } else if (userRole.toLowerCase().contains('operations') ||
+                    userRole.toLowerCase().contains('ba') ||
+                    userRole.toLowerCase().contains('specialist')) {
                   return const ModernBASpecialistDashboard();
+                } else if (userRole.toLowerCase().contains('manager')) {
+                  return const ModernManagerDashboard();
                 } else {
                   return const ModernAuthScreen(authMode: AuthMode.login);
                 }

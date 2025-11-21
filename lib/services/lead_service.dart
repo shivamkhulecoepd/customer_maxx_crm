@@ -8,29 +8,33 @@ import '../models/user.dart';
 
 class LeadService {
   final ApiClient apiClient;
-  
+
   LeadService(this.apiClient);
-  
+
   // Get all leads with optional filtering and pagination
-  Future<List<Lead>> getAllLeads({String? status, int page = 1, int limit = 10}) async {
+  Future<List<Lead>> getAllLeads({
+    String? status,
+    int page = 1,
+    int limit = 10,
+  }) async {
     try {
       final queryParameters = {
         if (status != null) 'status': status,
         'page': page.toString(),
         'limit': limit.toString(),
       };
-      
+
       final response = await apiClient.get(
         ApiEndpoints.getLeads,
         queryParameters: queryParameters,
         authenticated: true,
       );
-      
+
       if (response['status'] == 'success') {
         final leads = (response['leads'] as List)
             .map((leadJson) => Lead.fromJson(leadJson))
             .toList();
-        
+
         return leads;
       } else {
         throw Exception(response['message'] ?? 'Failed to fetch leads');
@@ -40,7 +44,7 @@ class LeadService {
     }
   }
 
-    // Get BA dashboard data with optional filtering
+  // Get BA dashboard data with optional filtering
   Future<List<Lead>> getBADashboard({
     String? name,
     String? contact,
@@ -50,37 +54,39 @@ class LeadService {
   }) async {
     try {
       final queryParameters = <String, dynamic>{};
-      
+
       if (name != null) queryParameters['name'] = name;
       if (contact != null) queryParameters['contact'] = contact;
       if (date != null) queryParameters['date'] = date;
       if (status != null) queryParameters['status'] = status;
       if (feedback != null) queryParameters['feedback'] = feedback;
-      
+
       final response = await apiClient.get(
         ApiEndpoints.getBADashboard,
         queryParameters: queryParameters,
         authenticated: true,
       );
-      
+
       log('BA Dashboard response: $response');
-      
+
       if (response['status'] == 'success') {
         final leads = (response['leads'] as List)
             .map((leadJson) => Lead.fromJson(leadJson))
             .toList();
-        
+
         log('Parsed ${leads.length} BA dashboard leads');
         return leads;
       } else {
-        throw Exception(response['message'] ?? 'Failed to fetch BA dashboard data');
+        throw Exception(
+          response['message'] ?? 'Failed to fetch BA dashboard data',
+        );
       }
     } catch (e) {
       log('Error in getBADashboard: $e');
       rethrow;
     }
   }
-  
+
   // Get registered leads with fee information
   Future<List<Lead>> getRegisteredLeads() async {
     try {
@@ -88,25 +94,27 @@ class LeadService {
         ApiEndpoints.getRegisteredLeads,
         authenticated: true,
       );
-      
+
       log('Registered leads response: $response');
-      
+
       if (response['status'] == 'success') {
         final leads = (response['leads'] as List)
             .map((leadJson) => Lead.fromJson(leadJson))
             .toList();
-        
+
         log('Parsed ${leads.length} registered leads');
         return leads;
       } else {
-        throw Exception(response['message'] ?? 'Failed to fetch registered leads');
+        throw Exception(
+          response['message'] ?? 'Failed to fetch registered leads',
+        );
       }
     } catch (e) {
       log('Error in getRegisteredLeads: $e');
       rethrow;
     }
   }
-  
+
   // Get all leads without pagination (fetches all pages)
   Future<List<Lead>> getAllLeadsNoPagination({String? status}) async {
     try {
@@ -114,27 +122,27 @@ class LeadService {
       int page = 1;
       int limit = 10;
       bool hasMorePages = true;
-      
+
       while (hasMorePages) {
         final queryParameters = {
           if (status != null) 'status': status,
           'page': page.toString(),
           'limit': limit.toString(),
         };
-        
+
         final response = await apiClient.get(
           ApiEndpoints.getLeads,
           queryParameters: queryParameters,
           authenticated: true,
         );
-        
+
         if (response['status'] == 'success') {
           final leads = (response['leads'] as List)
               .map((leadJson) => Lead.fromJson(leadJson))
               .toList();
-          
+
           allLeads.addAll(leads);
-          
+
           // Check if there are more pages
           final pagination = response['pagination'];
           if (pagination != null && pagination is Map) {
@@ -150,13 +158,13 @@ class LeadService {
           throw Exception(response['message'] ?? 'Failed to fetch leads');
         }
       }
-      
+
       return allLeads;
     } catch (e) {
       rethrow;
     }
   }
-  
+
   // Create a new lead
   Future<Map<String, dynamic>> createLead(Lead lead) async {
     try {
@@ -165,13 +173,13 @@ class LeadService {
         lead.toJson(),
         authenticated: true,
       );
-      
+
       return response;
     } catch (e) {
       rethrow;
     }
   }
-  
+
   // Update an existing lead
   Future<Map<String, dynamic>> updateLead(Lead lead) async {
     try {
@@ -180,13 +188,13 @@ class LeadService {
         lead.toJson(),
         authenticated: true,
       );
-      
+
       return response;
     } catch (e) {
       rethrow;
     }
   }
-  
+
   // Delete a lead
   Future<Map<String, dynamic>> deleteLead(int leadId) async {
     try {
@@ -195,13 +203,13 @@ class LeadService {
         queryParameters: {'id': leadId.toString()},
         authenticated: true,
       );
-      
+
       return response;
     } catch (e) {
       rethrow;
     }
   }
-  
+
   // Get lead history
   Future<List<LeadHistory>> getLeadHistory(int leadId) async {
     try {
@@ -210,12 +218,12 @@ class LeadService {
         queryParameters: {'lead_id': leadId.toString()},
         authenticated: true,
       );
-      
+
       if (response['status'] == 'success') {
         final history = (response['history'] as List)
             .map((historyJson) => LeadHistory.fromJson(historyJson))
             .toList();
-        
+
         return history;
       } else {
         throw Exception(response['message'] ?? 'Failed to fetch lead history');
@@ -224,22 +232,24 @@ class LeadService {
       rethrow;
     }
   }
-  
+
   // Import leads from CSV file
-  Future<Map<String, dynamic>> importLeads(Map<String, dynamic> formData) async {
+  Future<Map<String, dynamic>> importLeads(
+    Map<String, dynamic> formData,
+  ) async {
     try {
       final response = await apiClient.post(
         ApiEndpoints.importLeads,
         formData,
         authenticated: true,
       );
-      
+
       return response;
     } catch (e) {
       rethrow;
     }
   }
-  
+
   // Export leads to CSV file
   Future<Map<String, dynamic>> exportLeads() async {
     try {
@@ -247,69 +257,65 @@ class LeadService {
         ApiEndpoints.exportLeads,
         authenticated: true,
       );
-      
+
       return response;
     } catch (e) {
       rethrow;
     }
   }
-  
+
   // Update fee information for a lead
-  Future<Map<String, dynamic>> updateFee(int leadId, int discount, double installment1, double installment2) async {
+  Future<Map<String, dynamic>> updateFee(
+    int leadId,
+    int discount,
+    double installment1,
+    double installment2,
+  ) async {
     try {
-      final response = await apiClient.post(
-        ApiEndpoints.updateFee,
-        {
-          'id': leadId,
-          'discount': discount,
-          'installment1': installment1,
-          'installment2': installment2,
-        },
-        authenticated: true,
-      );
-      
+      final response = await apiClient.post(ApiEndpoints.updateFee, {
+        'id': leadId,
+        'discount': discount,
+        'installment1': installment1,
+        'installment2': installment2,
+      }, authenticated: true);
+
       return response;
     } catch (e) {
       rethrow;
     }
   }
-  
+
   // Update feedback for a lead
-  Future<Map<String, dynamic>> updateFeedback(int leadId, String feedback) async {
+  Future<Map<String, dynamic>> updateFeedback(
+    int leadId,
+    String feedback,
+  ) async {
     try {
-      final response = await apiClient.post(
-        ApiEndpoints.updateFeedback,
-        {
-          'id': leadId,
-          'feedback': feedback,
-        },
-        authenticated: true,
-      );
-      
+      final response = await apiClient.post(ApiEndpoints.updateFeedback, {
+        'id': leadId,
+        'feedback': feedback,
+      }, authenticated: true);
+
       return response;
     } catch (e) {
       rethrow;
     }
   }
-  
+
   // Update status for a lead
   Future<Map<String, dynamic>> updateStatus(int leadId, String status) async {
     try {
-      final response = await apiClient.post(
-        ApiEndpoints.updateStatus,
-        {
-          'id': leadId,
-          'status': status,
-        },
-        authenticated: true,
-      );
-      
+      final response = await apiClient.post(ApiEndpoints.updateStatus, {
+        'id': leadId,
+        'status': status,
+      }, authenticated: true);
+
       return response;
     } catch (e) {
       rethrow;
     }
   }
-  
+
   // Get lead managers for dropdown
   Future<List<UserRole>> getLeadManagers() async {
     try {
@@ -317,12 +323,12 @@ class LeadService {
         ApiEndpoints.getLeadManagers,
         authenticated: true,
       );
-      
+
       if (response['status'] == 'success') {
         final leadManagers = (response['lead_managers'] as List)
             .map((managerJson) => UserRole.fromJson(managerJson))
             .toList();
-        
+
         return leadManagers;
       } else {
         throw Exception(response['message'] ?? 'Failed to fetch lead managers');
@@ -331,7 +337,7 @@ class LeadService {
       rethrow;
     }
   }
-  
+
   // Get BA specialists for dropdown
   Future<List<UserRole>> getBASpecialists() async {
     try {
@@ -339,21 +345,23 @@ class LeadService {
         ApiEndpoints.getBASpecialists,
         authenticated: true,
       );
-      
+
       if (response['status'] == 'success') {
         final baSpecialists = (response['ba_specialists'] as List)
             .map((specialistJson) => UserRole.fromJson(specialistJson))
             .toList();
-        
+
         return baSpecialists;
       } else {
-        throw Exception(response['message'] ?? 'Failed to fetch BA specialists');
+        throw Exception(
+          response['message'] ?? 'Failed to fetch BA specialists',
+        );
       }
     } catch (e) {
       rethrow;
     }
   }
-  
+
   // Get all dropdown data in one call
   Future<DropdownData> getDropdownData() async {
     try {
@@ -361,13 +369,41 @@ class LeadService {
         ApiEndpoints.getDropdownData,
         authenticated: true,
       );
-      
+
       if (response['status'] == 'success') {
         return DropdownData.fromJson(response['dropdown_data']);
       } else {
         throw Exception(response['message'] ?? 'Failed to fetch dropdown data');
       }
     } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Get stale leads (Not Connected > 7 days)
+  Future<List<Lead>> getStaleLeads({int page = 1, int limit = 20}) async {
+    try {
+      final queryParameters = {
+        'page': page.toString(),
+        'limit': limit.toString(),
+      };
+
+      final response = await apiClient.get(
+        ApiEndpoints.getStaleLeads,
+        queryParameters: queryParameters,
+        authenticated: true,
+      );
+
+      if (response['status'] == 'success') {
+        final leads = (response['stale_leads'] as List)
+            .map((leadJson) => Lead.fromJson(leadJson))
+            .toList();
+        return leads;
+      } else {
+        throw Exception(response['message'] ?? 'Failed to fetch stale leads');
+      }
+    } catch (e) {
+      log('Error in getStaleLeads: $e');
       rethrow;
     }
   }

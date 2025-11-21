@@ -1,24 +1,23 @@
 import 'dart:developer';
 
-import 'package:customer_maxx_crm/blocs/theme/theme_event.dart';
-import 'package:customer_maxx_crm/widgets/app_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:customer_maxx_crm/blocs/auth/auth_bloc.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_bloc.dart';
+import 'package:customer_maxx_crm/blocs/theme/theme_event.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_state.dart';
 import 'package:customer_maxx_crm/utils/theme_utils.dart';
 import 'package:customer_maxx_crm/widgets/navigation_bar.dart';
-
-// Changed from standard_table_view to generic_table_view
+import 'package:customer_maxx_crm/widgets/app_drawer.dart';
 import 'package:customer_maxx_crm/widgets/generic_table_view.dart';
 import 'package:customer_maxx_crm/models/lead.dart';
 import 'package:customer_maxx_crm/services/lead_service.dart';
 import 'package:customer_maxx_crm/services/profile_service.dart';
 import 'package:customer_maxx_crm/utils/api_service_locator.dart';
-import 'package:customer_maxx_crm/models/dashboard_stats.dart'; // Added import for BAStats
-import 'package:customer_maxx_crm/services/dashboard_service.dart'; // Added import for DashboardService
-import 'package:shimmer/shimmer.dart'; // Added import for shimmer effect
+import 'package:customer_maxx_crm/models/dashboard_stats.dart';
+import 'package:customer_maxx_crm/services/dashboard_service.dart';
+import 'package:customer_maxx_crm/screens/notifications/notification_screen.dart';
+import 'package:shimmer/shimmer.dart';
 
 class ModernBASpecialistDashboard extends StatefulWidget {
   final int initialIndex;
@@ -89,7 +88,8 @@ class _ModernBASpecialistDashboardState
     _currentNavIndex = widget.initialIndex;
     _leadService = ServiceLocator.leadService;
     _profileService = ServiceLocator.profileService;
-    _dashboardService = ServiceLocator.dashboardService; // Initialize DashboardService
+    _dashboardService =
+        ServiceLocator.dashboardService; // Initialize DashboardService
     _loadUserData();
 
     log('BA Specialist Dashboard initialized with index: $_currentNavIndex');
@@ -159,7 +159,10 @@ class _ModernBASpecialistDashboardState
 
   Future<void> _loadDashboardStats({bool forceRefresh = false}) async {
     // Don't load if already loaded or currently loading, unless force refresh is requested
-    if (!forceRefresh && _hasLoadedInitialDashboardStats && _baStats != null && !_isLoadingDashboardStats) {
+    if (!forceRefresh &&
+        _hasLoadedInitialDashboardStats &&
+        _baStats != null &&
+        !_isLoadingDashboardStats) {
       return;
     }
 
@@ -175,8 +178,10 @@ class _ModernBASpecialistDashboardState
     try {
       log('Loading BA dashboard stats');
       final stats = await _dashboardService.getBAStats();
-      log('BA Stats loaded: Total Leads: ${stats.totalLeads}, Registered: ${stats.registeredLeads}, Conversion Rate: ${stats.conversionRate}%');
-      
+      log(
+        'BA Stats loaded: Total Leads: ${stats.totalLeads}, Registered: ${stats.registeredLeads}, Conversion Rate: ${stats.conversionRate}%',
+      );
+
       setState(() {
         _baStats = stats;
         _isLoadingDashboardStats = false;
@@ -214,9 +219,7 @@ class _ModernBASpecialistDashboardState
         _assignedLeads = leads;
         _isLoadingAssigned = false;
       });
-      log(
-        'Assigned leads state updated. New count: ${_assignedLeads.length}',
-      );
+      log('Assigned leads state updated. New count: ${_assignedLeads.length}');
     } catch (e) {
       log('Error loading assigned leads: $e');
       setState(() {
@@ -281,27 +284,31 @@ class _ModernBASpecialistDashboardState
     try {
       log('Loading profile data for user ID: $_userId');
       final profileResponse = await _profileService.fetchUserProfile(_userId);
-      
+
       if (profileResponse['success'] == true) {
         final profileData = profileResponse['data'];
         log('Profile data loaded successfully: $profileData');
-        
+
         setState(() {
           _profileData = profileData;
           _isLoadingProfileData = false;
-          
+
           // Update user name from profile data if available
           if (profileData['fullname'] != null) {
             _userName = profileData['fullname'];
           }
-          
+
           // Set default values for profile stats
-          _assignedLeadsCountProfile = profileData['assigned_leads'] as int? ?? 0;
-          _completedLeadsCountProfile = profileData['completed_leads'] as int? ?? 0;
+          _assignedLeadsCountProfile =
+              profileData['assigned_leads'] as int? ?? 0;
+          _completedLeadsCountProfile =
+              profileData['completed_leads'] as int? ?? 0;
           _successRateProfile = profileData['success_rate'] as int? ?? 0;
         });
       } else {
-        throw Exception(profileResponse['message'] ?? 'Failed to load profile data');
+        throw Exception(
+          profileResponse['message'] ?? 'Failed to load profile data',
+        );
       }
     } catch (e) {
       log('Error loading profile data: $e');
@@ -416,6 +423,18 @@ class _ModernBASpecialistDashboardState
 
           // Actions
           if (actions != null) ...actions!,
+
+          // Notification Icon
+          _buildIconButton(context, Icons.notifications_outlined, () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const NotificationScreen(),
+              ),
+            );
+          }, isDarkMode),
+
+          SizedBox(width: width < 360 ? 6 : 8),
 
           // Theme Toggle
           _buildIconButton(
@@ -569,9 +588,9 @@ class _ModernBASpecialistDashboardState
 
   Widget _buildDashboardView(bool isDarkMode) {
     // Load dashboard stats if not already loaded
-    if (!_hasLoadedInitialDashboardStats && 
-        _baStats == null && 
-        !_isLoadingDashboardStats && 
+    if (!_hasLoadedInitialDashboardStats &&
+        _baStats == null &&
+        !_isLoadingDashboardStats &&
         _dashboardStatsError == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _loadDashboardStats();
@@ -684,7 +703,12 @@ class _ModernBASpecialistDashboardState
 
     // Show shimmer effect while loading
     if (_isLoadingDashboardStats && _baStats == null) {
-      return _buildShimmerStatsGrid(isDarkMode, crossAxisCount, spacing, screenWidth);
+      return _buildShimmerStatsGrid(
+        isDarkMode,
+        crossAxisCount,
+        spacing,
+        screenWidth,
+      );
     }
 
     return GridView.builder(
@@ -709,14 +733,18 @@ class _ModernBASpecialistDashboardState
           },
           {
             'title': 'Registered',
-            'value': _baStats != null ? _baStats!.registeredLeads.toString() : '23',
+            'value': _baStats != null
+                ? _baStats!.registeredLeads.toString()
+                : '23',
             'icon': Icons.check_circle_rounded,
             'color': AppThemes.greenAccent,
             'change': 'This week',
           },
           {
             'title': 'Conversion Rate',
-            'value': _baStats != null ? '${_baStats!.conversionRate.toStringAsFixed(1)}%' : '28.6%',
+            'value': _baStats != null
+                ? '${_baStats!.conversionRate.toStringAsFixed(1)}%'
+                : '28.6%',
             'icon': Icons.trending_up_rounded,
             'color': AppThemes.purpleAccent,
             'change': 'Overall',
@@ -742,7 +770,12 @@ class _ModernBASpecialistDashboardState
     );
   }
 
-  Widget _buildShimmerStatsGrid(bool isDarkMode, int crossAxisCount, double spacing, double screenWidth) {
+  Widget _buildShimmerStatsGrid(
+    bool isDarkMode,
+    int crossAxisCount,
+    double spacing,
+    double screenWidth,
+  ) {
     return Shimmer.fromColors(
       baseColor: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
       highlightColor: isDarkMode ? Colors.grey[600]! : Colors.grey[100]!,
@@ -1287,10 +1320,7 @@ class _ModernBASpecialistDashboardState
                     ),
                     Text(
                       lead.email,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
@@ -1379,12 +1409,8 @@ class _ModernBASpecialistDashboardState
   }
 
   Widget _buildRegisteredLeadsView(bool isDarkMode) {
-    log(
-      'Building registered leads view with ${_registeredLeads.length} items',
-    );
-    log(
-      'Loading state: $_isLoadingRegistered, Error: $_registeredLeadsError',
-    );
+    log('Building registered leads view with ${_registeredLeads.length} items');
+    log('Loading state: $_isLoadingRegistered, Error: $_registeredLeadsError');
 
     // Load registered leads data only when needed (first time)
     if (!_hasLoadedInitialRegisteredData &&
@@ -1440,7 +1466,9 @@ class _ModernBASpecialistDashboardState
             log('No registered leads to display');
           }
 
-          log('Creating GenericTableView with ${_registeredLeads.length} items');
+          log(
+            'Creating GenericTableView with ${_registeredLeads.length} items',
+          );
 
           return GenericTableView<Lead>(
             key: const ValueKey(
@@ -1468,10 +1496,7 @@ class _ModernBASpecialistDashboardState
                     ),
                     Text(
                       lead.email,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
@@ -1515,12 +1540,14 @@ class _ModernBASpecialistDashboardState
               GenericTableColumn<Lead>(
                 width: 110,
                 title: 'Installment 1',
-                value: (lead) => lead.installment1?.toStringAsFixed(2) ?? '0.00',
+                value: (lead) =>
+                    lead.installment1?.toStringAsFixed(2) ?? '0.00',
               ),
               GenericTableColumn<Lead>(
                 width: 110,
                 title: 'Installment 2',
-                value: (lead) => lead.installment2?.toStringAsFixed(2) ?? '0.00',
+                value: (lead) =>
+                    lead.installment2?.toStringAsFixed(2) ?? '0.00',
               ),
               GenericTableColumn<Lead>(
                 width: 110,
@@ -1565,7 +1592,7 @@ class _ModernBASpecialistDashboardState
 
   Widget _buildProfileView(bool isDarkMode) {
     final screenWidth = MediaQuery.of(context).size.width;
-    
+
     return RefreshIndicator(
       onRefresh: () async {
         await _loadDashboardStats(forceRefresh: true);
@@ -1778,12 +1805,18 @@ class _ModernBASpecialistDashboardState
     if (_isLoadingDashboardStats && _baStats == null) {
       return _buildShimmerProfileStats(isDarkMode);
     }
-    
+
     // Use dynamic data from _baStats if available, otherwise use static data
-    String leadsValue = _baStats != null ? _baStats!.totalLeads.toString() : '47';
-    String completedValue = _baStats != null ? _baStats!.registeredLeads.toString() : '23';
-    String successRateValue = _baStats != null ? '${_baStats!.conversionRate.toStringAsFixed(1)}%' : '89%';
-    
+    String leadsValue = _baStats != null
+        ? _baStats!.totalLeads.toString()
+        : '47';
+    String completedValue = _baStats != null
+        ? _baStats!.registeredLeads.toString()
+        : '23';
+    String successRateValue = _baStats != null
+        ? '${_baStats!.conversionRate.toStringAsFixed(1)}%'
+        : '89%';
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
@@ -2001,7 +2034,12 @@ class _ModernBASpecialistDashboardState
     );
   }
 
-  Widget _buildStatItem(String label, String value, Color color, bool isDarkMode) {
+  Widget _buildStatItem(
+    String label,
+    String value,
+    Color color,
+    bool isDarkMode,
+  ) {
     return Column(
       children: [
         Container(
@@ -2032,8 +2070,6 @@ class _ModernBASpecialistDashboardState
       ],
     );
   }
-
-
 
   Widget _buildActionButton(
     BuildContext context,
@@ -2128,8 +2164,8 @@ class _ModernBASpecialistDashboardState
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom > 0 
-              ? MediaQuery.of(context).viewInsets.bottom 
+          bottom: MediaQuery.of(context).viewInsets.bottom > 0
+              ? MediaQuery.of(context).viewInsets.bottom
               : 20,
         ),
         decoration: BoxDecoration(
@@ -2664,17 +2700,21 @@ class _ModernBASpecialistDashboardState
                 setState(() {
                   _userName = nameController.text;
                 });
-                
+
                 if (context.mounted) {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Profile updated successfully!')),
+                    const SnackBar(
+                      content: Text('Profile updated successfully!'),
+                    ),
                   );
                 }
               } catch (e) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error updating profile: ${e.toString()}')),
+                    SnackBar(
+                      content: Text('Error updating profile: ${e.toString()}'),
+                    ),
                   );
                 }
               }

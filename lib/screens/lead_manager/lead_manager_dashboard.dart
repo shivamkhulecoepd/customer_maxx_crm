@@ -20,6 +20,7 @@ import 'package:customer_maxx_crm/blocs/leads/leads_event.dart';
 import 'package:customer_maxx_crm/services/lead_service.dart';
 import 'package:customer_maxx_crm/blocs/lead_manager_dashboard/lead_manager_dashboard_bloc.dart';
 import 'package:customer_maxx_crm/models/dashboard_stats.dart';
+import 'package:customer_maxx_crm/screens/notifications/notification_screen.dart';
 import 'package:shimmer/shimmer.dart';
 
 class ModernLeadManagerDashboard extends StatefulWidget {
@@ -338,6 +339,20 @@ class _ModernLeadManagerDashboardState
 
           // Actions
           if (actions != null) ...actions!,
+
+          // Notification Icon
+          _buildIconButton(
+            context,
+            Icons.notifications_outlined,
+            () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const NotificationScreen(),
+              ),
+            ),
+            isDarkMode,
+          ),
+          SizedBox(width: width < 360 ? 6 : 8),
 
           // Theme Toggle
           _buildIconButton(

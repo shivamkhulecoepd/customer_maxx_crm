@@ -24,6 +24,7 @@ import 'package:customer_maxx_crm/models/user.dart';
 import 'package:customer_maxx_crm/models/lead.dart';
 import 'package:customer_maxx_crm/models/dashboard_stats.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
+import 'package:customer_maxx_crm/screens/notifications/notification_screen.dart';
 
 class ModernAdminDashboard extends StatefulWidget {
   final int initialIndex;
@@ -521,6 +522,18 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
           // Actions
           if (actions != null) ...actions!,
 
+          // Notification Icon
+          _buildIconButton(context, Icons.notifications_outlined, () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const NotificationScreen(),
+              ),
+            );
+          }, isDarkMode),
+
+          SizedBox(width: width < 360 ? 6 : 8),
+
           // Theme Toggle
           _buildIconButton(
             context,
@@ -689,12 +702,12 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
           _hasLoadedInitialLeadsData = false;
           _hasLoadedInitialDashboardData = false;
         });
-        
+
         // Load fresh data
         context.read<LeadsBloc>().add(LoadAllLeads());
         context.read<UsersBloc>().add(LoadAllUsers());
         context.read<DashboardBloc>().add(LoadAdminStats());
-        
+
         // Wait for data to load
         await Future.delayed(const Duration(milliseconds: 500));
       },
@@ -811,37 +824,45 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
 
                 // Show shimmer only if dashboard data is not loaded yet
                 // Since we primarily use dashboard stats, show data as soon as it's available
-                if (dashboardState is DashboardLoading || dashboardState is DashboardInitial) {
+                if (dashboardState is DashboardLoading ||
+                    dashboardState is DashboardInitial) {
                   // But still show shimmer if users/leads are loading and dashboard hasn't loaded yet
                   if ((usersState.isLoading && usersState.users.isEmpty) ||
                       (leadsState.isLoading && leadsState.leads.isEmpty)) {
-                    return _buildStatsGridShimmer(isDarkMode, crossAxisCount, screenWidth);
+                    return _buildStatsGridShimmer(
+                      isDarkMode,
+                      crossAxisCount,
+                      screenWidth,
+                    );
                   }
                 }
 
                 // Use dashboard stats for consistent user count, with fallback to users bloc
-                final totalUsers = dashboardState is DashboardLoaded 
-                    ? dashboardState.stats.users.total 
+                final totalUsers = dashboardState is DashboardLoaded
+                    ? dashboardState.stats.users.total
                     : usersState.users.length;
-                
+
                 // Use dashboard stats for leads when available, otherwise calculate from leads bloc
                 final totalLeads = dashboardState is DashboardLoaded
                     ? dashboardState.stats.leads.total
                     : leadsState.leads.length;
                 final activeLeads = dashboardState is DashboardLoaded
-                    ? (dashboardState.stats.leads.total - dashboardState.stats.registrations.total)
+                    ? (dashboardState.stats.leads.total -
+                          dashboardState.stats.registrations.total)
                     : leadsState.leads
-                        .where(
-                          (lead) =>
-                              lead.status.toLowerCase() != 'completed' &&
-                              lead.status.toLowerCase() != 'rejected',
-                        )
-                        .length;
+                          .where(
+                            (lead) =>
+                                lead.status.toLowerCase() != 'completed' &&
+                                lead.status.toLowerCase() != 'rejected',
+                          )
+                          .length;
                 final completedLeads = dashboardState is DashboardLoaded
                     ? dashboardState.stats.registrations.total
                     : leadsState.leads
-                        .where((lead) => lead.status.toLowerCase() == 'completed')
-                        .length;
+                          .where(
+                            (lead) => lead.status.toLowerCase() == 'completed',
+                          )
+                          .length;
                 final conversionRate = totalLeads > 0
                     ? ((completedLeads / totalLeads) * 100).toStringAsFixed(1)
                     : '0.0';
@@ -906,7 +927,11 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
     );
   }
 
-  Widget _buildStatsGridShimmer(bool isDarkMode, int crossAxisCount, double screenWidth) {
+  Widget _buildStatsGridShimmer(
+    bool isDarkMode,
+    int crossAxisCount,
+    double screenWidth,
+  ) {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -926,9 +951,7 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
   Widget _buildStatCardShimmer(bool isDarkMode, double screenWidth) {
     return Container(
       padding: EdgeInsets.all(screenWidth * 0.04),
-      constraints: BoxConstraints(
-        minHeight: screenWidth * 0.3,
-      ),
+      constraints: BoxConstraints(minHeight: screenWidth * 0.3),
       decoration: BoxDecoration(
         color: isDarkMode ? const Color(0xFF1A1A1A) : Colors.white,
         borderRadius: BorderRadius.circular(screenWidth * 0.03),
@@ -951,7 +974,9 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
             children: [
               Shimmer.fromColors(
                 baseColor: isDarkMode ? Colors.grey[800]! : Colors.grey[300]!,
-                highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+                highlightColor: isDarkMode
+                    ? Colors.grey[700]!
+                    : Colors.grey[100]!,
                 child: Container(
                   width: screenWidth * 0.12,
                   height: screenWidth * 0.12,
@@ -963,7 +988,9 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
               ),
               Shimmer.fromColors(
                 baseColor: isDarkMode ? Colors.grey[800]! : Colors.grey[300]!,
-                highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+                highlightColor: isDarkMode
+                    ? Colors.grey[700]!
+                    : Colors.grey[100]!,
                 child: Container(
                   width: screenWidth * 0.08,
                   height: screenWidth * 0.04,
@@ -980,7 +1007,9 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
             children: [
               Shimmer.fromColors(
                 baseColor: isDarkMode ? Colors.grey[800]! : Colors.grey[300]!,
-                highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+                highlightColor: isDarkMode
+                    ? Colors.grey[700]!
+                    : Colors.grey[100]!,
                 child: Container(
                   width: screenWidth * 0.15,
                   height: screenWidth * 0.07,
@@ -993,7 +1022,9 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
               SizedBox(height: screenWidth * 0.01),
               Shimmer.fromColors(
                 baseColor: isDarkMode ? Colors.grey[800]! : Colors.grey[300]!,
-                highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+                highlightColor: isDarkMode
+                    ? Colors.grey[700]!
+                    : Colors.grey[100]!,
                 child: Container(
                   width: screenWidth * 0.2,
                   height: screenWidth * 0.035,
@@ -1853,7 +1884,7 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
 
   Widget _buildPerformanceStatsShimmer(bool isDarkMode) {
     final screenWidth = MediaQuery.of(context).size.width;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1887,12 +1918,15 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
             ],
           ),
           child: Column(
-            children: List.generate(6, (index) => Column(
-              children: [
-                _buildShimmerRow(isDarkMode),
-                if (index < 5) const Divider(height: 1),
-              ],
-            )),
+            children: List.generate(
+              6,
+              (index) => Column(
+                children: [
+                  _buildShimmerRow(isDarkMode),
+                  if (index < 5) const Divider(height: 1),
+                ],
+              ),
+            ),
           ),
         ),
       ],
@@ -1920,7 +1954,9 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
           Expanded(
             child: Shimmer.fromColors(
               baseColor: isDarkMode ? Colors.grey[800]! : Colors.grey[300]!,
-              highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+              highlightColor: isDarkMode
+                  ? Colors.grey[700]!
+                  : Colors.grey[100]!,
               child: Container(
                 height: 16,
                 decoration: BoxDecoration(
@@ -1950,7 +1986,7 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
 
   Widget _buildPerformanceStatsError(String message, bool isDarkMode) {
     final screenWidth = MediaQuery.of(context).size.width;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1986,16 +2022,14 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
           child: Center(
             child: Column(
               children: [
-                Icon(
-                  Icons.error_outline,
-                  color: AppThemes.redAccent,
-                  size: 48,
-                ),
+                Icon(Icons.error_outline, color: AppThemes.redAccent, size: 48),
                 const SizedBox(height: 16),
                 Text(
                   'Error loading dashboard data',
                   style: TextStyle(
-                    color: isDarkMode ? Colors.white : AppThemes.lightPrimaryText,
+                    color: isDarkMode
+                        ? Colors.white
+                        : AppThemes.lightPrimaryText,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -2003,7 +2037,9 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
                 Text(
                   message,
                   style: TextStyle(
-                    color: isDarkMode ? AppThemes.darkSecondaryText : AppThemes.lightSecondaryText,
+                    color: isDarkMode
+                        ? AppThemes.darkSecondaryText
+                        : AppThemes.lightSecondaryText,
                     fontSize: 12,
                   ),
                   textAlign: TextAlign.center,
@@ -2309,7 +2345,7 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
 
   Widget _buildDetailedChartsShimmer(bool isDarkMode) {
     final screenWidth = MediaQuery.of(context).size.width;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -2331,7 +2367,11 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
     );
   }
 
-  Widget _buildChartCardShimmer(String title, bool isDarkMode, double screenWidth) {
+  Widget _buildChartCardShimmer(
+    String title,
+    bool isDarkMode,
+    double screenWidth,
+  ) {
     return Container(
       width: double.infinity,
       margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.01, vertical: 8),

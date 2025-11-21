@@ -8,6 +8,7 @@ import 'package:customer_maxx_crm/utils/theme_utils.dart';
 import 'package:customer_maxx_crm/screens/admin/admin_dashboard.dart';
 import 'package:customer_maxx_crm/screens/lead_manager/lead_manager_dashboard.dart';
 import 'package:customer_maxx_crm/screens/ba_specialist/ba_specialist_dashboard.dart';
+import 'package:customer_maxx_crm/screens/manager/manager_dashboard.dart';
 
 // Add logging import
 import 'dart:developer' as developer;
@@ -49,13 +50,12 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
   // Map display names to API role values
   final Map<String, String> _roleMap = {
     'Admin': 'admin',
-    // 'Lead Manager': 'bde',
-    // 'BA Specialist': 'operations',
+    'Manager': 'manager',
     'BDE': 'bde',
     'Operations': 'operations',
   };
 
-  final List<String> _roles = ['Admin', 'BDE', 'Operations'];
+  final List<String> _roles = ['Admin', 'Manager', 'BDE', 'Operations'];
 
   @override
   void initState() {
@@ -161,6 +161,9 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
               case 'admin':
                 dashboard = const ModernAdminDashboard();
                 break;
+              case 'manager':
+                dashboard = const ModernManagerDashboard();
+                break;
               case 'bde':
                 dashboard = const ModernLeadManagerDashboard();
                 break;
@@ -171,7 +174,10 @@ class _ModernAuthScreenState extends State<ModernAuthScreen>
                 // Handle case where role names don't match exactly
                 if (userRole.toLowerCase().contains('admin')) {
                   dashboard = const ModernAdminDashboard();
-                } else if (userRole.toLowerCase().contains('bde') || userRole.toLowerCase().contains('lead')) {
+                } else if (userRole.toLowerCase().contains('manager')) {
+                  dashboard = const ModernManagerDashboard();
+                } else if (userRole.toLowerCase().contains('bde') ||
+                    userRole.toLowerCase().contains('lead')) {
                   dashboard = const ModernLeadManagerDashboard();
                 } else if (userRole.toLowerCase().contains('operations') ||
                     userRole.toLowerCase().contains('ba') ||

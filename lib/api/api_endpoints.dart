@@ -9,7 +9,8 @@ class ApiEndpoints {
   // Lead endpoints
   static const String getLeads = '$_apiPath?action=get_leads';
   static const String getBADashboard = '$_apiPath?action=get_ba_dashboard';
-  static const String getRegisteredLeads = '$_apiPath?action=get_registered_leads';
+  static const String getRegisteredLeads =
+      '$_apiPath?action=get_registered_leads';
   static const String createLead = '$_apiPath?action=create_lead';
   static const String updateLead = '$_apiPath?action=update_lead';
   static const String deleteLead = '$_apiPath?action=delete_lead';
@@ -38,4 +39,15 @@ class ApiEndpoints {
   static const String getLeadManagerStats =
       '$_apiPath?action=get_lead_manager_stats';
   static const String getBAStats = '$_apiPath?action=get_ba_stats';
+  static const String getManagerStats = '$_apiPath?action=get_manager_stats';
+
+  // Notification endpoints
+  static const String getNotifications = '$_apiPath?action=get_notifications';
+  static const String getUnreadCount = '$_apiPath?action=get_unread_count';
+  static const String markNotificationRead =
+      '$_apiPath?action=mark_notification_read';
+  static const String runCron = '$_apiPath?action=run_cron';
+
+  // Stale Leads endpoint
+  static const String getStaleLeads = '$_apiPath?action=get_stale_leads';
 }
