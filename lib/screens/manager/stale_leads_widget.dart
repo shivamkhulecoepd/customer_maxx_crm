@@ -11,14 +11,14 @@ import 'package:customer_maxx_crm/utils/api_service_locator.dart';
 import 'package:customer_maxx_crm/widgets/generic_table_view.dart';
 import 'package:intl/intl.dart';
 
-class StaleLeadsScreen extends StatefulWidget {
-  const StaleLeadsScreen({super.key});
+class StaleLeadsWidget extends StatefulWidget {
+  const StaleLeadsWidget({super.key});
 
   @override
-  State<StaleLeadsScreen> createState() => _StaleLeadsScreenState();
+  State<StaleLeadsWidget> createState() => _StaleLeadsWidgetState();
 }
 
-class _StaleLeadsScreenState extends State<StaleLeadsScreen> {
+class _StaleLeadsWidgetState extends State<StaleLeadsWidget> {
   late LeadService _leadService;
   List<Lead> _leads = [];
   bool _isLoading = true;
@@ -28,9 +28,6 @@ class _StaleLeadsScreenState extends State<StaleLeadsScreen> {
   final ScrollController _scrollController = ScrollController();
   List<UserRole> _baSpecialists = [];
 
-  final bool showDrawer = true;
-  final List<Widget>? actions = [];
-
   bool _hasLoadedInitialData = false;
 
   @override
@@ -39,6 +36,10 @@ class _StaleLeadsScreenState extends State<StaleLeadsScreen> {
     _leadService = ServiceLocator.leadService;
     _loadBASpecialists();
     _scrollController.addListener(_onScroll);
+    // Load initial data
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadLeads();
+    });
   }
 
   @override
@@ -185,121 +186,12 @@ class _StaleLeadsScreenState extends State<StaleLeadsScreen> {
     return BlocBuilder<ThemeBloc, ThemeState>(
       builder: (context, themeState) {
         final isDarkMode = themeState.isDarkMode;
-
-        return Scaffold(
-          appBar: AppBar(
-            automaticallyImplyLeading: false,
-            title: _buildCustomAppBar(context, isDarkMode),
-            centerTitle: true,
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          ),
-          body: _buildBody(isDarkMode),
-        );
+        return _buildBody(isDarkMode);
       },
     );
   }
 
-  Widget _buildCustomAppBar(BuildContext context, bool isDarkMode) {
-    final width = MediaQuery.of(context).size.width;
-
-    return Container(
-      color: Colors.transparent,
-      child: Row(
-        children: [
-          // Back Button
-          Builder(
-            builder: (BuildContext context) {
-              return _buildIconButton(
-                context,
-                Icons.arrow_back_ios,
-                () => Navigator.pop(context),
-                isDarkMode,
-              );
-            },
-          ),
-          SizedBox(width: width < 360 ? 8 : 12),
-
-          // Title
-          Expanded(
-            child: Text(
-              "Stale Leads",
-              style: TextStyle(
-                fontSize: width < 360 ? 18 : 20,
-                fontWeight: FontWeight.w600,
-                color: isDarkMode ? Colors.white : const Color(0xFF1A1A1A),
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-
-          // Actions
-          if (actions != null) ...actions!,
-          SizedBox(width: width < 360 ? 6 : 8),
-
-          // Refresh Icon
-          _buildIconButton(
-            context,
-            Icons.refresh,
-            () {
-              _page = 1;
-              _loadLeads();
-            },
-            isDarkMode,
-          ),
-
-          SizedBox(width: width < 360 ? 6 : 8),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildIconButton(
-    BuildContext context,
-    IconData icon,
-    VoidCallback onPressed,
-    bool isDarkMode,
-  ) {
-    final width = MediaQuery.of(context).size.width;
-    final buttonSize = width < 360 ? 36.0 : 44.0;
-    final iconSize = width < 360 ? 18.0 : 20.0;
-
-    return Container(
-      width: buttonSize,
-      height: buttonSize,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: isDarkMode
-            ? Colors.white.withValues(alpha: 0.1)
-            : Colors.grey.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(width < 360 ? 10 : 12),
-      ),
-      child: IconButton(
-        icon: Icon(
-          icon,
-          color: isDarkMode ? Colors.white : const Color(0xFF1A1A1A),
-          size: iconSize,
-        ),
-        onPressed: onPressed,
-        padding: EdgeInsets.zero,
-      ),
-    );
-  }
-
   Widget _buildBody(bool isDarkMode) {
-    // Load data only when needed (first time)
-    if (!_hasLoadedInitialData &&
-        _leads.isEmpty &&
-        !_isLoading &&
-        _error == null) {
-      // Use addPostFrameCallback to avoid calling during build phase
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _loadLeads();
-        setState(() {
-          _hasLoadedInitialData = true;
-        });
-      });
-    }
-
     if (_isLoading && _leads.isEmpty) {
       return _buildShimmerLoading(isDarkMode);
     }
@@ -314,10 +206,6 @@ class _StaleLeadsScreenState extends State<StaleLeadsScreen> {
 
     return RefreshIndicator(
       onRefresh: () async {
-        // Reset the flag and load fresh data
-        setState(() {
-          _hasLoadedInitialData = false;
-        });
         _page = 1;
         await _loadLeads();
       },

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../models/lead.dart';
 import '../../services/lead_service.dart';
 import '../../utils/api_service_locator.dart';
 import '../../utils/theme_utils.dart';
 import '../../blocs/theme/theme_bloc.dart';
 import '../../blocs/theme/theme_state.dart';
+import '../../widgets/generic_table_view.dart';
 import '../leads/lead_detail_screen.dart';
 
 class ManagerAllLeadsScreen extends StatefulWidget {
@@ -41,10 +43,11 @@ class _ManagerAllLeadsScreenState extends State<ManagerAllLeadsScreen> {
     'Registered',
   ];
 
+  bool _hasLoadedInitialData = false;
+
   @override
   void initState() {
     super.initState();
-    _loadLeads();
     _scrollController.addListener(_onScroll);
   }
 
@@ -256,21 +259,11 @@ class _ManagerAllLeadsScreenState extends State<ManagerAllLeadsScreen> {
       builder: (context, state) {
         final isDarkMode = state.isDarkMode;
         return Scaffold(
-          backgroundColor: isDarkMode
-              ? AppThemes.darkBackground
-              : AppThemes.lightBackground,
           appBar: AppBar(
-            title: const Text('All Leads'),
-            backgroundColor: isDarkMode
-                ? AppThemes.darkCardBackground
-                : AppThemes.primaryColor,
-            foregroundColor: Colors.white,
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.filter_list),
-                onPressed: () => _showFilterModal(isDarkMode),
-              ),
-            ],
+            automaticallyImplyLeading: false,
+            title: _buildCustomAppBar(context, isDarkMode),
+            centerTitle: true,
+            backgroundColor: isDarkMode ? Colors.black : Colors.white,
           ),
           body: _buildBody(isDarkMode),
         );
@@ -279,131 +272,116 @@ class _ManagerAllLeadsScreenState extends State<ManagerAllLeadsScreen> {
   }
 
   Widget _buildBody(bool isDarkMode) {
+    // Load data only when needed (first time)
+    if (!_hasLoadedInitialData &&
+        _leads.isEmpty &&
+        !_isLoading &&
+        _error == null) {
+      // Use addPostFrameCallback to avoid calling during build phase
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadLeads();
+        setState(() {
+          _hasLoadedInitialData = true;
+        });
+      });
+    }
+
     if (_isLoading && _leads.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return _buildShimmerLoading(isDarkMode);
     }
 
     if (_error != null && _leads.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Error: $_error',
-              style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
-            ),
-            ElevatedButton(
-              onPressed: () => _loadLeads(refresh: true),
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
-      );
+      return _buildErrorView(_error!, isDarkMode);
     }
 
     if (_leads.isEmpty) {
-      return Center(
-        child: Text(
-          'No leads found',
-          style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black54),
-        ),
-      );
+      return _buildEmptyView(isDarkMode);
     }
 
     return RefreshIndicator(
-      onRefresh: () => _loadLeads(refresh: true),
-      child: ListView.builder(
-        controller: _scrollController,
-        padding: const EdgeInsets.all(16),
-        itemCount: _leads.length + (_hasMore ? 1 : 0),
-        itemBuilder: (context, index) {
-          if (index == _leads.length) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: CircularProgressIndicator(),
+      onRefresh: () async {
+        // Reset the flag and load fresh data
+        setState(() {
+          _hasLoadedInitialData = false;
+        });
+        await _loadLeads(refresh: true);
+      },
+      child: GenericTableView<Lead>(
+        title: 'All Leads',
+        data: _leads,
+        columns: [
+          GenericTableColumn(
+            title: 'ID',
+            value: (lead) => lead.id.toString(),
+            width: 60,
+          ),
+          GenericTableColumn(
+            title: 'Name',
+            value: (lead) => lead.name,
+            width: 150,
+          ),
+          GenericTableColumn(
+            title: 'Phone',
+            value: (lead) => lead.phone,
+            width: 120,
+          ),
+          GenericTableColumn(
+            title: 'Email',
+            value: (lead) => lead.email,
+            width: 150,
+          ),
+          GenericTableColumn(
+            title: 'Status',
+            value: (lead) => lead.status,
+            width: 120,
+            builder: (lead) => Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: 4,
               ),
-            );
-          }
-
-          final lead = _leads[index];
-          return Card(
-            margin: const EdgeInsets.only(bottom: 16),
-            color: isDarkMode ? AppThemes.darkCardBackground : Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            elevation: 2,
-            child: InkWell(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => LeadDetailScreen(leadId: lead.id),
-                  ),
-                );
-              },
-              borderRadius: BorderRadius.circular(12),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          lead.name,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: isDarkMode ? Colors.white : Colors.black87,
-                          ),
-                        ),
-                        _buildStatusBadge(lead.status),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    _buildInfoRow(Icons.phone, lead.phone, isDarkMode),
-                    const SizedBox(height: 4),
-                    _buildInfoRow(Icons.email, lead.email, isDarkMode),
-                    const SizedBox(height: 4),
-                    _buildInfoRow(
-                      Icons.calendar_today,
-                      lead.date != null
-                          ? DateFormat('MMM dd, yyyy').format(lead.date!)
-                          : (lead.createdAt.isNotEmpty
-                                ? DateFormat('MMM dd, yyyy').format(
-                                    DateTime.tryParse(lead.createdAt) ??
-                                        DateTime.now(),
-                                  )
-                                : 'N/A'),
-                      isDarkMode,
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.person_outline,
-                          size: 16,
-                          color: isDarkMode ? Colors.white60 : Colors.black54,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Owner: ${lead.ownerName}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isDarkMode ? Colors.white60 : Colors.black54,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+              decoration: BoxDecoration(
+                color: AppThemes.getStatusColor(lead.status).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                lead.status.isEmpty ? 'N/A' : lead.status,
+                style: TextStyle(
+                  color: AppThemes.getStatusColor(lead.status.isEmpty ? 'New' : lead.status),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
+          ),
+          GenericTableColumn(
+            title: 'Created',
+            value: (lead) => lead.createdAt.isNotEmpty
+                ? DateFormat('MMM d, y').format(DateTime.parse(lead.createdAt))
+                : 'N/A',
+            width: 120,
+          ),
+          GenericTableColumn(
+            title: 'Owner',
+            value: (lead) => lead.ownerName,
+            width: 120,
+          ),
+          GenericTableColumn(
+            title: 'Assigned To',
+            value: (lead) => lead.assignedName,
+            width: 120,
+          ),
+        ],
+        onRowTap: (lead) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => LeadDetailScreen(leadId: lead.id),
+            ),
           );
         },
+        showSearch: true,
+        showFilter: true,
+        showExport: true,
       ),
     );
   }
@@ -441,6 +419,191 @@ class _ManagerAllLeadsScreenState extends State<ManagerAllLeadsScreen> {
           fontSize: 12,
           fontWeight: FontWeight.bold,
         ),
+      ),
+    );
+  }
+
+  Widget _buildCustomAppBar(BuildContext context, bool isDarkMode) {
+    final width = MediaQuery.of(context).size.width;
+
+    return Container(
+      color: Colors.transparent,
+      child: Row(
+        children: [
+          // Back Button
+          Builder(
+            builder: (BuildContext context) {
+              return _buildIconButton(
+                context,
+                Icons.arrow_back_ios,
+                () => Navigator.pop(context),
+                isDarkMode,
+              );
+            },
+          ),
+          SizedBox(width: width < 360 ? 8 : 12),
+
+          // Title
+          Expanded(
+            child: Text(
+              "All Leads",
+              style: TextStyle(
+                fontSize: width < 360 ? 18 : 20,
+                fontWeight: FontWeight.w600,
+                color: isDarkMode ? Colors.white : const Color(0xFF1A1A1A),
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+
+          // Filter Icon
+          _buildIconButton(
+            context,
+            Icons.filter_list,
+            () => _showFilterModal(isDarkMode),
+            isDarkMode,
+          ),
+
+          SizedBox(width: width < 360 ? 6 : 8),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIconButton(
+    BuildContext context,
+    IconData icon,
+    VoidCallback onPressed,
+    bool isDarkMode,
+  ) {
+    final width = MediaQuery.of(context).size.width;
+    final buttonSize = width < 360 ? 36.0 : 44.0;
+    final iconSize = width < 360 ? 18.0 : 20.0;
+
+    return Container(
+      width: buttonSize,
+      height: buttonSize,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: isDarkMode
+            ? Colors.white.withValues(alpha: 0.1)
+            : Colors.grey.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(width < 360 ? 10 : 12),
+      ),
+      child: IconButton(
+        icon: Icon(
+          icon,
+          color: isDarkMode ? Colors.white : const Color(0xFF1A1A1A),
+          size: iconSize,
+        ),
+        onPressed: onPressed,
+        padding: EdgeInsets.zero,
+      ),
+    );
+  }
+
+  Widget _buildShimmerLoading(bool isDarkMode) {
+    return Shimmer.fromColors(
+      baseColor: isDarkMode ? Colors.grey[800]! : Colors.grey[300]!,
+      highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+      child: SingleChildScrollView(
+        child: Column(
+          children: [
+            // Header shimmer
+            Container(
+              height: 60,
+              margin: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: isDarkMode ? Colors.grey[800] : Colors.grey[300],
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            // Table rows shimmer
+            for (int i = 0; i < 10; i++)
+              Container(
+                height: 80,
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isDarkMode ? Colors.grey[800] : Colors.grey[300],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorView(String error, bool isDarkMode) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline,
+            size: 48,
+            color: AppThemes.redAccent,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Error loading leads',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: isDarkMode ? Colors.white : AppThemes.lightPrimaryText,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            error,
+            style: TextStyle(
+              fontSize: 14,
+              color: isDarkMode ? AppThemes.darkSecondaryText : AppThemes.lightSecondaryText,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () => _loadLeads(refresh: true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppThemes.primaryColor,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Retry'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyView(bool isDarkMode) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.inbox_outlined,
+            size: 48,
+            color: isDarkMode ? Colors.white54 : Colors.grey[400],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No leads found',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: isDarkMode ? Colors.white : AppThemes.lightPrimaryText,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Try adjusting your filters',
+            style: TextStyle(
+              fontSize: 14,
+              color: isDarkMode ? AppThemes.darkSecondaryText : AppThemes.lightSecondaryText,
+            ),
+          ),
+        ],
       ),
     );
   }

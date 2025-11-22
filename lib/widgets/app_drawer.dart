@@ -303,20 +303,20 @@ class ModernDrawer extends StatelessWidget {
               const Divider(),
 
               // System Settings (Cron Jobs)
-              _buildModernDrawerItem(
-                context,
-                Icons.settings_system_daydream_outlined,
-                'System Settings',
-                () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const SystemSettingsScreen(),
-                    ),
-                  );
-                },
-              ),
+              // _buildModernDrawerItem(
+              //   context,
+              //   Icons.settings_system_daydream_outlined,
+              //   'System Settings',
+              //   () {
+              //     Navigator.pop(context);
+              //     Navigator.push(
+              //       context,
+              //       MaterialPageRoute(
+              //         builder: (context) => const SystemSettingsScreen(),
+              //       ),
+              //     );
+              //   },
+              // ),
 
               // Settings
               _buildModernDrawerItem(

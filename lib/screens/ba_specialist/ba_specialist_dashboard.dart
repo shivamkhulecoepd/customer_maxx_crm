@@ -78,6 +78,7 @@ class _ModernBASpecialistDashboardState
   bool _hasLoadedInitialRegisteredData = false;
   bool _hasLoadedInitialProfileData = false;
   bool _hasLoadedInitialDashboardStats = false; // Added for dashboard stats
+  bool _hasLoadedInitialData = false; // Added for consistent pattern
 
   final List<Widget>? actions = [];
   final bool showDrawer = true;
@@ -1232,7 +1233,7 @@ class _ModernBASpecialistDashboardState
     log('Loading state: $_isLoadingAssigned, Error: $_assignedLeadsError');
 
     // Load assigned leads data only when needed (first time)
-    if (!_hasLoadedInitialAssignedData &&
+    if (!_hasLoadedInitialData &&
         _assignedLeads.isEmpty &&
         !_isLoadingAssigned &&
         _assignedLeadsError == null) {
@@ -1240,7 +1241,7 @@ class _ModernBASpecialistDashboardState
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _loadAssignedLeads();
         setState(() {
-          _hasLoadedInitialAssignedData = true;
+          _hasLoadedInitialData = true;
         });
       });
     }
@@ -1249,7 +1250,7 @@ class _ModernBASpecialistDashboardState
       onRefresh: () async {
         // Reset the flag so we can load data again if needed
         setState(() {
-          _hasLoadedInitialAssignedData = false;
+          _hasLoadedInitialData = false;
         });
         await _loadAssignedLeads();
       },
@@ -1406,7 +1407,7 @@ class _ModernBASpecialistDashboardState
     log('Loading state: $_isLoadingRegistered, Error: $_registeredLeadsError');
 
     // Load registered leads data only when needed (first time)
-    if (!_hasLoadedInitialRegisteredData &&
+    if (!_hasLoadedInitialData &&
         _registeredLeads.isEmpty &&
         !_isLoadingRegistered &&
         _registeredLeadsError == null) {
@@ -1414,7 +1415,7 @@ class _ModernBASpecialistDashboardState
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _loadRegisteredLeads();
         setState(() {
-          _hasLoadedInitialRegisteredData = true;
+          _hasLoadedInitialData = true;
         });
       });
     }
@@ -1423,7 +1424,7 @@ class _ModernBASpecialistDashboardState
       onRefresh: () async {
         // Reset the flag so we can load data again if needed
         setState(() {
-          _hasLoadedInitialRegisteredData = false;
+          _hasLoadedInitialData = false;
         });
         await _loadRegisteredLeads();
       },

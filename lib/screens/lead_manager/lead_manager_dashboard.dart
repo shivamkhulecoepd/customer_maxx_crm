@@ -72,6 +72,7 @@ class _ModernLeadManagerDashboardState
   DropdownData? dropdownData;
   bool _isLoadingDropdownData = false;
   bool _hasLoadedInitialLeadsData = false;
+  bool _hasLoadedInitialData = false;
 
   final leadService = ServiceLocator.leadService;
   late final LeadManagerDashboardBloc _leadManagerDashboardBloc;
@@ -1770,7 +1771,7 @@ class _ModernLeadManagerDashboardState
     return BlocBuilder<LeadsBloc, LeadsState>(
       builder: (context, state) {
         // Load leads data only when needed (first time)
-        if (!_hasLoadedInitialLeadsData &&
+        if (!_hasLoadedInitialData &&
             state.leads.isEmpty &&
             !state.isLoading &&
             state.error == null) {
@@ -1778,7 +1779,7 @@ class _ModernLeadManagerDashboardState
           WidgetsBinding.instance.addPostFrameCallback((_) {
             context.read<LeadsBloc>().add(LoadAllLeads());
             setState(() {
-              _hasLoadedInitialLeadsData = true;
+              _hasLoadedInitialData = true;
             });
           });
         }
@@ -1787,7 +1788,7 @@ class _ModernLeadManagerDashboardState
           onRefresh: () async {
             // Reset the flag so we can load data again if needed
             setState(() {
-              _hasLoadedInitialLeadsData = false;
+              _hasLoadedInitialData = false;
             });
             context.read<LeadsBloc>().add(LoadAllLeads());
             // We don't need to wait here as the Bloc will handle the state changes

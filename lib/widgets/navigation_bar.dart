@@ -344,6 +344,12 @@ class FloatingNavigationBar extends StatelessWidget {
         NavigationItem(icon: Icons.task_rounded, label: 'Registered Leads'),
         NavigationItem(icon: Icons.person_rounded, label: 'Profile'),
       ];
+    } else if (normalizedRole.contains('manager')) {
+      return [
+        NavigationItem(icon: Icons.dashboard_rounded, label: 'Main Dashboard'),
+        NavigationItem(icon: Icons.leaderboard_rounded, label: 'All Leads'),
+        NavigationItem(icon: Icons.warning_amber_rounded, label: 'Stale Leads'),
+      ];
     } else {
       return [NavigationItem(icon: Icons.dashboard_rounded, label: 'Dashboard')];
     }
