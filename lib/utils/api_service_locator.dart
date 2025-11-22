@@ -9,6 +9,7 @@ import 'package:customer_maxx_crm/services/lead_service.dart';
 import 'package:customer_maxx_crm/services/profile_service.dart';
 import 'package:customer_maxx_crm/services/user_service.dart';
 import 'package:customer_maxx_crm/services/notification_service.dart';
+import 'package:customer_maxx_crm/services/cron_service.dart';
 import 'package:customer_maxx_crm/utils/api_constants.dart';
 
 class ServiceLocator {
@@ -19,6 +20,7 @@ class ServiceLocator {
   static late DashboardService _dashboardService;
   static late ProfileService _profileService;
   static late NotificationService _notificationService;
+  static late CronService _cronService;
 
   static bool _isInitialized = false;
 
@@ -39,6 +41,7 @@ class ServiceLocator {
       _dashboardService = DashboardService(_apiClient);
       _profileService = ProfileService(_apiClient);
       _notificationService = NotificationService(_apiClient);
+      _cronService = CronService(_apiClient);
 
       // Initialize auth service
       await _authService.init();
@@ -58,6 +61,7 @@ class ServiceLocator {
   static DashboardService get dashboardService => _dashboardService;
   static ProfileService get profileService => _profileService;
   static NotificationService get notificationService => _notificationService;
+  static CronService get cronService => _cronService;
 
   // Check if services are initialized
   static bool get isInitialized => _isInitialized;

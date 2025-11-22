@@ -14,12 +14,18 @@ class LeadService {
   // Get all leads with optional filtering and pagination
   Future<List<Lead>> getAllLeads({
     String? status,
+    String? name,
+    String? phone,
+    String? date,
     int page = 1,
     int limit = 10,
   }) async {
     try {
       final queryParameters = {
         if (status != null) 'status': status,
+        if (name != null) 'name': name,
+        if (phone != null) 'phone': phone,
+        if (date != null) 'date': date,
         'page': page.toString(),
         'limit': limit.toString(),
       };
@@ -308,6 +314,23 @@ class LeadService {
       final response = await apiClient.post(ApiEndpoints.updateStatus, {
         'id': leadId,
         'status': status,
+      }, authenticated: true);
+
+      return response;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Reassign a lead
+  Future<Map<String, dynamic>> reassignLead(
+    int leadId,
+    int newAssignedTo,
+  ) async {
+    try {
+      final response = await apiClient.post(ApiEndpoints.reassignLead, {
+        'lead_id': leadId,
+        'assigned_to': newAssignedTo,
       }, authenticated: true);
 
       return response;

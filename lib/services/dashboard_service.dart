@@ -91,6 +91,7 @@ class DashboardService {
         queryParameters: queryParameters,
         authenticated: true,
       );
+      developer.log('ManagerStats API Response: $response');
 
       if (response['status'] == 'success') {
         return ManagerStats.fromJson(response['stats']);

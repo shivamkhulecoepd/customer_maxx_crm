@@ -10,13 +10,16 @@ import 'package:customer_maxx_crm/blocs/lead_manager_dashboard/lead_manager_dash
 import 'package:customer_maxx_crm/blocs/manager_dashboard/manager_dashboard_bloc.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_event.dart';
 import 'package:customer_maxx_crm/blocs/theme/theme_state.dart';
-import 'package:customer_maxx_crm/screens/splash_screen.dart';
+import 'package:customer_maxx_crm/screens/common/splash_screen.dart';
 import 'package:customer_maxx_crm/screens/auth/auth_screen.dart';
 import 'package:customer_maxx_crm/screens/admin/admin_dashboard.dart';
 import 'package:customer_maxx_crm/screens/lead_manager/lead_manager_dashboard.dart';
 import 'package:customer_maxx_crm/screens/ba_specialist/ba_specialist_dashboard.dart';
 import 'package:customer_maxx_crm/screens/manager/manager_dashboard.dart';
 import 'package:customer_maxx_crm/utils/theme_utils.dart';
+
+import 'package:customer_maxx_crm/blocs/notifications/notification_bloc.dart';
+import 'package:customer_maxx_crm/blocs/notifications/notification_event.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,6 +42,10 @@ void main() async {
         BlocProvider<ManagerDashboardBloc>(
           create: (context) => ManagerDashboardBloc(),
         ),
+        BlocProvider<NotificationBloc>(
+          create: (context) =>
+              NotificationBloc(ServiceLocator.notificationService),
+        ),
       ],
       child: const MainApp(),
     ),
@@ -50,17 +57,29 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ThemeBloc, ThemeState>(
-      builder: (context, themeState) {
-        return MaterialApp(
-          title: 'CustomerMax CRM',
-          theme: AppThemes.lightTheme,
-          darkTheme: AppThemes.darkTheme,
-          themeMode: themeState.themeMode,
-          debugShowCheckedModeBanner: false,
-          home: const ModernSplashScreen(),
-        );
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state is Authenticated) {
+          // Load initial notifications immediately
+          context.read<NotificationBloc>().add(const LoadNotifications());
+          // Then start polling for updates
+          context.read<NotificationBloc>().add(StartNotificationPolling());
+        } else if (state is Unauthenticated) {
+          context.read<NotificationBloc>().add(StopNotificationPolling());
+        }
       },
+      child: BlocBuilder<ThemeBloc, ThemeState>(
+        builder: (context, themeState) {
+          return MaterialApp(
+            title: 'CustomerMax CRM',
+            theme: AppThemes.lightTheme,
+            darkTheme: AppThemes.darkTheme,
+            themeMode: themeState.themeMode,
+            debugShowCheckedModeBanner: false,
+            home: const ModernSplashScreen(),
+          );
+        },
+      ),
     );
   }
 }

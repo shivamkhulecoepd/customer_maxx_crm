@@ -34,7 +34,11 @@ class NotificationService {
         final notifications = (response['notifications'] as List)
             .map((json) => NotificationModel.fromJson(json))
             .toList();
-        log("NotificationService Notifications: $notifications");
+        if (notifications.isNotEmpty) {
+          log("NotificationService Notifications: ${notifications[0]}");
+        } else {
+          log("NotificationService Notifications: []");
+        }
         return notifications;
       } else {
         throw Exception(response['message'] ?? 'Failed to fetch notifications');
@@ -54,7 +58,9 @@ class NotificationService {
       );
       log("NotificationService response: $response");
       if (response['status'] == 'success') {
-        return int.tryParse(response['unread_count'].toString()) ?? 0;
+        return int.tryParse(response['count'].toString()) ??
+            int.tryParse(response['unread_count'].toString()) ??
+            0;
       } else {
         return 0;
       }

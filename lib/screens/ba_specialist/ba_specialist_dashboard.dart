@@ -16,7 +16,7 @@ import 'package:customer_maxx_crm/services/profile_service.dart';
 import 'package:customer_maxx_crm/utils/api_service_locator.dart';
 import 'package:customer_maxx_crm/models/dashboard_stats.dart';
 import 'package:customer_maxx_crm/services/dashboard_service.dart';
-import 'package:customer_maxx_crm/screens/notifications/notification_screen.dart';
+import 'package:customer_maxx_crm/widgets/notification_badge.dart';
 import 'package:shimmer/shimmer.dart';
 
 class ModernBASpecialistDashboard extends StatefulWidget {
@@ -425,14 +425,7 @@ class _ModernBASpecialistDashboardState
           if (actions != null) ...actions!,
 
           // Notification Icon
-          _buildIconButton(context, Icons.notifications_outlined, () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const NotificationScreen(),
-              ),
-            );
-          }, isDarkMode),
+          NotificationBadge(isDarkMode: isDarkMode),
 
           SizedBox(width: width < 360 ? 6 : 8),
 

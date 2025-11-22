@@ -6,10 +6,11 @@ import 'package:customer_maxx_crm/blocs/theme/theme_state.dart';
 import 'package:customer_maxx_crm/screens/admin/admin_dashboard.dart';
 import 'package:customer_maxx_crm/screens/lead_manager/lead_manager_dashboard.dart';
 import 'package:customer_maxx_crm/screens/ba_specialist/ba_specialist_dashboard.dart';
-import 'package:customer_maxx_crm/screens/settings_screen.dart';
-import 'package:customer_maxx_crm/screens/help_support_screen.dart';
+import 'package:customer_maxx_crm/screens/common/settings_screen.dart';
+import 'package:customer_maxx_crm/screens/common/help_support_screen.dart';
 import 'package:customer_maxx_crm/screens/notifications/notification_screen.dart';
 import 'package:customer_maxx_crm/screens/leads/stale_leads_screen.dart';
+import 'package:customer_maxx_crm/screens/admin/system_settings_screen.dart';
 import 'package:customer_maxx_crm/main.dart';
 
 class ModernDrawer extends StatelessWidget {
@@ -300,6 +301,22 @@ class ModernDrawer extends StatelessWidget {
               ),
 
               const Divider(),
+
+              // System Settings (Cron Jobs)
+              _buildModernDrawerItem(
+                context,
+                Icons.settings_system_daydream_outlined,
+                'System Settings',
+                () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SystemSettingsScreen(),
+                    ),
+                  );
+                },
+              ),
 
               // Settings
               _buildModernDrawerItem(

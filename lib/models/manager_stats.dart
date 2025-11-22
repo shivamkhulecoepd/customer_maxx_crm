@@ -1,36 +1,33 @@
 class ManagerStats {
   final int totalLeads;
-  final int assignedLeads;
-  final int unassignedLeads;
-  final int pendingLeads;
-  final int registeredLeads;
-  final int notConnectedLeads;
-  final int fakeLeads;
-  final int totalTeamMembers;
+  final Map<String, int> statusCounts;
+  final List<Map<String, dynamic>> recentLeads;
+  final Map<String, dynamic>? debugInfo;
 
   ManagerStats({
     required this.totalLeads,
-    required this.assignedLeads,
-    required this.unassignedLeads,
-    required this.pendingLeads,
-    required this.registeredLeads,
-    required this.notConnectedLeads,
-    required this.fakeLeads,
-    required this.totalTeamMembers,
+    required this.statusCounts,
+    required this.recentLeads,
+    this.debugInfo,
   });
 
   factory ManagerStats.fromJson(Map<String, dynamic> json) {
+    final statusCountsJson =
+        json['status_counts'] as Map<String, dynamic>? ?? {};
+    final statusCounts = statusCountsJson.map(
+      (key, value) => MapEntry(key, int.tryParse(value.toString()) ?? 0),
+    );
+
+    final recentLeadsJson = json['recent_leads'] as List<dynamic>? ?? [];
+    final recentLeads = recentLeadsJson
+        .map((e) => e as Map<String, dynamic>)
+        .toList();
+
     return ManagerStats(
       totalLeads: int.tryParse(json['total_leads'].toString()) ?? 0,
-      assignedLeads: int.tryParse(json['assigned_leads'].toString()) ?? 0,
-      unassignedLeads: int.tryParse(json['unassigned_leads'].toString()) ?? 0,
-      pendingLeads: int.tryParse(json['pending_leads'].toString()) ?? 0,
-      registeredLeads: int.tryParse(json['registered_leads'].toString()) ?? 0,
-      notConnectedLeads:
-          int.tryParse(json['not_connected_leads'].toString()) ?? 0,
-      fakeLeads: int.tryParse(json['fake_leads'].toString()) ?? 0,
-      totalTeamMembers:
-          int.tryParse(json['total_team_members'].toString()) ?? 0,
+      statusCounts: statusCounts,
+      recentLeads: recentLeads,
+      debugInfo: json['debug_info'] as Map<String, dynamic>?,
     );
   }
 }

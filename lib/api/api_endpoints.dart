@@ -20,6 +20,7 @@ class ApiEndpoints {
   static const String updateFee = '$_apiPath?action=update_fee';
   static const String updateFeedback = '$_apiPath?action=update_feedback';
   static const String updateStatus = '$_apiPath?action=update_status';
+  static const String reassignLead = '$_apiPath?action=reassign_lead';
   static const String getLeadManagers = '$_apiPath?action=get_lead_managers';
   static const String getBASpecialists = '$_apiPath?action=get_ba_specialists';
   static const String getDropdownData = '$_apiPath?action=get_dropdown_data';

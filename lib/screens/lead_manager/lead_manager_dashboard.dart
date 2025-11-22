@@ -20,7 +20,7 @@ import 'package:customer_maxx_crm/blocs/leads/leads_event.dart';
 import 'package:customer_maxx_crm/services/lead_service.dart';
 import 'package:customer_maxx_crm/blocs/lead_manager_dashboard/lead_manager_dashboard_bloc.dart';
 import 'package:customer_maxx_crm/models/dashboard_stats.dart';
-import 'package:customer_maxx_crm/screens/notifications/notification_screen.dart';
+import 'package:customer_maxx_crm/widgets/notification_badge.dart';
 import 'package:shimmer/shimmer.dart';
 
 class ModernLeadManagerDashboard extends StatefulWidget {
@@ -341,17 +341,7 @@ class _ModernLeadManagerDashboardState
           if (actions != null) ...actions!,
 
           // Notification Icon
-          _buildIconButton(
-            context,
-            Icons.notifications_outlined,
-            () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const NotificationScreen(),
-              ),
-            ),
-            isDarkMode,
-          ),
+          NotificationBadge(isDarkMode: isDarkMode),
           SizedBox(width: width < 360 ? 6 : 8),
 
           // Theme Toggle
@@ -1963,12 +1953,140 @@ class _ModernLeadManagerDashboardState
                     );
                   }
                 },
+                onRowReassign: (lead) {
+                  _showReassignDialog(lead);
+                },
               );
             },
           ),
         );
       },
     );
+  }
+
+  Future<void> _showReassignDialog(Lead lead) async {
+    // Ensure dropdown data is loaded before showing dialog
+    if (dropdownData == null) {
+      await _fetchDropdownData();
+    }
+
+    if (!mounted) return;
+
+    // Get BA specialists list
+    final baSpecialists = dropdownData?.baSpecialists ?? [];
+
+    // Convert the list to int values to find matching selection
+    final availableIds = baSpecialists
+        .map((ba) => int.tryParse(ba.id))
+        .where((id) => id != null)
+        .cast<int>()
+        .toList();
+
+    // Check if current assignedTo exists in the list, otherwise set to null
+    int? selectedBaId =
+        (lead.assignedTo != null && availableIds.contains(lead.assignedTo))
+        ? lead.assignedTo
+        : null;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Text('Reassign Lead'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Reassign ${lead.name} to:'),
+                const SizedBox(height: 4),
+                if (lead.assignedName.isNotEmpty)
+                  Text(
+                    'Current: ${lead.assignedName}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontStyle: FontStyle.italic,
+                      color: Colors.grey,
+                    ),
+                  ),
+                const SizedBox(height: 16),
+                if (baSpecialists.isEmpty)
+                  const Center(child: CircularProgressIndicator())
+                else
+                  DropdownButtonFormField<int>(
+                    decoration: const InputDecoration(
+                      labelText: 'Select BA Specialist',
+                      border: OutlineInputBorder(),
+                    ),
+                    value: selectedBaId,
+                    items: baSpecialists.map<DropdownMenuItem<int>>((ba) {
+                      return DropdownMenuItem<int>(
+                        value: int.tryParse(ba.id),
+                        child: Text(ba.name),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setDialogState(() {
+                        selectedBaId = value;
+                      });
+                    },
+                  ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: selectedBaId == null
+                    ? null
+                    : () async {
+                        Navigator.pop(context);
+                        await _reassignLead(lead, selectedBaId!);
+                      },
+                child: const Text('Reassign'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _reassignLead(Lead lead, int newAssignedTo) async {
+    try {
+      final leadService = ServiceLocator.leadService;
+
+      // Use the dedicated reassign method which handles notifications
+      final response = await leadService.reassignLead(lead.id, newAssignedTo);
+
+      if (mounted) {
+        if (response['status'] == 'success') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Lead reassigned successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          // Refresh the list
+          context.read<LeadsBloc>().add(LoadAllLeads());
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to reassign: ${response['message']}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   Widget _buildReportsView(bool isDarkMode) {

@@ -15,6 +15,7 @@ class GenericTableView<T> extends StatefulWidget {
   final Function(T)? onRowTap;
   final Function(T)? onRowEdit;
   final Function(T)? onRowDelete;
+  final Function(T)? onRowReassign; // New parameter for reassign action
   final Widget? emptyWidget;
   final bool isLoading;
   final String? searchHint;
@@ -32,6 +33,7 @@ class GenericTableView<T> extends StatefulWidget {
     this.onRowTap,
     this.onRowEdit,
     this.onRowDelete,
+    this.onRowReassign, // New parameter
     this.emptyWidget,
     this.isLoading = false,
     this.searchHint,
@@ -55,7 +57,9 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
     log('GenericTableView initState - Data length: ${widget.data.length}');
     _filteredData = List<T>.from(widget.data);
     _searchController.addListener(_onSearchChanged);
-    log('GenericTableView initState - Filtered data length: ${_filteredData.length}');
+    log(
+      'GenericTableView initState - Filtered data length: ${_filteredData.length}',
+    );
   }
 
   @override
@@ -73,7 +77,9 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
   }
 
   void _filterData() {
-    log('GenericTableView _filterData - Search query: $_searchQuery, Selected filter: $_selectedFilter');
+    log(
+      'GenericTableView _filterData - Search query: $_searchQuery, Selected filter: $_selectedFilter',
+    );
     setState(() {
       if (_searchQuery.isEmpty && _selectedFilter == 'All') {
         log('GenericTableView _filterData - No filters, using all data');
@@ -101,18 +107,24 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
             matchesFilter = lead.status == _selectedFilter;
           }
 
-          log('GenericTableView _filterData - Item matches search: $matchesSearch, matches filter: $matchesFilter');
+          log(
+            'GenericTableView _filterData - Item matches search: $matchesSearch, matches filter: $matchesFilter',
+          );
           return matchesSearch && matchesFilter;
         }).toList();
       }
-      log('GenericTableView _filterData - Filtered data length: ${_filteredData.length}');
+      log(
+        'GenericTableView _filterData - Filtered data length: ${_filteredData.length}',
+      );
     });
   }
 
   @override
   void didUpdateWidget(GenericTableView<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
-    log('GenericTableView didUpdateWidget - Old data length: ${oldWidget.data.length}, New data length: ${widget.data.length}');
+    log(
+      'GenericTableView didUpdateWidget - Old data length: ${oldWidget.data.length}, New data length: ${widget.data.length}',
+    );
     // Only update filtered data if the data actually changed
     if (!listEquals(oldWidget.data, widget.data)) {
       _filteredData = List<T>.from(widget.data);
@@ -124,8 +136,10 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
   Widget build(BuildContext context) {
     final screen = MediaQuery.of(context).size;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
-    log('GenericTableView build - Data length: ${widget.data.length}, Filtered data length: ${_filteredData.length}');
+
+    log(
+      'GenericTableView build - Data length: ${widget.data.length}, Filtered data length: ${_filteredData.length}',
+    );
     log('GenericTableView build - Is loading: ${widget.isLoading}');
 
     // Wrap the entire table in a scrollable widget for refresh indicator support
@@ -154,9 +168,13 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
 
   Widget _buildHorizontalScrollTable(bool isDarkMode, Size screen) {
     final totalWidth = _calculateTotalTableWidth(screen);
-    
-    log('GenericTableView _buildHorizontalScrollTable - Total width: $totalWidth, Screen width: ${screen.width}');
-    log('GenericTableView _buildHorizontalScrollTable - Filtered data length: ${_filteredData.length}');
+
+    log(
+      'GenericTableView _buildHorizontalScrollTable - Total width: $totalWidth, Screen width: ${screen.width}',
+    );
+    log(
+      'GenericTableView _buildHorizontalScrollTable - Filtered data length: ${_filteredData.length}',
+    );
 
     // Always allow horizontal scrolling to prevent overflow
     return Scrollbar(
@@ -195,59 +213,82 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
       0.0,
       (sum, column) => sum + _getColumnWidth(column, screen),
     );
-    
-    log('GenericTableView _calculateTotalTableWidth - Columns: ${widget.columns.length}, Initial width: $totalWidth');
+
+    log(
+      'GenericTableView _calculateTotalTableWidth - Columns: ${widget.columns.length}, Initial width: $totalWidth',
+    );
 
     // Calculate action column width based on number of actions
     int actionCount = 0;
     if (widget.onRowEdit != null) actionCount++;
     if (widget.onRowDelete != null) actionCount++;
+    if (widget.onRowReassign != null) actionCount++;
 
     if (actionCount > 0) {
       // Each action needs ~50px + some padding
       double actionColumnWidth = actionCount * 50.0 + 20.0;
       totalWidth += actionColumnWidth;
-      log('GenericTableView _calculateTotalTableWidth - Added action column width: $actionColumnWidth');
+      log(
+        'GenericTableView _calculateTotalTableWidth - Added action column width: $actionColumnWidth',
+      );
     }
 
     totalWidth += screen.width * 0.08; // left-right padding
-    log('GenericTableView _calculateTotalTableWidth - Final width: $totalWidth, Screen width: ${screen.width}');
+    log(
+      'GenericTableView _calculateTotalTableWidth - Final width: $totalWidth, Screen width: ${screen.width}',
+    );
     return totalWidth < screen.width ? screen.width : totalWidth;
   }
 
   double _getColumnWidth(GenericTableColumn<T> column, Size screen) {
     // If column has a custom width, use it
     if (column.width != null) {
-      log('GenericTableView _getColumnWidth - Using custom width: ${column.width}');
+      log(
+        'GenericTableView _getColumnWidth - Using custom width: ${column.width}',
+      );
       return column.width!;
     }
 
     // Otherwise, use default width based on title (reduced to prevent overflow)
     switch (column.title.toLowerCase()) {
       case 'name':
-        log('GenericTableView _getColumnWidth - Using name width: ${screen.width * 0.25}');
+        log(
+          'GenericTableView _getColumnWidth - Using name width: ${screen.width * 0.25}',
+        );
         return screen.width * 0.25;
       case 'email':
-        log('GenericTableView _getColumnWidth - Using email width: ${screen.width * 0.25}');
+        log(
+          'GenericTableView _getColumnWidth - Using email width: ${screen.width * 0.25}',
+        );
         return screen.width * 0.25;
       case 'phone':
-        log('GenericTableView _getColumnWidth - Using phone width: ${screen.width * 0.15}');
+        log(
+          'GenericTableView _getColumnWidth - Using phone width: ${screen.width * 0.15}',
+        );
         return screen.width * 0.15;
       case 'status':
-        log('GenericTableView _getColumnWidth - Using status width: ${screen.width * 0.15}');
+        log(
+          'GenericTableView _getColumnWidth - Using status width: ${screen.width * 0.15}',
+        );
         return screen.width * 0.15;
       case 'date':
-        log('GenericTableView _getColumnWidth - Using date width: ${screen.width * 0.2}');
+        log(
+          'GenericTableView _getColumnWidth - Using date width: ${screen.width * 0.2}',
+        );
         return screen.width * 0.2;
       default:
-        log('GenericTableView _getColumnWidth - Using default width: ${screen.width * 0.2}');
+        log(
+          'GenericTableView _getColumnWidth - Using default width: ${screen.width * 0.2}',
+        );
         return screen.width * 0.2;
     }
   }
 
   Widget _buildTableHeaderRow(bool isDarkMode, double totalWidth, Size screen) {
-    log('GenericTableView _buildTableHeaderRow - Building header row, Total width: $totalWidth, Columns: ${widget.columns.length}');
-    
+    log(
+      'GenericTableView _buildTableHeaderRow - Building header row, Total width: $totalWidth, Columns: ${widget.columns.length}',
+    );
+
     return Container(
       width: totalWidth,
       padding: EdgeInsets.symmetric(
@@ -283,12 +324,15 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
               ),
             ),
           ),
-          if (widget.onRowEdit != null || widget.onRowDelete != null)
+          if (widget.onRowEdit != null ||
+              widget.onRowDelete != null ||
+              widget.onRowReassign != null)
             LayoutBuilder(
               builder: (context, constraints) {
                 int actionCount = 0;
                 if (widget.onRowEdit != null) actionCount++;
                 if (widget.onRowDelete != null) actionCount++;
+                if (widget.onRowReassign != null) actionCount++;
 
                 double actionColumnWidth = actionCount * 50.0 + 20.0;
 
@@ -324,7 +368,7 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
     Size screen,
   ) {
     log('GenericTableView _buildTableRow - Building row $index');
-    
+
     return GestureDetector(
       onTap: () => widget.onRowTap?.call(item),
       child: Container(
@@ -370,12 +414,15 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
                 ),
               ),
             ),
-            if (widget.onRowEdit != null || widget.onRowDelete != null)
+            if (widget.onRowEdit != null ||
+                widget.onRowDelete != null ||
+                widget.onRowReassign != null)
               LayoutBuilder(
                 builder: (context, constraints) {
                   int actionCount = 0;
                   if (widget.onRowEdit != null) actionCount++;
                   if (widget.onRowDelete != null) actionCount++;
+                  if (widget.onRowReassign != null) actionCount++;
 
                   double actionColumnWidth = actionCount * 50.0 + 20.0;
 
@@ -512,6 +559,17 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
+        if (widget.onRowReassign != null)
+          IconButton(
+            icon: const Icon(
+              Icons.person_add_alt_1_rounded,
+              color: Colors.orange,
+            ),
+            onPressed: () => widget.onRowReassign?.call(item),
+            iconSize: 18,
+            padding: const EdgeInsets.all(4),
+            constraints: const BoxConstraints.tightFor(width: 40, height: 40),
+          ),
         if (widget.onRowEdit != null)
           IconButton(
             icon: const Icon(Icons.edit_rounded, color: Color(0xFF00BCD4)),
@@ -562,7 +620,9 @@ class _GenericTableViewState<T> extends State<GenericTableView<T>> {
   }
 
   Widget _buildEmptySearchResultWidget(BuildContext context) {
-    log('GenericTableView _buildEmptySearchResultWidget - Building empty search result widget');
+    log(
+      'GenericTableView _buildEmptySearchResultWidget - Building empty search result widget',
+    );
     return SizedBox(
       height: MediaQuery.of(context).size.height * 0.62,
       width: double.infinity,

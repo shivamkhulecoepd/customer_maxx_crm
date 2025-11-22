@@ -24,7 +24,8 @@ import 'package:customer_maxx_crm/models/user.dart';
 import 'package:customer_maxx_crm/models/lead.dart';
 import 'package:customer_maxx_crm/models/dashboard_stats.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
-import 'package:customer_maxx_crm/screens/notifications/notification_screen.dart';
+
+import 'package:customer_maxx_crm/widgets/notification_badge.dart';
 
 class ModernAdminDashboard extends StatefulWidget {
   final int initialIndex;
@@ -523,14 +524,7 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard> {
           if (actions != null) ...actions!,
 
           // Notification Icon
-          _buildIconButton(context, Icons.notifications_outlined, () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const NotificationScreen(),
-              ),
-            );
-          }, isDarkMode),
+          NotificationBadge(isDarkMode: isDarkMode),
 
           SizedBox(width: width < 360 ? 6 : 8),
 

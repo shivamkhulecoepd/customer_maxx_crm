@@ -25,7 +25,11 @@ class ManagerDashboardBloc
       final stats = await dashboardService.getManagerStats(
         managerId: event.managerId,
       );
+      developer.log('stats: $stats');
       developer.log('Received manager stats: ${stats.totalLeads} total leads');
+      if (stats.debugInfo != null) {
+        developer.log('Debug Info: ${stats.debugInfo}');
+      }
       emit(ManagerDashboardLoaded(stats));
     } catch (e) {
       developer.log('Error fetching manager stats: $e');
